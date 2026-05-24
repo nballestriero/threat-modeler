@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Eye, Pencil, Sparkles, Plus, X, Check, Loader2 } from 'lucide-react';
+import { Eye, Pencil, Sparkles, Plus, X, Check, Loader2, Trash } from 'lucide-react';
 import { useThreatModelStore } from '../store/useThreatModelStore';
 
 const CATEGORIES = [
@@ -13,7 +13,7 @@ const CATEGORIES = [
 ];
 
 export default function AssetInventory() {
-  const { assets, isLoading, fetchAssets } = useThreatModelStore();
+  const { assets, isLoading, fetchAssets, deleteAsset } = useThreatModelStore();
   const [selectedAsset, setSelectedAsset] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
@@ -37,6 +37,17 @@ export default function AssetInventory() {
     });
     setIsEditModalOpen(true);
   };
+  
+const handleDelete = async (id) => {
+    if (!window.confirm("Sei sicuro di voler eliminare questo asset?")) return;
+        try {
+            await deleteAsset(id);
+            // Se arriva qui, l'eliminazione è andata a buon fine e lo store si è aggiornato
+        } catch (error) {
+            console.error("Errore durante l'eliminazione:", error);
+            alert("Impossibile eliminare l'asset.");
+        }
+};
 
   const handleSave = async () => {
     try {
@@ -65,16 +76,17 @@ export default function AssetInventory() {
     }
   };
 
+
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-lg font-semibold">Elenco Asset</h2>
-        <div className="space-x-2">
-          <button onClick={() => handleEnhance(selectedAsset?.id || assets[0]?.id)} className="px-3 py-1.5 bg-purple-100 text-purple-700 rounded hover:bg-purple-200 text-sm flex items-center gap-1">
-            <Sparkles size={14} /> Migliora con AI
-          </button>
+              <div className="flex flex-row space-x-2">
           <button onClick={handleCreate} className="px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm flex items-center gap-1">
             <Plus size={14} /> Nuovo Asset
+          </button>
+          <button onClick={() => handleEnhance(selectedAsset?.id || assets[0]?.id)} className="px-3 py-1.5 bg-purple-100 text-purple-700 rounded hover:bg-purple-200 text-sm flex items-center gap-1">
+            <Sparkles size={14} /> Migliora con AI
           </button>
         </div>
       </div>
@@ -103,6 +115,9 @@ export default function AssetInventory() {
                   </button>
                   <button onClick={() => handleEdit(a)} className="p-1 text-amber-600 hover:bg-amber-100 rounded" title="Modifica">
                     <Pencil size={18} />
+                  </button>
+                  <button onClick={() => handleDelete(a.id)} className="p-1 hover:bg-red-100 text-red-600 rounded" title="Elimina asset">
+                    <Trash size={18} />
                   </button>
                 </td>
               </tr>

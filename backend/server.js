@@ -127,6 +127,24 @@ app.put('/api/assets/:id', async (req, res) => {
   res.json(model.assets[idx]);
 });
 
+app.delete('/api/assets/:id', async (req, res) => {
+    console.log("🔴 TENTATIVO DI ELIMINAZIONE ID:", req.params.id); // LOG 1
+    const model = await loadModel();
+    const idx = model.assets.findIndex(a => a.id === req.params.id);
+
+    if (idx === -1) {
+        return res.status(404).json({ error: 'Asset non trovato' });
+    }
+
+    // Rimuovi l'asset dall'array
+    model.assets.splice(idx, 1);
+
+    // Salva le modifiche nel file JSON
+    await fs.writeFile(JSON_FILE, JSON.stringify(model, null, 2));
+
+    res.json({ message: 'Asset eliminato con successo' });
+});
+
 // =========================================================
 // 7. ROUTES: GESTIONE FILE
 // =========================================================

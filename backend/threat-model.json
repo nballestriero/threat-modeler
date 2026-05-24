@@ -20,11 +20,11 @@
   },
   "assets": [
     {
-      "id": "bc75587f-d542-487c-b6e2-7d63a64fc9bc",
-      "name": "TEST",
-      "category": "Data",
-      "subCategory": "Raw Data",
-      "description": "testststststss"
+      "id": "7e446dfa-3552-4fcb-b5e3-425c2b2cf593",
+      "name": "test",
+      "category": "Models & Algorithms",
+      "subCategory": "Training Pipeline",
+      "description": "adad"
     }
   ]
 }

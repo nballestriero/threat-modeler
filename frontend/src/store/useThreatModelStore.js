@@ -30,5 +30,18 @@ export const useThreatModelStore = create((set, get) => ({
     } catch (err) {
       console.error('Errore import asset estratti:', err);
     }
+  },
+
+  deleteAsset: async (id) => {
+        try {
+            await axios.delete(`${API_BASE}/assets/${id}`);
+            // Aggiorna lo stato locale rimuovendo l'asset eliminato
+            set((state) => ({
+                assets: state.assets.filter((asset) => asset.id !== id)
+            }));
+        } catch (err) {
+            console.error('Errore eliminazione asset:', err);
+            throw err; // Rilancia l'errore per gestirlo nel componente se necessario
+        }
   }
 }));
