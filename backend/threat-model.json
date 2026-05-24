@@ -1,0 +1,30 @@
+{
+  "project": {
+    "name": "Nuovo Progetto",
+    "version": "1.0",
+    "owner": ""
+  },
+  "config": {
+    "ollama": {
+      "enabled": false,
+      "host": "http://localhost",
+      "port": 11434,
+      "apiKey": ""
+    },
+    "database": {
+      "enabled": false,
+      "type": "sqlite",
+      "path": "./data.db"
+    },
+    "jsonStoragePath": "./threat-models/"
+  },
+  "assets": [
+    {
+      "id": "bc75587f-d542-487c-b6e2-7d63a64fc9bc",
+      "name": "TEST",
+      "category": "Data",
+      "subCategory": "Raw Data",
+      "description": "testststststss"
+    }
+  ]
+}
