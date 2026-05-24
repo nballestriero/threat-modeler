@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ThreatModeler — Asset Taxonomy v1.0</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap');
+
+:root {
+  --text:       #1a1a18;
+  --text2:      #5F5E5A;
+  --text3:      #888780;
+  --border:     #e0ddd6;
+  --border-lt:  #edeae3;
+  --bg:         #ffffff;
+  --bg2:        #faf9f6;
+  --bg3:        #f4f2ed;
+  --radius:     8px;
+  --radius-lg:  12px;
+
+  --data-bg:    #EAF3DE; --data-text:  #27500A; --data-border:#97C459;
+  --model-bg:   #EEEDFE; --model-text: #3C3489; --model-border:#AFA9EC;
+  --infra-bg:   #E6F1FB; --infra-text: #0C447C; --infra-border:#85B7EB;
+  --actor-bg:   #FAEEDA; --actor-text: #633806; --actor-border:#EF9F27;
+  --proc-bg:    #E1F5EE; --proc-text:  #085041; --proc-border: #5DCAA5;
+  --tools-bg:   #FAECE7; --tools-text: #712B13; --tools-border:#F0997B;
+  --artf-bg:    #F1EFE8; --artf-text:  #444441; --artf-border: #B4B2A9;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'IBM Plex Sans', system-ui, sans-serif;
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 48px 40px;
+}
+
+/* ── PRINT ── */
+@media print {
+  @page { size: A4; margin: 18mm 16mm; }
+  body { padding: 0; max-width: 100%; font-size: 11px; }
+  .no-print { display: none !important; }
+  .cat-block { break-inside: avoid; page-break-inside: avoid; }
+  .sub-row   { break-inside: avoid; }
+  .page-break { page-break-before: always; break-before: page; }
+  a { color: inherit; text-decoration: none; }
+}
+
+/* ── COVER ── */
+.cover {
+  margin-bottom: 44px;
+  padding-bottom: 36px;
+  border-bottom: 1.5px solid var(--border);
+}
+.cover-eyebrow {
+  font-size: 10px; font-weight: 600; letter-spacing: .1em;
+  text-transform: uppercase; color: #185FA5;
+  background: #E6F1FB; border: 0.5px solid #85B7EB;
+  display: inline-block; padding: 3px 10px; border-radius: 20px;
+  margin-bottom: 14px;
+}
+.cover h1 { font-size: 30px; font-weight: 600; line-height: 1.15; margin-bottom: 10px; }
+.cover-sub { font-size: 14px; color: var(--text2); max-width: 640px; margin-bottom: 24px; line-height: 1.6; }
+.cover-meta { display: flex; gap: 28px; flex-wrap: wrap; }
+.cm-item .cm-label { font-size: 10px; text-transform: uppercase; letter-spacing: .07em; color: var(--text3); margin-bottom: 2px; }
+.cm-item .cm-val   { font-size: 12px; font-weight: 500; }
+
+/* ── SOURCES TABLE ── */
+.sources-section { margin-bottom: 40px; }
+.section-title {
+  font-size: 10px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: .07em; color: var(--text3);
+  margin-bottom: 12px; padding-bottom: 8px;
+  border-bottom: 0.5px solid var(--border);
+}
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+th {
+  background: var(--bg3); padding: 7px 10px;
+  text-align: left; font-weight: 600;
+  font-size: 10px; text-transform: uppercase; letter-spacing: .05em;
+  color: var(--text3); border-bottom: 1px solid var(--border);
+}
+td { padding: 8px 10px; border-bottom: 0.5px solid var(--border-lt); vertical-align: top; }
+tr:last-child td { border-bottom: none; }
+.source-id {
+  font-family: 'IBM Plex Mono', monospace; font-size: 10px;
+  background: var(--bg3); border: 0.5px solid var(--border);
+  padding: 2px 6px; border-radius: 4px; color: var(--text2);
+  white-space: nowrap;
+}
+
+/* ── CATEGORY BLOCKS ── */
+.cat-block {
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  margin-bottom: 28px;
+}
+
+.cat-header {
+  display: flex; align-items: flex-start;
+  gap: 14px; padding: 16px 18px;
+  border-bottom: 0.5px solid var(--border);
+}
+.cat-badge {
+  width: 40px; height: 40px; border-radius: var(--radius);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; flex-shrink: 0;
+  font-family: 'IBM Plex Mono', monospace;
+}
+.cat-header-text { flex: 1; }
+.cat-header-text h2 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+.cat-header-text p  { font-size: 12px; color: var(--text2); line-height: 1.55; }
+.cat-meta { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; align-items: center; }
+
+.stride-tag {
+  font-size: 10px; padding: 2px 7px; border-radius: 20px;
+  border: 0.5px solid; font-weight: 500;
+}
+.source-ref { font-size: 10px; color: var(--text3); }
+
+/* ── SUBCATEGORY TABLE ── */
+.sub-table { width: 100%; }
+.sub-head-row {
+  display: grid;
+  grid-template-columns: 30px 160px 1fr 110px;
+  gap: 0; padding: 7px 18px;
+  background: var(--bg2);
+  border-bottom: 0.5px solid var(--border);
+}
+.sub-head-row span {
+  font-size: 10px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .05em; color: var(--text3);
+}
+.sub-row {
+  display: grid;
+  grid-template-columns: 30px 160px 1fr 110px;
+  gap: 0; padding: 10px 18px;
+  border-bottom: 0.5px solid var(--border-lt);
+  align-items: start;
+}
+.sub-row:last-child { border-bottom: none; }
+.sub-row:hover { background: var(--bg2); }
+
+.sub-id {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px; color: var(--text3); padding-top: 1px;
+}
+.sub-name { font-size: 12px; font-weight: 500; padding-right: 12px; }
+.sub-desc { font-size: 11px; color: var(--text2); line-height: 1.55; padding-right: 12px; }
+.sub-src  { font-size: 10px; color: var(--text3); font-family: 'IBM Plex Mono', monospace; line-height: 1.4; }
+
+/* ── LEGEND ── */
+.legend { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 32px; }
+.legend-item {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 11px; color: var(--text2);
+}
+.legend-dot { width: 10px; height: 10px; border-radius: 3px; border: 0.5px solid; flex-shrink: 0; }
+
+/* ── FOOTER ── */
+.doc-footer {
+  margin-top: 48px; padding-top: 20px;
+  border-top: 0.5px solid var(--border);
+  display: flex; justify-content: space-between;
+  font-size: 11px; color: var(--text3);
+}
+
+code {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px; background: var(--bg3);
+  padding: 1px 5px; border-radius: 4px;
+}
+</style>
+</head>
+<body>
+
+<!-- COVER -->
+<div class="cover">
+  <div class="cover-eyebrow">ThreatModeler · Tassonomia Asset · v1.0</div>
+  <h1>Asset Taxonomy<br>per Threat Modeling</h1>
+  <p class="cover-sub">
+    Classificazione strutturata degli asset per l'analisi delle minacce secondo il processo OWASP STRIDE.
+    Integra le 6 macro-categorie del paper <em>STRIDE-AI</em> (Mauri &amp; Damiani 2022) con la categoria
+    <strong>Infrastructure</strong> aggiunta per coprire sistemi IT classici.
+    Allineata a ENISA AI Threat Landscape, Microsoft SDL e OWASP Threat Modeling Process.
+  </p>
+  <div class="cover-meta">
+    <div class="cm-item"><div class="cm-label">Versione</div><div class="cm-val">1.0 — May 2025</div></div>
+    <div class="cm-item"><div class="cm-label">Categorie</div><div class="cm-val">7</div></div>
+    <div class="cm-item"><div class="cm-label">Sottocategorie</div><div class="cm-val">50</div></div>
+    <div class="cm-item"><div class="cm-label">Metodologia</div><div class="cm-val">OWASP STRIDE + STRIDE-AI</div></div>
+    <div class="cm-item"><div class="cm-label">Formato dati</div><div class="cm-val">JSON canonico</div></div>
+    <div class="cm-item"><div class="cm-label">Licenza</div><div class="cm-val">CC BY 4.0</div></div>
+  </div>
+</div>
+
+<!-- FONTI -->
+<div class="sources-section">
+  <div class="section-title">Fonti e riferimenti</div>
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Riferimento</th>
+        <th>Categorie derivate</th>
+        <th>Anno</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="source-id">STRIDE-AI</span></td>
+        <td>Mauri L., Damiani E. — <em>Modeling Threats to AI-ML Systems Using STRIDE</em>, Sensors 2022, 22, 6662. Propone Data, Models, Actors, Processes, Tools, Artefacts come asset categories per sistemi ML.</td>
+        <td>Data · Models · Actors · Processes · Tools · Artefacts</td>
+        <td>2022</td>
+      </tr>
+      <tr>
+        <td><span class="source-id">ENISA-AI</span></td>
+        <td>ENISA — <em>AI Cybersecurity Challenges — Threat Landscape for Artificial Intelligence</em>. Identifica asset ML nel contesto del ciclo di vita del modello e mappa le minacce.</td>
+        <td>Data · Models · Actors · Infrastructure</td>
+        <td>2020</td>
+      </tr>
+      <tr>
+        <td><span class="source-id">OWASP-TM</span></td>
+        <td>OWASP Foundation — <em>Threat Modeling Process</em>. Definisce asset come "anything you want to protect" e guida l'identificazione tramite DFD e STRIDE.</td>
+        <td>Infrastructure · Actors · Processes · Artefacts</td>
+        <td>current</td>
+      </tr>
+      <tr>
+        <td><span class="source-id">MS-SDL</span></td>
+        <td>Microsoft — <em>Threat Modeling AI/ML Systems and Dependencies</em>. Estende il Security Development Lifecycle a sistemi AI con failure modes intentionali e non intentionali.</td>
+        <td>Models · Data · Tools · Artefacts</td>
+        <td>2019</td>
+      </tr>
+      <tr>
+        <td><span class="source-id">ENISA-ETT</span></td>
+        <td>ENISA — <em>Reference Incident Classification Taxonomy</em>. Tassonomia di riferimento per la classificazione degli incidenti, usata per allineare la categoria Infrastructure alle definizioni europee.</td>
+        <td>Infrastructure · Actors · Tools</td>
+        <td>2018</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- LEGENDA COLORI -->
+<div class="section-title">Legenda categorie</div>
+<div class="legend" style="margin-bottom:32px;">
+  <div class="legend-item"><div class="legend-dot" style="background:var(--data-bg);border-color:var(--data-border)"></div>Data</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--model-bg);border-color:var(--model-border)"></div>Models</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--infra-bg);border-color:var(--infra-border)"></div>Infrastructure</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--actor-bg);border-color:var(--actor-border)"></div>Actors</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--proc-bg);border-color:var(--proc-border)"></div>Processes</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--tools-bg);border-color:var(--tools-border)"></div>Tools</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--artf-bg);border-color:var(--artf-border)"></div>Artefacts</div>
+  <div class="legend-item" style="margin-left:12px;font-size:10px;color:var(--text3);">
+    ★ = aggiunto rispetto a STRIDE-AI (categoria Infrastructure)
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     CAT 01 — DATA
+═══════════════════════════════════════════════════════════════ -->
+<div class="section-title">Categorie e sottocategorie</div>
+
+<div class="cat-block">
+  <div class="cat-header" style="background:var(--data-bg);">
+    <div class="cat-badge" style="background:#C0DD97;color:var(--data-text);border:0.5px solid var(--data-border);">01</div>
+    <div class="cat-header-text">
+      <h2 style="color:var(--data-text);">Data</h2>
+      <p>Tutti i dati generati, trasformati o consumati lungo il ciclo di vita del sistema. Include dati di training ML, dati operativi, log e configurazioni. Categoria ad altissimo rischio: la compromissione dei dati può propagarsi a cascata su modelli e inferenze.</p>
+      <div class="cat-meta">
+        <span style="font-size:10px;font-weight:500;color:var(--data-text);">Fonti:</span>
+        <code>STRIDE-AI</code><code>ENISA-AI</code><code>MS-SDL</code>
+        <span class="source-ref">· STRIDE rilevante:</span>
+        <span class="stride-tag" style="background:#FAECE7;color:#712B13;border-color:#F0997B;">Tampering</span>
+        <span class="stride-tag" style="background:#E6F1FB;color:#0C447C;border-color:#85B7EB;">Information Disclosure</span>
+        <span class="stride-tag" style="background:#EEEDFE;color:#3C3489;border-color:#AFA9EC;">Spoofing</span>
+      </div>
+    </div>
+  </div>
+  <div class="sub-head-row">
+    <span>#</span><span>Sottocategoria</span><span>Descrizione e rischi</span><span>Fonte</span>
+  </div>
+  <div class="sub-row"><div class="sub-id">01</div><div class="sub-name">Raw Data</div><div class="sub-desc">Dati grezzi raccolti da fonti esterne prima di qualsiasi trasformazione. Vulnerabili a selection bias intenzionale e perturbation attacks. Un attaccante può rilasciare dati volutamente distorti per compromettere la qualità del modello.</div><div class="sub-src">STRIDE-AI<br>§3, §4 Tab.1</div></div>
+  <div class="sub-row"><div class="sub-id">02</div><div class="sub-name">Labeled Data</div><div class="sub-desc">Dataset etichettati per training supervisionato. Soggetti ad append attack (aggiunta casuale), backdoor attack e label flipping. Anche una piccola percentuale di label errate può compromettere il classificatore.</div><div class="sub-src">STRIDE-AI<br>§4 Tab.1</div></div>
+  <div class="sub-row"><div class="sub-id">03</div><div class="sub-name">Validation Data</div><div class="sub-desc">Dataset per valutare il modello durante il training. Anche una singola modifica può far interrompere prematuramente il training (early stopping malevolo) causando un modello sottoprestante.</div><div class="sub-src">STRIDE-AI<br>§4 Tab.1</div></div>
+  <div class="sub-row"><div class="sub-id">04</div><div class="sub-name">Augmented Data</div><div class="sub-desc">Dati generati artificialmente per aumentare la diversità del training set. Vulnerabili ad adversarial augmentation: item malevoli inseriti durante la fase di augmentation sono difficili da rilevare.</div><div class="sub-src">STRIDE-AI<br>§4 Tab.1</div></div>
+  <div class="sub-row"><div class="sub-id">05</div><div class="sub-name">Pre-processed Data</div><div class="sub-desc">Dati puliti e trasformati pronti per il training. Errori di pre-processing (es. data leakage tra train e test set) si propagano irreversibilmente a tutti gli step successivi del pipeline.</div><div class="sub-src">STRIDE-AI<br>§4 Tab.1</div></div>
+  <div class="sub-row"><div class="sub-id">06</div><div class="sub-name">Test Cases</div><div class="sub-desc">Held-out test cases usati in produzione per monitorare la performance. Soggetti a slicing attacks che manipolano il dataset per far sembrare il modello più accurato di quanto sia realmente.</div><div class="sub-src">STRIDE-AI<br>§4 Tab.1</div></div>
+  <div class="sub-row"><div class="sub-id">07</div><div class="sub-name">Inferences</div><div class="sub-desc">Output generati dal modello su dati reali in produzione. Soggetti a eavesdropping in sistemi distribuiti. Inferenze con alta entropia (poco informative) indicano possibile evasion attack in corso.</div><div class="sub-src">STRIDE-AI<br>§4 Tab.1</div></div>
+  <div class="sub-row"><div class="sub-id">08</div><div class="sub-name">Configuration Data</div><div class="sub-desc">File di configurazione del sistema: variabili d'ambiente, secrets, parametri di connessione, chiavi API. Rischio di credential exposure e secret leakage nei log o nei repository.</div><div class="sub-src">OWASP-TM<br>ENISA-ETT</div></div>
+  <div class="sub-row"><div class="sub-id">09</div><div class="sub-name">Logs & Audit Trails</div><div class="sub-desc">Log applicativi, di accesso e audit trail di sistema. Essenziali per la non-repudiation. La loro assenza o manomissione viola il GDPR Art. 30 e rende impossibile la forensics post-incidente.</div><div class="sub-src">OWASP-TM</div></div>
+</div>
+
+<!-- CAT 02 — MODELS -->
+<div class="cat-block">
+  <div class="cat-header" style="background:var(--model-bg);">
+    <div class="cat-badge" style="background:#CECBF6;color:var(--model-text);border:0.5px solid var(--model-border);">02</div>
+    <div class="cat-header-text">
+      <h2 style="color:var(--model-text);">Models</h2>
+      <p>Componenti ML: algoritmi, parametri, modelli in training e in produzione. Specifici dell'ecosistema AI — non presenti in sistemi IT classici. Soggetti ad attacchi di model extraction, model inversion e model poisoning.</p>
+      <div class="cat-meta">
+        <span style="font-size:10px;font-weight:500;color:var(--model-text);">Fonti:</span>
+        <code>STRIDE-AI</code><code>MS-SDL</code><code>ENISA-AI</code>
+        <span class="source-ref">· STRIDE rilevante:</span>
+        <span class="stride-tag" style="background:#FAECE7;color:#712B13;border-color:#F0997B;">Tampering</span>
+        <span class="stride-tag" style="background:#E6F1FB;color:#0C447C;border-color:#85B7EB;">Information Disclosure</span>
+        <span class="stride-tag" style="background:#FAEEDA;color:#633806;border-color:#EF9F27;">Elevation of Privilege</span>
+      </div>
+    </div>
+  </div>
+  <div class="sub-head-row">
+    <span>#</span><span>Sottocategoria</span><span>Descrizione e rischi</span><span>Fonte</span>
+  </div>
+  <div class="sub-row"><div class="sub-id">01</div><div class="sub-name">Trained Model</div><div class="sub-desc">Modello i cui parametri sono stati ottimizzati su dati di training. Soggetto a model poisoning attacks: un file di modello legittimo può essere sostituito con uno avvelenato, più probabile in ambienti cloud.</div><div class="sub-src">STRIDE-AI<br>§4 Tab.2</div></div>
+  <div class="sub-row"><div class="sub-id">02</div><div class="sub-name">Deployed Model</div><div class="sub-desc">Modello in produzione che riceve input reali. Bersaglio di evasion attacks (input avversariali), model inversion (ricostruzione dei dati di training), membership inference e model reuse attacks.</div><div class="sub-src">STRIDE-AI<br>§4 Tab.2</div></div>
+  <div class="sub-row"><div class="sub-id">03</div><div class="sub-name">Model Parameters</div><div class="sub-desc">Pesi interni del modello (es. pesi in una rete neurale). Vulnerabili a model extraction via query ripetute: un attaccante costruisce un modello shadow quasi equivalente all'originale.</div><div class="sub-src">STRIDE-AI<br>§4 Tab.2</div></div>
+  <div class="sub-row"><div class="sub-id">04</div><div class="sub-name">Hyper-parameters</div><div class="sub-desc">Parametri che controllano il training (learning rate, batch size, ecc.). Soggetti a hyper-parameter stealing attacks che sfruttano le capacità predittive dell'optimizer per estrarre configurazioni proprietarie.</div><div class="sub-src">STRIDE-AI<br>§4 Tab.2</div></div>
+  <div class="sub-row"><div class="sub-id">05</div><div class="sub-name">Learning Algorithm</div><div class="sub-desc">Algoritmo di ottimizzazione per il training. Un algoritmo online è più esposto ad attacchi di drift continuo. Scelta errata può causare algorithmic leakage di informazioni sensibili del training set.</div><div class="sub-src">STRIDE-AI<br>§4 Tab.2</div></div>
+  <div class="sub-row"><div class="sub-id">06</div><div class="sub-name">Pre-processing Algorithm</div><div class="sub-desc">Algoritmi di trasformazione dati (scaling, encoding, image processing). Vulnerabili ad image-scaling attacks che manipolano l'input in modo che appaia diverso prima e dopo il ridimensionamento.</div><div class="sub-src">STRIDE-AI<br>§4 Tab.2</div></div>
+</div>
+
+<!-- CAT 03 — INFRASTRUCTURE -->
+<div class="cat-block">
+  <div class="cat-header" style="background:var(--infra-bg);">
+    <div class="cat-badge" style="background:#B5D4F4;color:var(--infra-text);border:0.5px solid var(--infra-border);">03 ★</div>
+    <div class="cat-header-text">
+      <h2 style="color:var(--infra-text);">Infrastructure <span style="font-size:11px;font-weight:400;color:#185FA5;">— aggiunta rispetto a STRIDE-AI</span></h2>
+      <p>Componenti fisici e logici dell'infrastruttura IT: server, database, reti, API, cloud. Categoria non presente nel paper STRIDE-AI (che si concentra su asset ML), aggiunta per coprire sistemi IT classici. Allineata a OWASP Threat Modeling Process e ENISA ETT.</p>
+      <div class="cat-meta">
+        <span style="font-size:10px;font-weight:500;color:var(--infra-text);">Fonti:</span>
+        <code>OWASP-TM</code><code>ENISA-ETT</code><code>ENISA-AI</code>
+        <span class="source-ref">· STRIDE rilevante:</span>
+        <span class="stride-tag" style="background:#EEEDFE;color:#3C3489;border-color:#AFA9EC;">Spoofing</span>
+        <span class="stride-tag" style="background:#E1F5EE;color:#085041;border-color:#5DCAA5;">Denial of Service</span>
+        <span class="stride-tag" style="background:#FAEEDA;color:#633806;border-color:#EF9F27;">Elevation of Privilege</span>
+        <span class="stride-tag" style="background:#FAECE7;color:#712B13;border-color:#F0997B;">Tampering</span>
+      </div>
+    </div>
+  </div>
+  <div class="sub-head-row">
+    <span>#</span><span>Sottocategoria</span><span>Descrizione e rischi</span><span>Fonte</span>
+  </div>
+  <div class="sub-row"><div class="sub-id">01</div><div class="sub-name">Server / Host</div><div class="sub-desc">Macchine fisiche o virtuali che ospitano servizi applicativi. Entry point per privilege escalation e lateral movement. La mancanza di patch management espone a vulnerabilità note.</div><div class="sub-src">OWASP-TM<br>ENISA-ETT</div></div>
+  <div class="sub-row"><div class="sub-id">02</div><div class="sub-name">Database</div><div class="sub-desc">Sistemi RDBMS, NoSQL, graph database. Bersaglio primario per SQL injection, credential stuffing, data exfiltration. Contiene spesso PII soggette a GDPR.</div><div class="sub-src">OWASP-TM</div></div>
+  <div class="sub-row"><div class="sub-id">03</div><div class="sub-name">Network Component</div><div class="sub-desc">Router, firewall, load balancer, switch, VPN gateway. Bersaglio di MitM, packet sniffing, DoS volumetrico. La misconfiguration è la causa più comune di incident.</div><div class="sub-src">ENISA-ETT</div></div>
+  <div class="sub-row"><div class="sub-id">04</div><div class="sub-name">API / Endpoint</div><div class="sub-desc">Interfacce REST, GraphQL, gRPC esposte internamente o esternamente. Vulnerabili a injection, broken object-level authorization, rate limit bypass (OWASP API Security Top 10).</div><div class="sub-src">OWASP-TM</div></div>
+  <div class="sub-row"><div class="sub-id">05</div><div class="sub-name">Storage System</div><div class="sub-desc">Filesystem, object storage (S3, Azure Blob), NAS, SAN. Rischio di unauthorized access, data leakage da bucket pubblici, ransomware su storage condivisi.</div><div class="sub-src">OWASP-TM<br>ENISA-ETT</div></div>
+  <div class="sub-row"><div class="sub-id">06</div><div class="sub-name">Container / VM</div><div class="sub-desc">Container Docker/Kubernetes, macchine virtuali. Rischio di container escape, misconfiguration Kubernetes (RBAC eccessivo), image con vulnerability note nel registry.</div><div class="sub-src">ENISA-ETT</div></div>
+  <div class="sub-row"><div class="sub-id">07</div><div class="sub-name">Cloud Service</div><div class="sub-desc">Servizi esterni cloud (AWS, Azure, GCP) usati come dipendenze. Rischio di IAM misconfiguration, shared responsibility gap, cross-account privilege escalation.</div><div class="sub-src">ENISA-AI<br>OWASP-TM</div></div>
+  <div class="sub-row"><div class="sub-id">08</div><div class="sub-name">IoT / Sensor Device</div><div class="sub-desc">Dispositivi fisici connessi: sensori, attuatori, data logger (vedi use case LIGHT-TOREADOR in STRIDE-AI §6). Spesso privi di patch management e con credenziali di default.</div><div class="sub-src">STRIDE-AI §6<br>ENISA-AI</div></div>
+</div>
+
+<!-- CAT 04 — ACTORS -->
+<div class="cat-block page-break">
+  <div class="cat-header" style="background:var(--actor-bg);">
+    <div class="cat-badge" style="background:#FAC775;color:var(--actor-text);border:0.5px solid var(--actor-border);">04</div>
+    <div class="cat-header-text">
+      <h2 style="color:var(--actor-text);">Actors</h2>
+      <p>Entità umane, sistemi o agenti che interagiscono con il sistema, incluse sia figure legittime che avversariali. La modellazione degli attori è fondamentale per definire i trust level nel DFD e per applicare il principio di least privilege.</p>
+      <div class="cat-meta">
+        <span style="font-size:10px;font-weight:500;color:var(--actor-text);">Fonti:</span>
+        <code>STRIDE-AI</code><code>OWASP-TM</code><code>ENISA-ETT</code>
+        <span class="source-ref">· STRIDE rilevante:</span>
+        <span class="stride-tag" style="background:#EEEDFE;color:#3C3489;border-color:#AFA9EC;">Spoofing</span>
+        <span class="stride-tag" style="background:#F1EFE8;color:#444441;border-color:#B4B2A9;">Repudiation</span>
+        <span class="stride-tag" style="background:#FAEEDA;color:#633806;border-color:#EF9F27;">Elevation of Privilege</span>
+      </div>
+    </div>
+  </div>
+  <div class="sub-head-row">
+    <span>#</span><span>Sottocategoria</span><span>Descrizione e rischi</span><span>Fonte</span>
+  </div>
+  <div class="sub-row"><div class="sub-id">01</div><div class="sub-name">User (Human)</div><div class="sub-desc">Utente finale del sistema. Può essere vittima di social engineering, phishing e credential theft. Può essere anche vettore inconsapevole di attacchi (insider threat involontario).</div><div class="sub-src">OWASP-TM</div></div>
+  <div class="sub-row"><div class="sub-id">02</div><div class="sub-name">Administrator</div><div class="sub-desc">Operatore con privilegi elevati su sistemi e dati. La compromissione delle sue credenziali equivale a Elevation of Privilege immediata. Target privilegiato di spear phishing e credential stuffing.</div><div class="sub-src">OWASP-TM<br>STRIDE-AI</div></div>
+  <div class="sub-row"><div class="sub-id">03</div><div class="sub-name">Developer</div><div class="sub-desc">Sviluppatore con accesso al codice sorgente e alle pipeline CI/CD. Rischio di supply chain attack (codice malevolo in commit) e di accesso non autorizzato a segreti in repository.</div><div class="sub-src">MS-SDL</div></div>
+  <div class="sub-row"><div class="sub-id">04</div><div class="sub-name">AI Agent</div><div class="sub-desc">Agente autonomo basato su LLM o ML che prende decisioni e agisce sull'ambiente. Rischio di prompt injection, goal hijack (OWASP Top 10 Agentic Applications 2026, ASI01), tool poisoning (MCP threat taxonomy 2025).</div><div class="sub-src">ENISA-AI<br>OWASP 2026</div></div>
+  <div class="sub-row"><div class="sub-id">05</div><div class="sub-name">External System</div><div class="sub-desc">Sistema esterno che interagisce con il sistema via API o protocollo di rete. Deve avere un trust level separato nel DFD. Vedi use case LIGHT-TOREADOR: il sistema Receiver è un external actor.</div><div class="sub-src">OWASP-TM<br>STRIDE-AI §6</div></div>
+  <div class="sub-row"><div class="sub-id">06</div><div class="sub-name">Third-party Service</div><div class="sub-desc">Servizio SaaS esterno (es. Stripe, Twilio, OAuth provider). Fuori dal perimetro di controllo diretto — rischio supply chain e shared responsibility gap. Deve avere trust level esplicito nel DFD.</div><div class="sub-src">OWASP-TM<br>MS-SDL</div></div>
+  <div class="sub-row"><div class="sub-id">07</div><div class="sub-name">Attacker (modelled)</div><div class="sub-desc">Attore avversariale modellato esplicitamente per l'analisi (threat agent). Definire le sue capacità (insider/outsider, risorse, motivazione) guida la prioritizzazione delle minacce STRIDE.</div><div class="sub-src">STRIDE-AI §5<br>OWASP-TM</div></div>
+</div>
+
+<!-- CAT 05 — PROCESSES -->
+<div class="cat-block">
+  <div class="cat-header" style="background:var(--proc-bg);">
+    <div class="cat-badge" style="background:#9FE1CB;color:var(--proc-text);border:0.5px solid var(--proc-border);">05</div>
+    <div class="cat-header-text">
+      <h2 style="color:var(--proc-text);">Processes</h2>
+      <p>Processi e flussi operativi del sistema. Ogni processo nel DFD è un nodo target per l'analisi STRIDE. I processi ML coprono l'intero ciclo di vita del modello (STRIDE-AI Fig. 1); i processi IT classici coprono flussi aziendali e di autenticazione.</p>
+      <div class="cat-meta">
+        <span style="font-size:10px;font-weight:500;color:var(--proc-text);">Fonti:</span>
+        <code>STRIDE-AI</code><code>OWASP-TM</code>
+        <span class="source-ref">· STRIDE rilevante:</span>
+        <span class="stride-tag" style="background:#FAECE7;color:#712B13;border-color:#F0997B;">Tampering</span>
+        <span class="stride-tag" style="background:#F1EFE8;color:#444441;border-color:#B4B2A9;">Repudiation</span>
+        <span class="stride-tag" style="background:#E1F5EE;color:#085041;border-color:#5DCAA5;">Denial of Service</span>
+        <span class="stride-tag" style="background:#FAEEDA;color:#633806;border-color:#EF9F27;">Elevation of Privilege</span>
+      </div>
+    </div>
+  </div>
+  <div class="sub-head-row">
+    <span>#</span><span>Sottocategoria</span><span>Descrizione e rischi</span><span>Fonte</span>
+  </div>
+  <div class="sub-row"><div class="sub-id">01</div><div class="sub-name">Data Collection</div><div class="sub-desc">Processo di raccolta e ingestion dei dati da fonti multiple (sensori, API, database). Vulnerabile a data poisoning alla fonte: dati corrotti all'origine inficiano tutto il pipeline.</div><div class="sub-src">STRIDE-AI §3</div></div>
+  <div class="sub-row"><div class="sub-id">02</div><div class="sub-name">Data Pre-processing</div><div class="sub-desc">Pulizia, normalizzazione e trasformazione dei dati grezzi. Un errore in questa fase (es. data leakage train/test) si propaga irreversibilmente a tutti gli step successivi del pipeline ML.</div><div class="sub-src">STRIDE-AI §3</div></div>
+  <div class="sub-row"><div class="sub-id">03</div><div class="sub-name">Model Training</div><div class="sub-desc">Processo di ottimizzazione dei parametri del modello su dati di training. Bersaglio di data poisoning e training-time backdoor attacks. Il processo di training stesso può essere rallentato con energy-latency attacks.</div><div class="sub-src">STRIDE-AI §3</div></div>
+  <div class="sub-row"><div class="sub-id">04</div><div class="sub-name">Model Tuning</div><div class="sub-desc">Fine-tuning degli hyper-parameter tramite validation set. Vulnerabile a manipolazione degli hyper-parameter usati come "fitting knob" per far over-fittare il modello su dati specifici.</div><div class="sub-src">STRIDE-AI §3</div></div>
+  <div class="sub-row"><div class="sub-id">05</div><div class="sub-name">Model Deployment</div><div class="sub-desc">Transizione del modello da sviluppo a produzione. Rischio di model substitution (il file del modello viene sostituito prima del deploy) e di misconfiguration dei parametri di serving.</div><div class="sub-src">STRIDE-AI §3</div></div>
+  <div class="sub-row"><div class="sub-id">06</div><div class="sub-name">Monitoring</div><div class="sub-desc">Monitoraggio continuo delle performance in produzione e retraining. L'assenza di monitoring (o il suo sabotaggio) rende invisibili gli attacchi silenti di model drift e data poisoning in produzione.</div><div class="sub-src">STRIDE-AI §3</div></div>
+  <div class="sub-row"><div class="sub-id">07</div><div class="sub-name">Business Process</div><div class="sub-desc">Processo aziendale IT classico (ordine, pagamento, approvazione workflow). Nodo DFD standard per sistemi non-ML. Vulnerabile a business logic bypass e abuse cases.</div><div class="sub-src">OWASP-TM</div></div>
+  <div class="sub-row"><div class="sub-id">08</div><div class="sub-name">Authentication Flow</div><div class="sub-desc">Processo di autenticazione, autorizzazione e gestione delle sessioni. Bersaglio primario di spoofing (credential theft), brute force, session fixation e token theft. Entry point critico nel DFD.</div><div class="sub-src">OWASP-TM</div></div>
+</div>
+
+<!-- CAT 06 — TOOLS -->
+<div class="cat-block">
+  <div class="cat-header" style="background:var(--tools-bg);">
+    <div class="cat-badge" style="background:#F5C4B3;color:var(--tools-text);border:0.5px solid var(--tools-border);">06</div>
+    <div class="cat-header-text">
+      <h2 style="color:var(--tools-text);">Tools</h2>
+      <p>Strumenti software usati durante il ciclo di sviluppo e operativo del sistema. Spesso trascurati nell'analisi delle minacce, sono critici per la supply chain security: un tool compromesso può infettare tutto il pipeline.</p>
+      <div class="cat-meta">
+        <span style="font-size:10px;font-weight:500;color:var(--tools-text);">Fonti:</span>
+        <code>STRIDE-AI</code><code>MS-SDL</code>
+        <span class="source-ref">· STRIDE rilevante:</span>
+        <span class="stride-tag" style="background:#FAECE7;color:#712B13;border-color:#F0997B;">Tampering</span>
+        <span class="stride-tag" style="background:#E6F1FB;color:#0C447C;border-color:#85B7EB;">Information Disclosure</span>
+      </div>
+    </div>
+  </div>
+  <div class="sub-head-row">
+    <span>#</span><span>Sottocategoria</span><span>Descrizione e rischi</span><span>Fonte</span>
+  </div>
+  <div class="sub-row"><div class="sub-id">01</div><div class="sub-name">ML Framework</div><div class="sub-desc">Framework di machine learning (TensorFlow, PyTorch, scikit-learn). Vulnerabile a dependency confusion, malicious pre-trained weights distribuiti via hub pubblici (es. HuggingFace).</div><div class="sub-src">STRIDE-AI §3<br>MS-SDL</div></div>
+  <div class="sub-row"><div class="sub-id">02</div><div class="sub-name">Data Exploration Tool</div><div class="sub-desc">Strumenti di analisi dati (Jupyter, pandas, Apache Spark). Rischio di code injection tramite notebook condivisi contenenti celle malevole eseguite automaticamente.</div><div class="sub-src">STRIDE-AI §3</div></div>
+  <div class="sub-row"><div class="sub-id">03</div><div class="sub-name">Visualization Tool</div><div class="sub-desc">Strumenti di visualizzazione (Grafana, Kibana, Tableau). Rischio di dashboard tampering: grafici manipolati possono nascondere anomalie o simulare performance normali durante un attacco.</div><div class="sub-src">STRIDE-AI §3</div></div>
+  <div class="sub-row"><div class="sub-id">04</div><div class="sub-name">CI/CD Pipeline</div><div class="sub-desc">Pipeline di integrazione e deployment continuo (GitHub Actions, Jenkins, ArgoCD). Supply chain attack vector critico: un workflow malevolo può estrarre secrets, distribuire malware o alterare artifact di build.</div><div class="sub-src">MS-SDL<br>ENISA-ETT</div></div>
+  <div class="sub-row"><div class="sub-id">05</div><div class="sub-name">Security Tool</div><div class="sub-desc">SIEM, vulnerability scanner, IDS/IPS, WAF. La loro compromissione è particolarmente grave: può rendere completamente invisibili gli attacchi in corso al team di sicurezza.</div><div class="sub-src">ENISA-ETT</div></div>
+  <div class="sub-row"><div class="sub-id">06</div><div class="sub-name">Development Library</div><div class="sub-desc">Librerie e dipendenze software (npm, pip, Maven packages). Vettore principale di supply chain attacks: typosquatting, dependency confusion, malicious maintainer takeover.</div><div class="sub-src">MS-SDL</div></div>
+</div>
+
+<!-- CAT 07 — ARTEFACTS -->
+<div class="cat-block">
+  <div class="cat-header" style="background:var(--artf-bg);">
+    <div class="cat-badge" style="background:#D3D1C7;color:var(--artf-text);border:0.5px solid var(--artf-border);">07</div>
+    <div class="cat-header-text">
+      <h2 style="color:var(--artf-text);">Artefacts</h2>
+      <p>Documenti, schemi e artefatti tecnici prodotti e consumati dal sistema. Includono sia artefatti tecnici ML (architettura del modello, schema dei metadati) che documentazione di progetto. La loro compromissione può facilitare attacchi MitM e model inversion.</p>
+      <div class="cat-meta">
+        <span style="font-size:10px;font-weight:500;color:var(--artf-text);">Fonti:</span>
+        <code>STRIDE-AI</code><code>OWASP-TM</code>
+        <span class="source-ref">· STRIDE rilevante:</span>
+        <span class="stride-tag" style="background:#E6F1FB;color:#0C447C;border-color:#85B7EB;">Information Disclosure</span>
+        <span class="stride-tag" style="background:#EEEDFE;color:#3C3489;border-color:#AFA9EC;">Spoofing</span>
+        <span class="stride-tag" style="background:#FAECE7;color:#712B13;border-color:#F0997B;">Tampering</span>
+      </div>
+    </div>
+  </div>
+  <div class="sub-head-row">
+    <span>#</span><span>Sottocategoria</span><span>Descrizione e rischi</span><span>Fonte</span>
+  </div>
+  <div class="sub-row"><div class="sub-id">01</div><div class="sub-name">Model Architecture</div><div class="sub-desc">Specifica dell'architettura del pipeline ML (layer, connessioni, interfacce tra stage). La sua divulgazione facilita adversarial attacks altamente mirati e attacchi MitM alle interfacce tra componenti.</div><div class="sub-src">STRIDE-AI<br>§4 Tab.3</div></div>
+  <div class="sub-row"><div class="sub-id">02</div><div class="sub-name">Hardware Design</div><div class="sub-desc">Design hardware del modello ML (FPGA, neuromorphic chip). Vulnerabile a side-channel attacks fisici: osservazione dell'esecuzione hardware per estrarre i parametri del modello implementato.</div><div class="sub-src">STRIDE-AI<br>§4 Tab.3</div></div>
+  <div class="sub-row"><div class="sub-id">03</div><div class="sub-name">Metadata Schema</div><div class="sub-desc">Schema dei metadati dei dati ML (tipi, range, distribuzione). La sua esposizione può facilitare model inversion attacks: un attaccante conosce la struttura dell'input e può ricostruire dati di training.</div><div class="sub-src">STRIDE-AI<br>§4 Tab.3</div></div>
+  <div class="sub-row"><div class="sub-id">04</div><div class="sub-name">Learned Index</div><div class="sub-desc">Struttura dati che usa un modello ML per mappare chiavi a posizioni. Soggetto a index poisoning attacks che degradano le prestazioni alterando la distribuzione dei dati su cui il modello è stato addestrato.</div><div class="sub-src">STRIDE-AI<br>§4 Tab.3</div></div>
+  <div class="sub-row"><div class="sub-id">05</div><div class="sub-name">Use Case Document</div><div class="sub-desc">Documentazione dei casi d'uso del sistema. La sua compromissione può alterare i requisiti di sicurezza a monte del design. Rischio di requirements manipulation che introduce vulnerabilità by design.</div><div class="sub-src">OWASP-TM</div></div>
+  <div class="sub-row"><div class="sub-id">06</div><div class="sub-name">API Contract</div><div class="sub-desc">Specifica OpenAPI/Swagger, WSDL o contratto di interfaccia. La sua esposizione non autorizzata facilita la ricognizione: un attaccante conosce tutti gli endpoint, parametri e formati di risposta.</div><div class="sub-src">OWASP-TM</div></div>
+  <div class="sub-row"><div class="sub-id">07</div><div class="sub-name">Threat Model Document</div><div class="sub-desc">Il documento di threat modeling stesso (questo file). La sua compromissione o perdita è particolarmente critica: rivela le vulnerabilità note, i rischi accettati e le contromisure non implementate del sistema.</div><div class="sub-src">OWASP-TM</div></div>
+</div>
+
+<!-- SUMMARY TABLE -->
+<div style="margin-top:8px;" class="page-break">
+  <div class="section-title">Riepilogo — 7 categorie · 50 sottocategorie</div>
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th><th>Categoria</th><th>N. sottoc.</th><th>Fonti principali</th><th>STRIDE primarie</th><th>AI-specifico</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td><code>CAT-01</code></td><td><strong>Data</strong></td><td>9</td><td>STRIDE-AI · ENISA-AI · MS-SDL</td><td>Tampering · Disclosure · Spoofing</td><td>✓ Parzialmente</td></tr>
+      <tr><td><code>CAT-02</code></td><td><strong>Models</strong></td><td>6</td><td>STRIDE-AI · MS-SDL · ENISA-AI</td><td>Tampering · Disclosure · EoP</td><td>✓ Completamente</td></tr>
+      <tr><td><code>CAT-03</code></td><td><strong>Infrastructure ★</strong></td><td>8</td><td>OWASP-TM · ENISA-ETT · ENISA-AI</td><td>Spoofing · DoS · EoP · Tampering</td><td>✗ IT classico</td></tr>
+      <tr><td><code>CAT-04</code></td><td><strong>Actors</strong></td><td>7</td><td>STRIDE-AI · OWASP-TM · ENISA-ETT</td><td>Spoofing · Repudiation · EoP</td><td>✓ Parzialmente</td></tr>
+      <tr><td><code>CAT-05</code></td><td><strong>Processes</strong></td><td>8</td><td>STRIDE-AI · OWASP-TM</td><td>Tampering · Repudiation · DoS · EoP</td><td>✓ Parzialmente</td></tr>
+      <tr><td><code>CAT-06</code></td><td><strong>Tools</strong></td><td>6</td><td>STRIDE-AI · MS-SDL</td><td>Tampering · Disclosure</td><td>✓ Parzialmente</td></tr>
+      <tr><td><code>CAT-07</code></td><td><strong>Artefacts</strong></td><td>7</td><td>STRIDE-AI · OWASP-TM</td><td>Disclosure · Spoofing · Tampering</td><td>✓ Parzialmente</td></tr>
+    </tbody>
+  </table>
+  <p style="margin-top:10px;font-size:11px;color:var(--text3);">★ = categoria aggiunta rispetto alle 6 originali di STRIDE-AI (Mauri &amp; Damiani 2022) per coprire sistemi IT classici non AI.</p>
+</div>
+
+<!-- FOOTER -->
+<div class="doc-footer">
+  <span>ThreatModeler Asset Taxonomy v1.0 — CC BY 4.0</span>
+  <span>Fonti: STRIDE-AI (Sensors 2022) · OWASP · ENISA · Microsoft SDL</span>
+</div>
+
+</body>
+</html>

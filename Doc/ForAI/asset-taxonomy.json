@@ -1,0 +1,171 @@
+{
+  "meta": {
+    "name": "ThreatModeler Asset Taxonomy",
+    "version": "1.0",
+    "description": "Tassonomia degli asset per Threat Modeling, compatibile OWASP STRIDE. Integra le categorie del paper STRIDE-AI (Mauri & Damiani 2022), le linee guida ENISA AI Threat Landscape, il processo OWASP Threat Modeling e il Microsoft SDL. La categoria Infrastructure è aggiunta per coprire sistemi IT classici non AI.",
+    "sources": [
+      {
+        "id": "STRIDE-AI",
+        "ref": "Mauri L., Damiani E. — 'Modeling Threats to AI-ML Systems Using STRIDE', Sensors 2022, 22, 6662",
+        "url": "https://doi.org/10.3390/s22176662",
+        "contributes": ["Data", "Models", "Actors", "Processes", "Tools", "Artefacts"]
+      },
+      {
+        "id": "ENISA-AI",
+        "ref": "ENISA — 'AI Cybersecurity Challenges — Threat Landscape for Artificial Intelligence', 2020",
+        "url": "https://www.enisa.europa.eu/publications/artificial-intelligence-cybersecurity-challenges",
+        "contributes": ["Data", "Models", "Actors", "Infrastructure"]
+      },
+      {
+        "id": "OWASP-TM",
+        "ref": "OWASP Foundation — 'Threat Modeling Process'",
+        "url": "https://owasp.org/www-community/Threat_Modeling_Process",
+        "contributes": ["Infrastructure", "Actors", "Processes"]
+      },
+      {
+        "id": "MS-SDL",
+        "ref": "Microsoft — 'Threat Modeling AI/ML Systems and Dependencies', 2019",
+        "url": "https://docs.microsoft.com/en-us/security/engineering/threat-modeling-aiml",
+        "contributes": ["Models", "Data", "Artefacts"]
+      },
+      {
+        "id": "ENISA-ETT",
+        "ref": "ENISA — 'Reference Incident Classification Taxonomy'",
+        "url": "https://www.enisa.europa.eu/publications/reference-incident-classification-taxonomy",
+        "contributes": ["Infrastructure", "Actors"]
+      }
+    ],
+    "createdAt": "2025-05-23",
+    "license": "CC BY 4.0"
+  },
+  "categories": [
+    {
+      "id": "CAT-01",
+      "name": "Data",
+      "color": "#27500A",
+      "colorBg": "#EAF3DE",
+      "description": "Tutti i dati generati, trasformati o consumati lungo il ciclo di vita del sistema. Include dati di training ML, dati operativi, log e configurazioni. Categoria ad altissimo rischio: la compromissione dei dati può propagarsi a cascata su modelli e inferenze.",
+      "sources": ["STRIDE-AI", "ENISA-AI", "MS-SDL"],
+      "strideRelevance": ["Tampering", "Information Disclosure", "Spoofing"],
+      "subcategories": [
+        { "id": "CAT-01-01", "name": "Raw Data",            "description": "Dati grezzi raccolti da fonti esterne prima di qualsiasi trasformazione. Vulnerabili a selection bias e perturbation attacks.", "source": "STRIDE-AI §3" },
+        { "id": "CAT-01-02", "name": "Labeled Data",         "description": "Dataset etichettati per training supervisionato. Soggetti ad append attack, backdoor attack, label flipping.", "source": "STRIDE-AI §4 Table 1" },
+        { "id": "CAT-01-03", "name": "Validation Data",      "description": "Dataset usati per valutare il modello in training. Anche una singola modifica può interrompere il training precocemente.", "source": "STRIDE-AI §4 Table 1" },
+        { "id": "CAT-01-04", "name": "Augmented Data",       "description": "Dati generati artificialmente per aumentare la diversità del training set. Vulnerabili a adversarial augmentation.", "source": "STRIDE-AI §4 Table 1" },
+        { "id": "CAT-01-05", "name": "Pre-processed Data",   "description": "Dati puliti e trasformati pronti per il training. Un errore qui si propaga a tutti gli step successivi.", "source": "STRIDE-AI §4 Table 1" },
+        { "id": "CAT-01-06", "name": "Test Cases",           "description": "Held-out test cases usati in produzione per monitorare la performance. Vulnerabili a slicing attacks.", "source": "STRIDE-AI §4 Table 1" },
+        { "id": "CAT-01-07", "name": "Inferences",           "description": "Output generati dal modello su dati reali. Soggetti a eavesdropping in sistemi distribuiti.", "source": "STRIDE-AI §4 Table 1" },
+        { "id": "CAT-01-08", "name": "Configuration Data",   "description": "File di configurazione del sistema (env vars, secrets, parametri di connessione). Rischio di credential exposure.", "source": "OWASP-TM, ENISA-ETT" },
+        { "id": "CAT-01-09", "name": "Logs & Audit Trails",  "description": "Log applicativi, di accesso e audit trail. Essenziali per non-repudiation; la loro assenza viola GDPR Art. 30.", "source": "OWASP-TM" }
+      ]
+    },
+    {
+      "id": "CAT-02",
+      "name": "Models",
+      "color": "#3C3489",
+      "colorBg": "#EEEDFE",
+      "description": "Componenti ML: algoritmi, parametri, modelli in training e in produzione. Specifici dell'ecosistema AI, non presenti in sistemi IT classici. Soggetti ad attacchi di model extraction, inversion e poisoning.",
+      "sources": ["STRIDE-AI", "MS-SDL", "ENISA-AI"],
+      "strideRelevance": ["Tampering", "Information Disclosure", "Elevation of Privilege"],
+      "subcategories": [
+        { "id": "CAT-02-01", "name": "Trained Model",           "description": "Modello i cui parametri sono stati ottimizzati su dati di training. Soggetto a model poisoning attacks.", "source": "STRIDE-AI §4 Table 2" },
+        { "id": "CAT-02-02", "name": "Deployed Model",          "description": "Modello in produzione che riceve input reali. Bersaglio di evasion, inversion, membership inference attacks.", "source": "STRIDE-AI §4 Table 2" },
+        { "id": "CAT-02-03", "name": "Model Parameters",        "description": "Pesi interni del modello (es. pesi di una rete neurale). Vulnerabili a model extraction via query ripetute.", "source": "STRIDE-AI §4 Table 2" },
+        { "id": "CAT-02-04", "name": "Hyper-parameters",        "description": "Parametri che controllano il training (learning rate, batch size, ecc). Soggetti a hyper-parameter stealing attacks.", "source": "STRIDE-AI §4 Table 2" },
+        { "id": "CAT-02-05", "name": "Learning Algorithm",      "description": "Algoritmo di ottimizzazione usato per il training. Un algoritmo online è più esposto ad attacchi di drift.", "source": "STRIDE-AI §4 Table 2" },
+        { "id": "CAT-02-06", "name": "Pre-processing Algorithm","description": "Algoritmi di trasformazione dati prima del training. Un errore qui produce dati di training difettosi.", "source": "STRIDE-AI §4 Table 2" }
+      ]
+    },
+    {
+      "id": "CAT-03",
+      "name": "Infrastructure",
+      "color": "#0C447C",
+      "colorBg": "#E6F1FB",
+      "description": "Componenti fisici e logici dell'infrastruttura IT: server, database, reti, API. Categoria aggiunta rispetto al paper STRIDE-AI per coprire sistemi IT classici non AI. Allineata a OWASP e ENISA ETT.",
+      "sources": ["OWASP-TM", "ENISA-ETT", "ENISA-AI"],
+      "strideRelevance": ["Spoofing", "Denial of Service", "Elevation of Privilege", "Tampering"],
+      "subcategories": [
+        { "id": "CAT-03-01", "name": "Server / Host",         "description": "Macchine fisiche o virtuali che ospitano servizi. Entry point per privilege escalation e lateral movement.", "source": "OWASP-TM, ENISA-ETT" },
+        { "id": "CAT-03-02", "name": "Database",              "description": "Sistemi di gestione dati (SQL, NoSQL, graph). Bersaglio primario per SQL injection, data exfiltration.", "source": "OWASP-TM" },
+        { "id": "CAT-03-03", "name": "Network Component",     "description": "Router, firewall, load balancer, switch. Bersaglio di MitM, sniffing, DoS.", "source": "ENISA-ETT" },
+        { "id": "CAT-03-04", "name": "API / Endpoint",        "description": "Interfacce REST, GraphQL, gRPC esposte internamente o esternamente. Vulnerabili a injection, broken auth, rate limit bypass.", "source": "OWASP-TM" },
+        { "id": "CAT-03-05", "name": "Storage System",        "description": "Filesytem, object storage (S3), NAS. Rischio di unauthorized access, data leakage, ransomware.", "source": "OWASP-TM, ENISA-ETT" },
+        { "id": "CAT-03-06", "name": "Container / VM",        "description": "Container Docker/Kubernetes, macchine virtuali. Rischio di container escape, misconfiguration.", "source": "ENISA-ETT" },
+        { "id": "CAT-03-07", "name": "Cloud Service",         "description": "Servizi esterni cloud (AWS, Azure, GCP). Rischio di IAM misconfiguration, shared responsibility gap.", "source": "ENISA-AI, OWASP-TM" },
+        { "id": "CAT-03-08", "name": "IoT / Sensor Device",   "description": "Dispositivi fisici connessi: sensori, attuatori, data logger. Spesso privi di patch management. Vedi use case LIGHT-TOREADOR nel paper.", "source": "STRIDE-AI §6, ENISA-AI" }
+      ]
+    },
+    {
+      "id": "CAT-04",
+      "name": "Actors",
+      "color": "#633806",
+      "colorBg": "#FAEEDA",
+      "description": "Entità umane, sistemi o agenti che interagiscono con il sistema. Includono sia attori legittimi che potenziali minacce. La modellazione degli attori è fondamentale per definire i trust level nel DFD.",
+      "sources": ["STRIDE-AI", "OWASP-TM", "ENISA-ETT"],
+      "strideRelevance": ["Spoofing", "Repudiation", "Elevation of Privilege"],
+      "subcategories": [
+        { "id": "CAT-04-01", "name": "User (Human)",           "description": "Utente finale del sistema. Può essere vittima o vettore di attacco (social engineering, credential theft).", "source": "OWASP-TM" },
+        { "id": "CAT-04-02", "name": "Administrator",          "description": "Operatore con privilegi elevati. Alto rischio se le credenziali sono compromesse (EoP immediato).", "source": "OWASP-TM, STRIDE-AI" },
+        { "id": "CAT-04-03", "name": "Developer",              "description": "Sviluppatore con accesso al codice e alle pipeline CI/CD. Rischio di supply chain attack.", "source": "MS-SDL" },
+        { "id": "CAT-04-04", "name": "AI Agent",               "description": "Agente autonomo basato su LLM o ML che prende decisioni. Rischio di prompt injection, goal hijack (OWASP Top 10 Agentic 2026).", "source": "ENISA-AI, OWASP Top 10 Agentic 2026" },
+        { "id": "CAT-04-05", "name": "External System",        "description": "Sistema esterno che interagisce via API o protocollo. Deve essere trattato con trust level separato nel DFD.", "source": "OWASP-TM, STRIDE-AI §6" },
+        { "id": "CAT-04-06", "name": "Third-party Service",    "description": "Servizio esterno (es. Stripe, Twilio, OAuth provider). Fuori dal perimetro di controllo diretto — rischio supply chain.", "source": "OWASP-TM, MS-SDL" },
+        { "id": "CAT-04-07", "name": "Attacker (modelled)",    "description": "Attore avversariale modellato esplicitamente per l'analisi (threat agent). Utile per definire scenari STRIDE.", "source": "STRIDE-AI §5, OWASP-TM" }
+      ]
+    },
+    {
+      "id": "CAT-05",
+      "name": "Processes",
+      "color": "#085041",
+      "colorBg": "#E1F5EE",
+      "description": "Processi e flussi operativi del sistema, sia IT classici che ML-specifici. Ogni processo nel DFD è un nodo target per l'analisi STRIDE. I processi ML coprono l'intero ciclo di vita del modello come descritto in STRIDE-AI Fig. 1.",
+      "sources": ["STRIDE-AI", "OWASP-TM"],
+      "strideRelevance": ["Tampering", "Repudiation", "Denial of Service", "Elevation of Privilege"],
+      "subcategories": [
+        { "id": "CAT-05-01", "name": "Data Collection",        "description": "Processo di raccolta e ingestion dei dati da fonti multiple. Vulnerabile a data poisoning alla fonte.", "source": "STRIDE-AI §3" },
+        { "id": "CAT-05-02", "name": "Data Pre-processing",    "description": "Pulizia, normalizzazione, trasformazione dei dati grezzi. Un errore qui si propaga a tutti gli step successivi.", "source": "STRIDE-AI §3" },
+        { "id": "CAT-05-03", "name": "Model Training",         "description": "Processo di ottimizzazione dei parametri del modello. Bersaglio di data poisoning e training-time attacks.", "source": "STRIDE-AI §3" },
+        { "id": "CAT-05-04", "name": "Model Tuning",           "description": "Fine-tuning degli hyper-parameter. Vulnerabile a manipolazione degli hyper-parameter come fitting knob.", "source": "STRIDE-AI §3" },
+        { "id": "CAT-05-05", "name": "Model Deployment",       "description": "Transizione da sviluppo a produzione. Rischio di model substitution e misconfiguration.", "source": "STRIDE-AI §3" },
+        { "id": "CAT-05-06", "name": "Monitoring",             "description": "Monitoraggio continuo delle performance in produzione. L'assenza di monitoring facilita attacchi silenti.", "source": "STRIDE-AI §3" },
+        { "id": "CAT-05-07", "name": "Business Process",       "description": "Processo aziendale IT classico (ordine, pagamento, approvazione). Nodo DFD standard per sistemi non-ML.", "source": "OWASP-TM" },
+        { "id": "CAT-05-08", "name": "Authentication Flow",    "description": "Processo di autenticazione e gestione sessioni. Bersaglio di spoofing, brute force, token theft.", "source": "OWASP-TM" }
+      ]
+    },
+    {
+      "id": "CAT-06",
+      "name": "Tools",
+      "color": "#712B13",
+      "colorBg": "#FAECE7",
+      "description": "Strumenti software usati durante il ciclo di sviluppo e operativo del sistema ML o IT. Spesso trascurati nell'analisi delle minacce ma critici per supply chain security.",
+      "sources": ["STRIDE-AI", "MS-SDL"],
+      "strideRelevance": ["Tampering", "Information Disclosure"],
+      "subcategories": [
+        { "id": "CAT-06-01", "name": "ML Framework",              "description": "Framework di machine learning (TensorFlow, PyTorch, scikit-learn). Vulnerabile a dependency confusion, malicious weights.", "source": "STRIDE-AI §3, MS-SDL" },
+        { "id": "CAT-06-02", "name": "Data Exploration Tool",     "description": "Strumenti di analisi dati (Jupyter, pandas, Spark). Rischio di code injection via notebook.", "source": "STRIDE-AI §3" },
+        { "id": "CAT-06-03", "name": "Visualization Tool",        "description": "Strumenti di visualizzazione (Grafana, Kibana, Tableau). Rischio di dashboard tampering.", "source": "STRIDE-AI §3" },
+        { "id": "CAT-06-04", "name": "CI/CD Pipeline",            "description": "Pipeline di integrazione e deployment continuo (GitHub Actions, Jenkins). Supply chain attack vector critico.", "source": "MS-SDL, ENISA-ETT" },
+        { "id": "CAT-06-05", "name": "Security Tool",             "description": "SIEM, vulnerability scanner, IDS/IPS. La loro compromissione può rendere invisibili gli attacchi.", "source": "ENISA-ETT" },
+        { "id": "CAT-06-06", "name": "Development Library",       "description": "Librerie e dipendenze software (npm, pip packages). Vettore di supply chain attacks (typosquatting, dependency confusion).", "source": "MS-SDL" }
+      ]
+    },
+    {
+      "id": "CAT-07",
+      "name": "Artefacts",
+      "color": "#444441",
+      "colorBg": "#F1EFE8",
+      "description": "Documenti, schemi e artefatti tecnici prodotti e consumati dal sistema. Includono sia artefatti tecnici ML (architettura del modello, schema dei metadati) che documentazione di progetto. La loro compromissione può facilitare attacchi di tipo MitM e model inversion.",
+      "sources": ["STRIDE-AI", "OWASP-TM"],
+      "strideRelevance": ["Information Disclosure", "Spoofing", "Tampering"],
+      "subcategories": [
+        { "id": "CAT-07-01", "name": "Model Architecture",        "description": "Specifica dell'architettura del modello ML. La sua divulgazione facilita adversarial attacks mirati.", "source": "STRIDE-AI §4 Table 3" },
+        { "id": "CAT-07-02", "name": "Hardware Design",           "description": "Design hardware del modello ML (FPGA, neuromorphic). Vulnerabile a side-channel attacks fisici.", "source": "STRIDE-AI §4 Table 3" },
+        { "id": "CAT-07-03", "name": "Metadata Schema",           "description": "Schema dei metadati dei dati ML. Può facilitare model inversion attacks se esposto.", "source": "STRIDE-AI §4 Table 3" },
+        { "id": "CAT-07-04", "name": "Learned Index",             "description": "Indice ML che mappa chiavi a posizioni dati. Soggetto a index poisoning attacks.", "source": "STRIDE-AI §4 Table 3" },
+        { "id": "CAT-07-05", "name": "Use Case Document",         "description": "Documentazione dei casi d'uso del sistema. La sua compromissione può alterare i requisiti di sicurezza.", "source": "OWASP-TM" },
+        { "id": "CAT-07-06", "name": "API Contract",              "description": "Specifica OpenAPI/Swagger o contratto di interfaccia. L'esposizione facilita ricognizione per attacchi mirati.", "source": "OWASP-TM" },
+        { "id": "CAT-07-07", "name": "Threat Model Document",     "description": "Il documento di threat modeling stesso. La sua compromissione può rivelare le vulnerabilità note del sistema.", "source": "OWASP-TM" }
+      ]
+    }
+  ]
+}
