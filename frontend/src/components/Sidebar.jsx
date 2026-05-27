@@ -1,11 +1,12 @@
 import React from 'react';
 import { useAppStore } from '../store/useAppStore';
-import { Upload, Package, Share2 } from 'lucide-react';
+import { Upload, Package, Share2, Shield } from 'lucide-react';
 
 const phases = [
-    { id: 1, name: '1. Caricamento', icon: Upload, description: 'Carica documenti e analizza' },
-    { id: 2, name: '2. Asset', icon: Package, description: 'Gestisci asset manualmente' },
-    { id: 3, name: '3. DFD', icon: Share2, description: 'Visualizza diagramma' },
+    { id: 1, name: '1. Caricamento', icon: Upload, description: 'Carica documenti e analizza (DFD base)' },
+    { id: 2, name: '2. Asset Base', icon: Package, description: 'Gestisci asset (External Entity, Process, Data Store)' },
+    { id: 3, name: '3. DFD', icon: Share2, description: 'Crea Data Flow Diagram e flussi' },
+    { id: 4, name: '4. Asset Avanzati', icon: Shield, description: 'Arricchisci con tassonomia completa (STRIDE-AI)' },
 ];
 
 export default function Sidebar() {
@@ -15,7 +16,7 @@ export default function Sidebar() {
         <div className="w-64 bg-white border-r shadow-sm flex flex-col h-screen sticky top-0">
             <div className="p-4 border-b">
                 <h1 className="font-bold text-lg text-blue-700">🛡️ Threat Modeler</h1>
-                <p className="text-xs text-gray-500">Pipeline in 3 fasi</p>
+                <p className="text-xs text-gray-500">Pipeline in 4 fasi</p>
             </div>
             <nav className="flex-1 p-4 space-y-1">
                 {phases.map((phase) => (

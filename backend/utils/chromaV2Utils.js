@@ -1,30 +1,33 @@
 const axios = require('axios');
 
-async function chromaHeartbeat(baseUrl) {
-    const response = await axios.get(`${baseUrl}/api/v2/heartbeat`, { timeout: 5000 });
+const DEFAULT_TENANT = 'default_tenant';
+const DEFAULT_DATABASE = 'default_database';
+
+async function chromaRequest(baseUrl, method, path, data = null) {
+    const url = `${baseUrl}/api/v2/tenants/${DEFAULT_TENANT}/databases/${DEFAULT_DATABASE}/${path}`;
+    const response = await axios({ method, url, data, headers: { 'Content-Type': 'application/json' } });
     return response.data;
 }
 
 async function createCollection(baseUrl, name) {
-    const response = await axios.post(`${baseUrl}/api/v2/collections`, { name }, {
-        headers: { 'Content-Type': 'application/json' }
-    });
-    return response.data;
+    const result = await chromaRequest(baseUrl, 'post', 'collections', { name });
+    return { name: result.name, id: result.id };
 }
 
-async function addEmbeddings(baseUrl, collectionName, ids, embeddings, metadatas, documents) {
-    const response = await axios.post(`${baseUrl}/api/v2/collections/${collectionName}/add`, {
-        ids, embeddings, metadatas, documents
+async function addEmbeddings(baseUrl, collectionId, ids, embeddings, metadatas, documents) {
+    return chromaRequest(baseUrl, 'post', `collections/${collectionId}/add`, {
+        ids,
+        embeddings,
+        metadatas,
+        documents
     });
-    return response.data;
 }
 
-async function queryCollection(baseUrl, collectionName, queryEmbeddings, nResults = 3) {
-    const response = await axios.post(`${baseUrl}/api/v2/collections/${collectionName}/query`, {
+async function queryCollection(baseUrl, collectionId, queryEmbeddings, nResults = 3) {
+    return chromaRequest(baseUrl, 'post', `collections/${collectionId}/query`, {
         query_embeddings: queryEmbeddings,
         n_results: nResults
     });
-    return response.data;
 }
 
-module.exports = { chromaHeartbeat, createCollection, addEmbeddings, queryCollection };
+module.exports = { createCollection, addEmbeddings, queryCollection };

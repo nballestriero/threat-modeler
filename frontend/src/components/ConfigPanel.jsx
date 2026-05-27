@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { X, Save, Play, CheckCircle, AlertCircle, Loader2, RefreshCw, Database, Cpu } from 'lucide-react';
+import { X, Save, Play, CheckCircle, AlertCircle, Loader2, RefreshCw } from 'lucide-react';
 
 const API_BASE = 'http://localhost:3001/api';
-
 
 export default function ConfigPanel({ onClose }) {
     const [config, setConfig] = useState({
@@ -15,7 +14,8 @@ export default function ConfigPanel({ onClose }) {
         rag: {
             enabled: false,
             baseUrl: 'http://localhost:8000',
-            embeddingModel: 'nomic-embed-text'
+            embeddingModel: 'nomic-embed-text',
+            collectionPrefix: 'threatmodel_'
         },
         database: { enabled: false, type: 'sqlite', path: './data.db' },
         jsonStoragePath: './threat-models/'
@@ -60,7 +60,6 @@ export default function ConfigPanel({ onClose }) {
                 setConfig(prev => ({ ...prev, ollama: { ...prev.ollama, model: res.data[0] } }));
             }
         } catch (err) {
-            console.error('Impossibile recuperare i modelli:', err);
             setAvailableModels([]);
         } finally {
             setIsLoadingModels(false);
@@ -89,9 +88,7 @@ export default function ConfigPanel({ onClose }) {
         }
         setRagStatus({ state: 'testing', message: 'Verifica connessione...' });
         try {
-            const res = await axios.post(`${API_BASE}/rag/test-connection`, {
-                baseUrl: config.rag.baseUrl
-            });
+            const res = await axios.post(`${API_BASE}/rag/test-connection`, { baseUrl: config.rag.baseUrl });
             setRagStatus({ state: res.data.connected ? 'connected' : 'error', message: res.data.message });
         } catch (err) {
             setRagStatus({ state: 'error', message: err.response?.data?.message || err.message });
@@ -114,7 +111,6 @@ export default function ConfigPanel({ onClose }) {
             alert('✅ Configurazione salvata con successo!');
             onClose();
         } catch (err) {
-            console.error(err);
             alert('❌ Errore nel salvataggio della configurazione.');
         }
     };
@@ -207,7 +203,7 @@ export default function ConfigPanel({ onClose }) {
                             <input
                                 type="checkbox"
                                 checked={config.rag?.enabled || false}
-                                onChange={e => setConfig({ ...config, rag: { ...config.rag, enabled: e.target.checked, baseUrl: config.rag?.baseUrl || 'http://localhost:8000' } })}
+                                onChange={e => setConfig({ ...config, rag: { ...config.rag, enabled: e.target.checked } })}
                                 className="w-4 h-4 text-blue-600 rounded"
                             />
                             🧠 RAG con ChromaDB (analisi approfondita)
@@ -218,7 +214,7 @@ export default function ConfigPanel({ onClose }) {
                                 <label className="block text-xs font-medium text-gray-600 mb-1">URL ChromaDB</label>
                                 <input
                                     value={config.rag?.baseUrl || 'http://localhost:8000'}
-                                    onChange={e => setConfig({ ...config, rag: { ...config.rag, baseUrl: e.target.value, enabled: config.rag?.enabled || false } })}
+                                    onChange={e => setConfig({ ...config, rag: { ...config.rag, baseUrl: e.target.value } })}
                                     placeholder="http://localhost:8000"
                                     className="w-full p-2 border rounded text-sm font-mono"
                                 />
@@ -227,11 +223,20 @@ export default function ConfigPanel({ onClose }) {
                                 <label className="block text-xs font-medium text-gray-600 mb-1">Modello embedding (Ollama)</label>
                                 <input
                                     value={config.rag?.embeddingModel || 'nomic-embed-text'}
-                                    onChange={e => setConfig({ ...config, rag: { ...config.rag, embeddingModel: e.target.value, enabled: config.rag?.enabled || false } })}
+                                    onChange={e => setConfig({ ...config, rag: { ...config.rag, embeddingModel: e.target.value } })}
                                     placeholder="nomic-embed-text"
                                     className="w-full p-2 border rounded text-sm font-mono"
                                 />
                                 <p className="text-xs text-gray-500 mt-1">Assicurati di aver scaricato il modello: <code className="bg-gray-200 px-1 rounded">ollama pull nomic-embed-text</code></p>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-gray-600 mb-1">Prefisso collezioni</label>
+                                <input
+                                    value={config.rag?.collectionPrefix || 'threatmodel_'}
+                                    onChange={e => setConfig({ ...config, rag: { ...config.rag, collectionPrefix: e.target.value } })}
+                                    placeholder="threatmodel_"
+                                    className="w-full p-2 border rounded text-sm font-mono"
+                                />
                             </div>
                         </div>
 
@@ -245,7 +250,7 @@ export default function ConfigPanel({ onClose }) {
                         {/* Note esplicative */}
                         <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded text-xs text-blue-800">
                             <strong>ℹ️ Come avviare ChromaDB (RAG)</strong><br />
-                            ChromaDB è un server vettoriale necessario per la ricerca semantica dei chunk durante l'analisi approfondita.<br />
+                            ChromaDB è un server vettoriale necessario per la ricerca semantica durante l'analisi approfondita.<br />
                             Puoi avviarlo in due modi:
                             <ul className="list-disc ml-4 mt-1 space-y-1">
                                 <li><strong>Con Docker:</strong> <code className="bg-blue-100 px-1 rounded">docker run -d -p 8000:8000 --name chroma-server chromadb/chroma:latest</code></li>

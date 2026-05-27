@@ -6,17 +6,241 @@
   },
   "config": {
     "ollama": {
-      "enabled": false,
-      "host": "http://localhost",
-      "port": 11434,
-      "apiKey": ""
+      "enabled": true,
+      "baseUrl": "http://localhost:11434",
+      "model": "llama3.1:8b"
+    },
+    "project": {
+      "name": "Default Project"
     },
     "database": {
       "enabled": false,
       "type": "sqlite",
       "path": "./data.db"
     },
-    "jsonStoragePath": "./threat-models/"
+    "jsonStoragePath": "./threat-models/",
+    "rag": {
+      "enabled": true,
+      "baseUrl": "http://localhost:8000",
+      "embeddingModel": "nomic-embed-text",
+      "collectionPrefix": "threatmodel_"
+    }
   },
-  "assets": []
+  "assets": [
+    {
+      "id": "9f9359bb-990c-4ed6-aaa9-6d0b3b03ae78",
+      "name": "Patient",
+      "dfdType": "External Entity",
+      "description": "External Entity: Patient",
+      "contextChunk": "\n--- DOCUMENTO: 1779545521123-OR2_Architecture_Document.pdf ---\n\n\nOR2 — Architecture Document\nNLU and Diagnostic Engine | AI vs Cancer — DermaTriage\nAI vs Cancer — DermaTriage | University of Milan | Page 1\nOR2 — Architecture Document\nNLU and Diagnostic Engine\n1. System Overview\nProjectAI vs Cancer — DermaTriage\nPurposeAI-assisted dermatology triage for early skin cancer detection\nInstitutionUniversity of Milan\nSupervisorProf. Ernesto Damiani\nDeveloperBasil\nPlatformB4 (Social Things)\nTeamRicardo Matamoros, Niccolo\nLive URLhttps://5000--main--a14-cancer--basybasy00.coder.ricerca.sesar.di.unimi.it\nB4 Portalhttps://aivscancer.b4service.it\nGitHubgithub.com/basil-github/image_classifier\n2. Four-Stage AI Pipeline\nDermaTriage processes patient-submitted skin lesion images through a sequential four-stage AI pipeline, each stage\nenriching the clinical context before the final triage decision.\nStageModelInputOutput\n1EfficientNet-B4 (fine-tuned)Skin lesion imageHIGH / MEDIUM / LOW + confidence\n2Qwen2-VL-7B-InstructSkin lesion imageClinical text description (5-bullet format)\n3RAG — ChromaDBClinical textTop-5 similar historical cases\n4BioMistral-7BStage 1+2+3 + symptomsJSON: urgency, confidence, reasoning, pathology\nPipeline Flow:\n1. Patient uploads image + age + sex + localization via B4 chatbot\n2. Stage 1: predict_image() — EfficientNet classifies urgency (threshold: prob >= 0.25 for HIGH)\n3. Stage 2: _call_qwen2() — Vision LLM generates 5-bullet clinical description\n4. Stage 3: find_si",
+      "category": "External Entity",
+      "subCategory": ""
+    },
+    {
+      "id": "5355a7b3-6b48-4eec-801b-388b12cb7b9b",
+      "name": "B4 chatbot",
+      "dfdType": "External Entity",
+      "description": "External Entity: B4 chatbot",
+      "contextChunk": "\n--- DOCUMENTO: 1779545521123-OR2_Architecture_Document.pdf ---\n\n\nOR2 — Architecture Document\nNLU and Diagnostic Engine | AI vs Cancer — DermaTriage\nAI vs Cancer — DermaTriage | University of Milan | Page 1\nOR2 — Architecture Document\nNLU and Diagnostic Engine\n1. System Overview\nProjectAI vs Cancer — DermaTriage\nPurposeAI-assisted dermatology triage for early skin cancer detection\nInstitutionUniversity of Milan\nSupervisorProf. Ernesto Damiani\nDeveloperBasil\nPlatformB4 (Social Things)\nTeamRicardo Matamoros, Niccolo\nLive URLhttps://5000--main--a14-cancer--basybasy00.coder.ricerca.sesar.di.unimi.it\nB4 Portalhttps://aivscancer.b4service.it\nGitHubgithub.com/basil-github/image_classifier\n2. Four-Stage AI Pipeline\nDermaTriage processes patient-submitted skin lesion images through a sequential four-stage AI pipeline, each stage\nenriching the clinical context before the final triage decision.\nStageModelInputOutput\n1EfficientNet-B4 (fine-tuned)Skin lesion imageHIGH / MEDIUM / LOW + confidence\n2Qwen2-VL-7B-InstructSkin lesion imageClinical text description (5-bullet format)\n3RAG — ChromaDBClinical textTop-5 similar historical cases\n4BioMistral-7BStage 1+2+3 + symptomsJSON: urgency, confidence, reasoning, pathology\nPipeline Flow:\n1. Patient uploads image + age + sex + localization via B4 chatbot\n2. Stage 1: predict_image() — EfficientNet classifies urgency (threshold: prob >= 0.25 for HIGH)\n3. Stage 2: _call_qwen2() — Vision LLM generates 5-bullet clinical description\n4. Stage 3: find_si",
+      "category": "External Entity",
+      "subCategory": ""
+    },
+    {
+      "id": "979bbfa8-3060-4b41-be04-0a79ef11653e",
+      "name": "EfficientNet-B4 (fine-tuned)",
+      "dfdType": "Process",
+      "description": "Process: EfficientNet-B4 (fine-tuned)",
+      "contextChunk": "\n--- DOCUMENTO: 1779545521123-OR2_Architecture_Document.pdf ---\n\n\nOR2 — Architecture Document\nNLU and Diagnostic Engine | AI vs Cancer — DermaTriage\nAI vs Cancer — DermaTriage | University of Milan | Page 1\nOR2 — Architecture Document\nNLU and Diagnostic Engine\n1. System Overview\nProjectAI vs Cancer — DermaTriage\nPurposeAI-assisted dermatology triage for early skin cancer detection\nInstitutionUniversity of Milan\nSupervisorProf. Ernesto Damiani\nDeveloperBasil\nPlatformB4 (Social Things)\nTeamRicardo Matamoros, Niccolo\nLive URLhttps://5000--main--a14-cancer--basybasy00.coder.ricerca.sesar.di.unimi.it\nB4 Portalhttps://aivscancer.b4service.it\nGitHubgithub.com/basil-github/image_classifier\n2. Four-Stage AI Pipeline\nDermaTriage processes patient-submitted skin lesion images through a sequential four-stage AI pipeline, each stage\nenriching the clinical context before the final triage decision.\nStageModelInputOutput\n1EfficientNet-B4 (fine-tuned)Skin lesion imageHIGH / MEDIUM / LOW + confidence\n2Qwen2-VL-7B-InstructSkin lesion imageClinical text description (5-bullet format)\n3RAG — ChromaDBClinical textTop-5 similar historical cases\n4BioMistral-7BStage 1+2+3 + symptomsJSON: urgency, confidence, reasoning, pathology\nPipeline Flow:\n1. Patient uploads image + age + sex + localization via B4 chatbot\n2. Stage 1: predict_image() — EfficientNet classifies urgency (threshold: prob >= 0.25 for HIGH)\n3. Stage 2: _call_qwen2() — Vision LLM generates 5-bullet clinical description\n4. Stage 3: find_si",
+      "category": "Process",
+      "subCategory": ""
+    },
+    {
+      "id": "6feae08a-1c13-482e-8637-65c5e3e3ebab",
+      "name": "Qwen2-VL-7B-Instruct",
+      "dfdType": "Process",
+      "description": "Process: Qwen2-VL-7B-Instruct",
+      "contextChunk": "\n--- DOCUMENTO: 1779545521123-OR2_Architecture_Document.pdf ---\n\n\nOR2 — Architecture Document\nNLU and Diagnostic Engine | AI vs Cancer — DermaTriage\nAI vs Cancer — DermaTriage | University of Milan | Page 1\nOR2 — Architecture Document\nNLU and Diagnostic Engine\n1. System Overview\nProjectAI vs Cancer — DermaTriage\nPurposeAI-assisted dermatology triage for early skin cancer detection\nInstitutionUniversity of Milan\nSupervisorProf. Ernesto Damiani\nDeveloperBasil\nPlatformB4 (Social Things)\nTeamRicardo Matamoros, Niccolo\nLive URLhttps://5000--main--a14-cancer--basybasy00.coder.ricerca.sesar.di.unimi.it\nB4 Portalhttps://aivscancer.b4service.it\nGitHubgithub.com/basil-github/image_classifier\n2. Four-Stage AI Pipeline\nDermaTriage processes patient-submitted skin lesion images through a sequential four-stage AI pipeline, each stage\nenriching the clinical context before the final triage decision.\nStageModelInputOutput\n1EfficientNet-B4 (fine-tuned)Skin lesion imageHIGH / MEDIUM / LOW + confidence\n2Qwen2-VL-7B-InstructSkin lesion imageClinical text description (5-bullet format)\n3RAG — ChromaDBClinical textTop-5 similar historical cases\n4BioMistral-7BStage 1+2+3 + symptomsJSON: urgency, confidence, reasoning, pathology\nPipeline Flow:\n1. Patient uploads image + age + sex + localization via B4 chatbot\n2. Stage 1: predict_image() — EfficientNet classifies urgency (threshold: prob >= 0.25 for HIGH)\n3. Stage 2: _call_qwen2() — Vision LLM generates 5-bullet clinical description\n4. Stage 3: find_si",
+      "category": "Process",
+      "subCategory": ""
+    },
+    {
+      "id": "d1420503-8c69-41c3-a65d-46db9e371b3f",
+      "name": "RAG — ChromaDBClinical text",
+      "dfdType": "Data Store",
+      "description": "Data Store: RAG — ChromaDBClinical text",
+      "contextChunk": "\n--- DOCUMENTO: 1779545521123-OR2_Architecture_Document.pdf ---\n\n\nOR2 — Architecture Document\nNLU and Diagnostic Engine | AI vs Cancer — DermaTriage\nAI vs Cancer — DermaTriage | University of Milan | Page 1\nOR2 — Architecture Document\nNLU and Diagnostic Engine\n1. System Overview\nProjectAI vs Cancer — DermaTriage\nPurposeAI-assisted dermatology triage for early skin cancer detection\nInstitutionUniversity of Milan\nSupervisorProf. Ernesto Damiani\nDeveloperBasil\nPlatformB4 (Social Things)\nTeamRicardo Matamoros, Niccolo\nLive URLhttps://5000--main--a14-cancer--basybasy00.coder.ricerca.sesar.di.unimi.it\nB4 Portalhttps://aivscancer.b4service.it\nGitHubgithub.com/basil-github/image_classifier\n2. Four-Stage AI Pipeline\nDermaTriage processes patient-submitted skin lesion images through a sequential four-stage AI pipeline, each stage\nenriching the clinical context before the final triage decision.\nStageModelInputOutput\n1EfficientNet-B4 (fine-tuned)Skin lesion imageHIGH / MEDIUM / LOW + confidence\n2Qwen2-VL-7B-InstructSkin lesion imageClinical text description (5-bullet format)\n3RAG — ChromaDBClinical textTop-5 similar historical cases\n4BioMistral-7BStage 1+2+3 + symptomsJSON: urgency, confidence, reasoning, pathology\nPipeline Flow:\n1. Patient uploads image + age + sex + localization via B4 chatbot\n2. Stage 1: predict_image() — EfficientNet classifies urgency (threshold: prob >= 0.25 for HIGH)\n3. Stage 2: _call_qwen2() — Vision LLM generates 5-bullet clinical description\n4. Stage 3: find_si",
+      "category": "Data Store",
+      "subCategory": ""
+    },
+    {
+      "id": "057bed2e-7ace-40a3-881b-5bb842d3d4ee",
+      "name": "BioMistral-7B",
+      "dfdType": "Process",
+      "description": "Process: BioMistral-7B",
+      "contextChunk": "\n--- DOCUMENTO: 1779545521123-OR2_Architecture_Document.pdf ---\n\n\nOR2 — Architecture Document\nNLU and Diagnostic Engine | AI vs Cancer — DermaTriage\nAI vs Cancer — DermaTriage | University of Milan | Page 1\nOR2 — Architecture Document\nNLU and Diagnostic Engine\n1. System Overview\nProjectAI vs Cancer — DermaTriage\nPurposeAI-assisted dermatology triage for early skin cancer detection\nInstitutionUniversity of Milan\nSupervisorProf. Ernesto Damiani\nDeveloperBasil\nPlatformB4 (Social Things)\nTeamRicardo Matamoros, Niccolo\nLive URLhttps://5000--main--a14-cancer--basybasy00.coder.ricerca.sesar.di.unimi.it\nB4 Portalhttps://aivscancer.b4service.it\nGitHubgithub.com/basil-github/image_classifier\n2. Four-Stage AI Pipeline\nDermaTriage processes patient-submitted skin lesion images through a sequential four-stage AI pipeline, each stage\nenriching the clinical context before the final triage decision.\nStageModelInputOutput\n1EfficientNet-B4 (fine-tuned)Skin lesion imageHIGH / MEDIUM / LOW + confidence\n2Qwen2-VL-7B-InstructSkin lesion imageClinical text description (5-bullet format)\n3RAG — ChromaDBClinical textTop-5 similar historical cases\n4BioMistral-7BStage 1+2+3 + symptomsJSON: urgency, confidence, reasoning, pathology\nPipeline Flow:\n1. Patient uploads image + age + sex + localization via B4 chatbot\n2. Stage 1: predict_image() — EfficientNet classifies urgency (threshold: prob >= 0.25 for HIGH)\n3. Stage 2: _call_qwen2() — Vision LLM generates 5-bullet clinical description\n4. Stage 3: find_si",
+      "category": "Process",
+      "subCategory": ""
+    },
+    {
+      "id": "03e33dad-0ee5-422e-a294-2dcc797363f1",
+      "name": "Database clienti (presunto)",
+      "dfdType": "Data Store",
+      "description": "Data Store: Database clienti (presunto)",
+      "contextChunk": "\n--- DOCUMENTO: 1779545521123-OR2_Architecture_Document.pdf ---\n\n\nOR2 — Architecture Document\nNLU and Diagnostic Engine | AI vs Cancer — DermaTriage\nAI vs Cancer — DermaTriage | University of Milan | Page 1\nOR2 — Architecture Document\nNLU and Diagnostic Engine\n1. System Overview\nProjectAI vs Cancer — DermaTriage\nPurposeAI-assisted dermatology triage for early skin cancer detection\nInstitutionUniversity of Milan\nSupervisorProf. Ernesto Damiani\nDeveloperBasil\nPlatformB4 (Social Things)\nTeamRicardo Matamoros, Niccolo\nLive URLhttps://5000--main--a14-cancer--basybasy00.coder.ricerca.sesar.di.unimi.it\nB4 Portalhttps://aivscancer.b4service.it\nGitHubgithub.com/basil-github/image_classifier\n2. Four-Stage AI Pipeline\nDermaTriage processes patient-submitted skin lesion images through a sequential four-stage AI pipeline, each stage\nenriching the clinical context before the final triage decision.\nStageModelInputOutput\n1EfficientNet-B4 (fine-tuned)Skin lesion imageHIGH / MEDIUM / LOW + confidence\n2Qwen2-VL-7B-InstructSkin lesion imageClinical text description (5-bullet format)\n3RAG — ChromaDBClinical textTop-5 similar historical cases\n4BioMistral-7BStage 1+2+3 + symptomsJSON: urgency, confidence, reasoning, pathology\nPipeline Flow:\n1. Patient uploads image + age + sex + localization via B4 chatbot\n2. Stage 1: predict_image() — EfficientNet classifies urgency (threshold: prob >= 0.25 for HIGH)\n3. Stage 2: _call_qwen2() — Vision LLM generates 5-bullet clinical description\n4. Stage 3: find_si",
+      "category": "Data Store",
+      "subCategory": ""
+    },
+    {
+      "id": "bf8fed12-9bd7-48ba-b331-696f1ce522b7",
+      "name": "P1-P4",
+      "dfdType": "External Entity",
+      "description": "External Entity: P1-P4",
+      "contextChunk": "ssigns P1-P4, specialist and SLA\n7. Result saved to B4 via b4_client.save_prediction() and locally via save_diagnosis()\nAdaptation Layer Mapping:\nUrgency + ConditionP-ScaleSLA\nHIGH + confidence > 0.85P124 hours\nHIGHP248 hours\nMEDIUMP372 hours\n\nOR2 — Architecture Document\nNLU and Diagnostic Engine | AI vs Cancer — DermaTriage\nAI vs Cancer — DermaTriage | University of Milan | Page 2\nUrgency + ConditionP-ScaleSLA\nLOWP47 giorni\nFallback: When no image is available, symptom-only scoring derives urgency from B4 chatbot interaction fields (itching, bleeding,\ngrowing, changing, pain, etc.).\n3. API Endpoints\n3.1 DermaTriage API (20 endpoints)\nMethodPathAuthDescription\nGET/NoneHome page\nGET/triageNoneTriage upload page\nPOST/analyzeNoneFull 4-step pipeline (direct upload)\nPOST/diagnoseX-API-KeyB4-integrated pipeline\nGET/healthNoneService health check\nGET/statsNonePipeline statistics\nGET/admin/diagnosesX-API-KeyDiagnoses dashboard\nGET/admin/review/{id}X-API-KeyDoctor validation page\nPOST/admin/validate/{id}X-API-KeySave doctor correction\nGET/admin/promptsX-API-KeyPrompt manager dashboard\nPOST/admin/prompts/updateX-API-KeyRebuild prompts from corrections\nPOST/admin/prompts/reset/{model}X-API-KeyReset prompt to default\nGET/admin/prompts/history/{model}X-API-KeyPrompt version history\nGET/admin/retrainingX-API-KeyRetraining dashboard\nGET/admin/retraining/statusX-API-KeyModel version + correction progress\nPOST/admin/retraining/check-and-triggerX-API-KeyEvent-driven retraining trigger\nPOST/ad",
+      "category": "External Entity",
+      "subCategory": ""
+    },
+    {
+      "id": "ea4bc05c-5d39-4242-bac8-e061663c476b",
+      "name": "specialist",
+      "dfdType": "External Entity",
+      "description": "External Entity: specialist",
+      "contextChunk": "ssigns P1-P4, specialist and SLA\n7. Result saved to B4 via b4_client.save_prediction() and locally via save_diagnosis()\nAdaptation Layer Mapping:\nUrgency + ConditionP-ScaleSLA\nHIGH + confidence > 0.85P124 hours\nHIGHP248 hours\nMEDIUMP372 hours\n\nOR2 — Architecture Document\nNLU and Diagnostic Engine | AI vs Cancer — DermaTriage\nAI vs Cancer — DermaTriage | University of Milan | Page 2\nUrgency + ConditionP-ScaleSLA\nLOWP47 giorni\nFallback: When no image is available, symptom-only scoring derives urgency from B4 chatbot interaction fields (itching, bleeding,\ngrowing, changing, pain, etc.).\n3. API Endpoints\n3.1 DermaTriage API (20 endpoints)\nMethodPathAuthDescription\nGET/NoneHome page\nGET/triageNoneTriage upload page\nPOST/analyzeNoneFull 4-step pipeline (direct upload)\nPOST/diagnoseX-API-KeyB4-integrated pipeline\nGET/healthNoneService health check\nGET/statsNonePipeline statistics\nGET/admin/diagnosesX-API-KeyDiagnoses dashboard\nGET/admin/review/{id}X-API-KeyDoctor validation page\nPOST/admin/validate/{id}X-API-KeySave doctor correction\nGET/admin/promptsX-API-KeyPrompt manager dashboard\nPOST/admin/prompts/updateX-API-KeyRebuild prompts from corrections\nPOST/admin/prompts/reset/{model}X-API-KeyReset prompt to default\nGET/admin/prompts/history/{model}X-API-KeyPrompt version history\nGET/admin/retrainingX-API-KeyRetraining dashboard\nGET/admin/retraining/statusX-API-KeyModel version + correction progress\nPOST/admin/retraining/check-and-triggerX-API-KeyEvent-driven retraining trigger\nPOST/ad",
+      "category": "External Entity",
+      "subCategory": ""
+    },
+    {
+      "id": "eb7e4c29-c334-440b-a6ef-04ac0eb731f2",
+      "name": "SLA",
+      "dfdType": "External Entity",
+      "description": "External Entity: SLA",
+      "contextChunk": "ssigns P1-P4, specialist and SLA\n7. Result saved to B4 via b4_client.save_prediction() and locally via save_diagnosis()\nAdaptation Layer Mapping:\nUrgency + ConditionP-ScaleSLA\nHIGH + confidence > 0.85P124 hours\nHIGHP248 hours\nMEDIUMP372 hours\n\nOR2 — Architecture Document\nNLU and Diagnostic Engine | AI vs Cancer — DermaTriage\nAI vs Cancer — DermaTriage | University of Milan | Page 2\nUrgency + ConditionP-ScaleSLA\nLOWP47 giorni\nFallback: When no image is available, symptom-only scoring derives urgency from B4 chatbot interaction fields (itching, bleeding,\ngrowing, changing, pain, etc.).\n3. API Endpoints\n3.1 DermaTriage API (20 endpoints)\nMethodPathAuthDescription\nGET/NoneHome page\nGET/triageNoneTriage upload page\nPOST/analyzeNoneFull 4-step pipeline (direct upload)\nPOST/diagnoseX-API-KeyB4-integrated pipeline\nGET/healthNoneService health check\nGET/statsNonePipeline statistics\nGET/admin/diagnosesX-API-KeyDiagnoses dashboard\nGET/admin/review/{id}X-API-KeyDoctor validation page\nPOST/admin/validate/{id}X-API-KeySave doctor correction\nGET/admin/promptsX-API-KeyPrompt manager dashboard\nPOST/admin/prompts/updateX-API-KeyRebuild prompts from corrections\nPOST/admin/prompts/reset/{model}X-API-KeyReset prompt to default\nGET/admin/prompts/history/{model}X-API-KeyPrompt version history\nGET/admin/retrainingX-API-KeyRetraining dashboard\nGET/admin/retraining/statusX-API-KeyModel version + correction progress\nPOST/admin/retraining/check-and-triggerX-API-KeyEvent-driven retraining trigger\nPOST/ad",
+      "category": "External Entity",
+      "subCategory": ""
+    },
+    {
+      "id": "0d64122a-eed0-4a16-a74d-7ae13e56697f",
+      "name": "B4",
+      "dfdType": "External Entity",
+      "description": "External Entity: B4",
+      "contextChunk": "-API-KeyPull validated outcomes from B4\n3.2 B4 External API Calls\nMethodB4 PathPurpose\nPOST/api/v1/auth/tokenJWT authentication\nGET/api/v1/triage/listFetch all consultos\nGET/api/v1/chatbot/consulto/{id}/documentiList documents\nGET/api/v1/chatbot/documento/{id}Download image\nPUT/api/v1/chatbot/consulto/{id}/diagnostic-outputSave AI result\nPUT/api/v1/chatbot/consulto/{id}/medical-validationSave doctor validation\n\nOR2 — Architecture Document\nNLU and Diagnostic Engine | AI vs Cancer — DermaTriage\nAI vs Cancer — DermaTriage | University of Milan | Page 3\nMethodB4 PathPurpose\nGET/api/v1/chatbot/consulto/{id}/validated-outcomeRead validated outcome\nGET/api/v1/chatbot/healthB4 health check\n4. Self-Learning Loops\n4.1 Prompt Evolution\nParameterValue\nManagerPromptManager (singleton, thread-safe)\nStoragedb/prompts.json\nTriggerEvery 10 doctor corrections\nMethodSliding window of 20 most recent examples\nBioMistral versionv4 (3 updates, last: 2026-04-30)\nQwen2-VL versionv3 (2 updates, last: 2026-04-30)\n4.2 CNN Retraining Loop\nParameterValue\nTrigger50 doctor corrections where agrees == False\nSourceGET /api/v1/triage/list\nImage downloadGET /api/v1/chatbot/documento/{upload.id}\nLabel mappingP1/P2 -> HIGH, P3 -> MEDIUM, P4 -> LOW\nFine-tuneLast 2 EfficientNet feature blocks + classifier head\nLR backbone5e-6\nLR classifier3e-5\nEpochs per cycle10\nDeploy conditionNew sensitivity >= old AND false_low <= old AND accuracy >= old - 5%\nRollbackAutomatic if accuracy drops > 5%\nTrigger endpointPOST /admin/r",
+      "category": "External Entity",
+      "subCategory": ""
+    },
+    {
+      "id": "fc769ec9-7d8a-49c1-944b-17233c3218df",
+      "name": "Database clienti",
+      "dfdType": "Data Store",
+      "description": "Data Store: Database clienti",
+      "contextChunk": "-API-KeyPull validated outcomes from B4\n3.2 B4 External API Calls\nMethodB4 PathPurpose\nPOST/api/v1/auth/tokenJWT authentication\nGET/api/v1/triage/listFetch all consultos\nGET/api/v1/chatbot/consulto/{id}/documentiList documents\nGET/api/v1/chatbot/documento/{id}Download image\nPUT/api/v1/chatbot/consulto/{id}/diagnostic-outputSave AI result\nPUT/api/v1/chatbot/consulto/{id}/medical-validationSave doctor validation\n\nOR2 — Architecture Document\nNLU and Diagnostic Engine | AI vs Cancer — DermaTriage\nAI vs Cancer — DermaTriage | University of Milan | Page 3\nMethodB4 PathPurpose\nGET/api/v1/chatbot/consulto/{id}/validated-outcomeRead validated outcome\nGET/api/v1/chatbot/healthB4 health check\n4. Self-Learning Loops\n4.1 Prompt Evolution\nParameterValue\nManagerPromptManager (singleton, thread-safe)\nStoragedb/prompts.json\nTriggerEvery 10 doctor corrections\nMethodSliding window of 20 most recent examples\nBioMistral versionv4 (3 updates, last: 2026-04-30)\nQwen2-VL versionv3 (2 updates, last: 2026-04-30)\n4.2 CNN Retraining Loop\nParameterValue\nTrigger50 doctor corrections where agrees == False\nSourceGET /api/v1/triage/list\nImage downloadGET /api/v1/chatbot/documento/{upload.id}\nLabel mappingP1/P2 -> HIGH, P3 -> MEDIUM, P4 -> LOW\nFine-tuneLast 2 EfficientNet feature blocks + classifier head\nLR backbone5e-6\nLR classifier3e-5\nEpochs per cycle10\nDeploy conditionNew sensitivity >= old AND false_low <= old AND accuracy >= old - 5%\nRollbackAutomatic if accuracy drops > 5%\nTrigger endpointPOST /admin/r",
+      "category": "Data Store",
+      "subCategory": ""
+    },
+    {
+      "id": "080cfb92-c1aa-4e0c-9d17-ff78fd9859b8",
+      "name": "ManagerPrompt",
+      "dfdType": "Process",
+      "description": "Process: ManagerPrompt",
+      "contextChunk": "-API-KeyPull validated outcomes from B4\n3.2 B4 External API Calls\nMethodB4 PathPurpose\nPOST/api/v1/auth/tokenJWT authentication\nGET/api/v1/triage/listFetch all consultos\nGET/api/v1/chatbot/consulto/{id}/documentiList documents\nGET/api/v1/chatbot/documento/{id}Download image\nPUT/api/v1/chatbot/consulto/{id}/diagnostic-outputSave AI result\nPUT/api/v1/chatbot/consulto/{id}/medical-validationSave doctor validation\n\nOR2 — Architecture Document\nNLU and Diagnostic Engine | AI vs Cancer — DermaTriage\nAI vs Cancer — DermaTriage | University of Milan | Page 3\nMethodB4 PathPurpose\nGET/api/v1/chatbot/consulto/{id}/validated-outcomeRead validated outcome\nGET/api/v1/chatbot/healthB4 health check\n4. Self-Learning Loops\n4.1 Prompt Evolution\nParameterValue\nManagerPromptManager (singleton, thread-safe)\nStoragedb/prompts.json\nTriggerEvery 10 doctor corrections\nMethodSliding window of 20 most recent examples\nBioMistral versionv4 (3 updates, last: 2026-04-30)\nQwen2-VL versionv3 (2 updates, last: 2026-04-30)\n4.2 CNN Retraining Loop\nParameterValue\nTrigger50 doctor corrections where agrees == False\nSourceGET /api/v1/triage/list\nImage downloadGET /api/v1/chatbot/documento/{upload.id}\nLabel mappingP1/P2 -> HIGH, P3 -> MEDIUM, P4 -> LOW\nFine-tuneLast 2 EfficientNet feature blocks + classifier head\nLR backbone5e-6\nLR classifier3e-5\nEpochs per cycle10\nDeploy conditionNew sensitivity >= old AND false_low <= old AND accuracy >= old - 5%\nRollbackAutomatic if accuracy drops > 5%\nTrigger endpointPOST /admin/r",
+      "category": "Process",
+      "subCategory": ""
+    },
+    {
+      "id": "843a93d6-adf9-4581-9d7a-6aaab030f0b3",
+      "name": "Storagedb/prompts.json",
+      "dfdType": "Data Store",
+      "description": "Data Store: Storagedb/prompts.json",
+      "contextChunk": "-API-KeyPull validated outcomes from B4\n3.2 B4 External API Calls\nMethodB4 PathPurpose\nPOST/api/v1/auth/tokenJWT authentication\nGET/api/v1/triage/listFetch all consultos\nGET/api/v1/chatbot/consulto/{id}/documentiList documents\nGET/api/v1/chatbot/documento/{id}Download image\nPUT/api/v1/chatbot/consulto/{id}/diagnostic-outputSave AI result\nPUT/api/v1/chatbot/consulto/{id}/medical-validationSave doctor validation\n\nOR2 — Architecture Document\nNLU and Diagnostic Engine | AI vs Cancer — DermaTriage\nAI vs Cancer — DermaTriage | University of Milan | Page 3\nMethodB4 PathPurpose\nGET/api/v1/chatbot/consulto/{id}/validated-outcomeRead validated outcome\nGET/api/v1/chatbot/healthB4 health check\n4. Self-Learning Loops\n4.1 Prompt Evolution\nParameterValue\nManagerPromptManager (singleton, thread-safe)\nStoragedb/prompts.json\nTriggerEvery 10 doctor corrections\nMethodSliding window of 20 most recent examples\nBioMistral versionv4 (3 updates, last: 2026-04-30)\nQwen2-VL versionv3 (2 updates, last: 2026-04-30)\n4.2 CNN Retraining Loop\nParameterValue\nTrigger50 doctor corrections where agrees == False\nSourceGET /api/v1/triage/list\nImage downloadGET /api/v1/chatbot/documento/{upload.id}\nLabel mappingP1/P2 -> HIGH, P3 -> MEDIUM, P4 -> LOW\nFine-tuneLast 2 EfficientNet feature blocks + classifier head\nLR backbone5e-6\nLR classifier3e-5\nEpochs per cycle10\nDeploy conditionNew sensitivity >= old AND false_low <= old AND accuracy >= old - 5%\nRollbackAutomatic if accuracy drops > 5%\nTrigger endpointPOST /admin/r",
+      "category": "Data Store",
+      "subCategory": ""
+    },
+    {
+      "id": "f81cffaf-a443-430f-9719-832a35fd1c59",
+      "name": "Diagnoses history",
+      "dfdType": "Data Store",
+      "description": "Data Store: Diagnoses history",
+      "contextChunk": "-API-KeyPull validated outcomes from B4\n3.2 B4 External API Calls\nMethodB4 PathPurpose\nPOST/api/v1/auth/tokenJWT authentication\nGET/api/v1/triage/listFetch all consultos\nGET/api/v1/chatbot/consulto/{id}/documentiList documents\nGET/api/v1/chatbot/documento/{id}Download image\nPUT/api/v1/chatbot/consulto/{id}/diagnostic-outputSave AI result\nPUT/api/v1/chatbot/consulto/{id}/medical-validationSave doctor validation\n\nOR2 — Architecture Document\nNLU and Diagnostic Engine | AI vs Cancer — DermaTriage\nAI vs Cancer — DermaTriage | University of Milan | Page 3\nMethodB4 PathPurpose\nGET/api/v1/chatbot/consulto/{id}/validated-outcomeRead validated outcome\nGET/api/v1/chatbot/healthB4 health check\n4. Self-Learning Loops\n4.1 Prompt Evolution\nParameterValue\nManagerPromptManager (singleton, thread-safe)\nStoragedb/prompts.json\nTriggerEvery 10 doctor corrections\nMethodSliding window of 20 most recent examples\nBioMistral versionv4 (3 updates, last: 2026-04-30)\nQwen2-VL versionv3 (2 updates, last: 2026-04-30)\n4.2 CNN Retraining Loop\nParameterValue\nTrigger50 doctor corrections where agrees == False\nSourceGET /api/v1/triage/list\nImage downloadGET /api/v1/chatbot/documento/{upload.id}\nLabel mappingP1/P2 -> HIGH, P3 -> MEDIUM, P4 -> LOW\nFine-tuneLast 2 EfficientNet feature blocks + classifier head\nLR backbone5e-6\nLR classifier3e-5\nEpochs per cycle10\nDeploy conditionNew sensitivity >= old AND false_low <= old AND accuracy >= old - 5%\nRollbackAutomatic if accuracy drops > 5%\nTrigger endpointPOST /admin/r",
+      "category": "Data Store",
+      "subCategory": ""
+    },
+    {
+      "id": "6e5936f1-17d6-4a74-aca2-484d1a454ade",
+      "name": "Doctor corrections",
+      "dfdType": "Data Store",
+      "description": "Data Store: Doctor corrections",
+      "contextChunk": "-API-KeyPull validated outcomes from B4\n3.2 B4 External API Calls\nMethodB4 PathPurpose\nPOST/api/v1/auth/tokenJWT authentication\nGET/api/v1/triage/listFetch all consultos\nGET/api/v1/chatbot/consulto/{id}/documentiList documents\nGET/api/v1/chatbot/documento/{id}Download image\nPUT/api/v1/chatbot/consulto/{id}/diagnostic-outputSave AI result\nPUT/api/v1/chatbot/consulto/{id}/medical-validationSave doctor validation\n\nOR2 — Architecture Document\nNLU and Diagnostic Engine | AI vs Cancer — DermaTriage\nAI vs Cancer — DermaTriage | University of Milan | Page 3\nMethodB4 PathPurpose\nGET/api/v1/chatbot/consulto/{id}/validated-outcomeRead validated outcome\nGET/api/v1/chatbot/healthB4 health check\n4. Self-Learning Loops\n4.1 Prompt Evolution\nParameterValue\nManagerPromptManager (singleton, thread-safe)\nStoragedb/prompts.json\nTriggerEvery 10 doctor corrections\nMethodSliding window of 20 most recent examples\nBioMistral versionv4 (3 updates, last: 2026-04-30)\nQwen2-VL versionv3 (2 updates, last: 2026-04-30)\n4.2 CNN Retraining Loop\nParameterValue\nTrigger50 doctor corrections where agrees == False\nSourceGET /api/v1/triage/list\nImage downloadGET /api/v1/chatbot/documento/{upload.id}\nLabel mappingP1/P2 -> HIGH, P3 -> MEDIUM, P4 -> LOW\nFine-tuneLast 2 EfficientNet feature blocks + classifier head\nLR backbone5e-6\nLR classifier3e-5\nEpochs per cycle10\nDeploy conditionNew sensitivity >= old AND false_low <= old AND accuracy >= old - 5%\nRollbackAutomatic if accuracy drops > 5%\nTrigger endpointPOST /admin/r",
+      "category": "Data Store",
+      "subCategory": ""
+    },
+    {
+      "id": "e46d9544-b0d9-4c9a-add9-a4ef68fdf08c",
+      "name": "etdata/RAG_dataset.csv",
+      "dfdType": "External Entity",
+      "description": "External Entity: etdata/RAG_dataset.csv",
+      "contextChunk": "etdata/RAG_dataset.csv~5 MB\nDiagnoses historydb/diagnoses.jsonFlat JSON\nDoctor correctionsdb/corrections.jsonFlat JSON\nPrompt versionsdb/prompts.jsonFlat JSON\n\nOR2 — Architecture Document\nNLU and Diagnostic Engine | AI vs Cancer — DermaTriage\nAI vs Cancer — DermaTriage | University of Milan | Page 4\nComponentLocationSize\nModel versionsdb/model_versions.jsonFlat JSON\nTraining imagesdata/images/~2 GB\nLogslogs/Rotating\n6. Technology Stack\nCategoryTechnologyVersion\nWeb FrameworkFastAPI + UvicornLatest\nCNN ModelEfficientNet-B4 (PyTorch)Custom fine-tuned\nVision LLMQwen2-VL-7B-InstructHuggingFace\nMedical LLMBioMistral-7BHuggingFace\nEmbeddingsall-MiniLM-L6-v2sentence-transformers\nVector StoreChromaDBLatest\nHTTP ClienthttpxAsync\nImage ProcessingPillowLatest\nData Processingpandas, numpyLatest\nBalancingimbalanced-learn (SMOTE)Latest\nPythonCPython3.12.3\nGPUNVIDIA L40SCUDA enabled\nPyTorchPyTorch2.11.0\n7. Live System Status\nServiceStatusNotes\nEfficientNet-B4RunningLocal model, 72MB\nChromaDBRunning2,298 records indexed\nB4 ConnectionRunningJWT auto-refresh active\nOllamaNot usedBioMistral via HuggingFace directly\nMetricValue\nTotal diagnoses processed30\nDoctor corrections1\nUrgency distributionP1: 2, P2: 0, P3: 24, P4: 4\n",
+      "category": "External Entity",
+      "subCategory": ""
+    },
+    {
+      "id": "b42a24d2-8a69-4263-95bc-787897a7b75d",
+      "name": "historydb/diagnoses.json",
+      "dfdType": "Data Store",
+      "description": "Data Store: historydb/diagnoses.json",
+      "contextChunk": "etdata/RAG_dataset.csv~5 MB\nDiagnoses historydb/diagnoses.jsonFlat JSON\nDoctor correctionsdb/corrections.jsonFlat JSON\nPrompt versionsdb/prompts.jsonFlat JSON\n\nOR2 — Architecture Document\nNLU and Diagnostic Engine | AI vs Cancer — DermaTriage\nAI vs Cancer — DermaTriage | University of Milan | Page 4\nComponentLocationSize\nModel versionsdb/model_versions.jsonFlat JSON\nTraining imagesdata/images/~2 GB\nLogslogs/Rotating\n6. Technology Stack\nCategoryTechnologyVersion\nWeb FrameworkFastAPI + UvicornLatest\nCNN ModelEfficientNet-B4 (PyTorch)Custom fine-tuned\nVision LLMQwen2-VL-7B-InstructHuggingFace\nMedical LLMBioMistral-7BHuggingFace\nEmbeddingsall-MiniLM-L6-v2sentence-transformers\nVector StoreChromaDBLatest\nHTTP ClienthttpxAsync\nImage ProcessingPillowLatest\nData Processingpandas, numpyLatest\nBalancingimbalanced-learn (SMOTE)Latest\nPythonCPython3.12.3\nGPUNVIDIA L40SCUDA enabled\nPyTorchPyTorch2.11.0\n7. Live System Status\nServiceStatusNotes\nEfficientNet-B4RunningLocal model, 72MB\nChromaDBRunning2,298 records indexed\nB4 ConnectionRunningJWT auto-refresh active\nOllamaNot usedBioMistral via HuggingFace directly\nMetricValue\nTotal diagnoses processed30\nDoctor corrections1\nUrgency distributionP1: 2, P2: 0, P3: 24, P4: 4\n",
+      "category": "Data Store",
+      "subCategory": ""
+    },
+    {
+      "id": "eecd560f-f04b-4618-b74d-4f0cef72fec4",
+      "name": "doctor correctionsdb/corrections.json",
+      "dfdType": "Data Store",
+      "description": "Data Store: doctor correctionsdb/corrections.json",
+      "contextChunk": "etdata/RAG_dataset.csv~5 MB\nDiagnoses historydb/diagnoses.jsonFlat JSON\nDoctor correctionsdb/corrections.jsonFlat JSON\nPrompt versionsdb/prompts.jsonFlat JSON\n\nOR2 — Architecture Document\nNLU and Diagnostic Engine | AI vs Cancer — DermaTriage\nAI vs Cancer — DermaTriage | University of Milan | Page 4\nComponentLocationSize\nModel versionsdb/model_versions.jsonFlat JSON\nTraining imagesdata/images/~2 GB\nLogslogs/Rotating\n6. Technology Stack\nCategoryTechnologyVersion\nWeb FrameworkFastAPI + UvicornLatest\nCNN ModelEfficientNet-B4 (PyTorch)Custom fine-tuned\nVision LLMQwen2-VL-7B-InstructHuggingFace\nMedical LLMBioMistral-7BHuggingFace\nEmbeddingsall-MiniLM-L6-v2sentence-transformers\nVector StoreChromaDBLatest\nHTTP ClienthttpxAsync\nImage ProcessingPillowLatest\nData Processingpandas, numpyLatest\nBalancingimbalanced-learn (SMOTE)Latest\nPythonCPython3.12.3\nGPUNVIDIA L40SCUDA enabled\nPyTorchPyTorch2.11.0\n7. Live System Status\nServiceStatusNotes\nEfficientNet-B4RunningLocal model, 72MB\nChromaDBRunning2,298 records indexed\nB4 ConnectionRunningJWT auto-refresh active\nOllamaNot usedBioMistral via HuggingFace directly\nMetricValue\nTotal diagnoses processed30\nDoctor corrections1\nUrgency distributionP1: 2, P2: 0, P3: 24, P4: 4\n",
+      "category": "Data Store",
+      "subCategory": ""
+    },
+    {
+      "id": "a5dcc4e1-f129-445b-af24-47c5c52035ab",
+      "name": "prompt versionsdb/prompts.json",
+      "dfdType": "Data Store",
+      "description": "Data Store: prompt versionsdb/prompts.json",
+      "contextChunk": "etdata/RAG_dataset.csv~5 MB\nDiagnoses historydb/diagnoses.jsonFlat JSON\nDoctor correctionsdb/corrections.jsonFlat JSON\nPrompt versionsdb/prompts.jsonFlat JSON\n\nOR2 — Architecture Document\nNLU and Diagnostic Engine | AI vs Cancer — DermaTriage\nAI vs Cancer — DermaTriage | University of Milan | Page 4\nComponentLocationSize\nModel versionsdb/model_versions.jsonFlat JSON\nTraining imagesdata/images/~2 GB\nLogslogs/Rotating\n6. Technology Stack\nCategoryTechnologyVersion\nWeb FrameworkFastAPI + UvicornLatest\nCNN ModelEfficientNet-B4 (PyTorch)Custom fine-tuned\nVision LLMQwen2-VL-7B-InstructHuggingFace\nMedical LLMBioMistral-7BHuggingFace\nEmbeddingsall-MiniLM-L6-v2sentence-transformers\nVector StoreChromaDBLatest\nHTTP ClienthttpxAsync\nImage ProcessingPillowLatest\nData Processingpandas, numpyLatest\nBalancingimbalanced-learn (SMOTE)Latest\nPythonCPython3.12.3\nGPUNVIDIA L40SCUDA enabled\nPyTorchPyTorch2.11.0\n7. Live System Status\nServiceStatusNotes\nEfficientNet-B4RunningLocal model, 72MB\nChromaDBRunning2,298 records indexed\nB4 ConnectionRunningJWT auto-refresh active\nOllamaNot usedBioMistral via HuggingFace directly\nMetricValue\nTotal diagnoses processed30\nDoctor corrections1\nUrgency distributionP1: 2, P2: 0, P3: 24, P4: 4\n",
+      "category": "Data Store",
+      "subCategory": ""
+    },
+    {
+      "id": "60f8f15f-bf0e-4b78-b6e0-b78f2b0ea3fb",
+      "name": "model versionsdb/model_versions.json",
+      "dfdType": "Data Store",
+      "description": "Data Store: model versionsdb/model_versions.json",
+      "contextChunk": "etdata/RAG_dataset.csv~5 MB\nDiagnoses historydb/diagnoses.jsonFlat JSON\nDoctor correctionsdb/corrections.jsonFlat JSON\nPrompt versionsdb/prompts.jsonFlat JSON\n\nOR2 — Architecture Document\nNLU and Diagnostic Engine | AI vs Cancer — DermaTriage\nAI vs Cancer — DermaTriage | University of Milan | Page 4\nComponentLocationSize\nModel versionsdb/model_versions.jsonFlat JSON\nTraining imagesdata/images/~2 GB\nLogslogs/Rotating\n6. Technology Stack\nCategoryTechnologyVersion\nWeb FrameworkFastAPI + UvicornLatest\nCNN ModelEfficientNet-B4 (PyTorch)Custom fine-tuned\nVision LLMQwen2-VL-7B-InstructHuggingFace\nMedical LLMBioMistral-7BHuggingFace\nEmbeddingsall-MiniLM-L6-v2sentence-transformers\nVector StoreChromaDBLatest\nHTTP ClienthttpxAsync\nImage ProcessingPillowLatest\nData Processingpandas, numpyLatest\nBalancingimbalanced-learn (SMOTE)Latest\nPythonCPython3.12.3\nGPUNVIDIA L40SCUDA enabled\nPyTorchPyTorch2.11.0\n7. Live System Status\nServiceStatusNotes\nEfficientNet-B4RunningLocal model, 72MB\nChromaDBRunning2,298 records indexed\nB4 ConnectionRunningJWT auto-refresh active\nOllamaNot usedBioMistral via HuggingFace directly\nMetricValue\nTotal diagnoses processed30\nDoctor corrections1\nUrgency distributionP1: 2, P2: 0, P3: 24, P4: 4\n",
+      "category": "Data Store",
+      "subCategory": ""
+    },
+    {
+      "id": "9075cb9a-d745-4e03-a93c-f5742f1a372e",
+      "name": "training imagesdata/images/",
+      "dfdType": "External Entity",
+      "description": "External Entity: training imagesdata/images/",
+      "contextChunk": "etdata/RAG_dataset.csv~5 MB\nDiagnoses historydb/diagnoses.jsonFlat JSON\nDoctor correctionsdb/corrections.jsonFlat JSON\nPrompt versionsdb/prompts.jsonFlat JSON\n\nOR2 — Architecture Document\nNLU and Diagnostic Engine | AI vs Cancer — DermaTriage\nAI vs Cancer — DermaTriage | University of Milan | Page 4\nComponentLocationSize\nModel versionsdb/model_versions.jsonFlat JSON\nTraining imagesdata/images/~2 GB\nLogslogs/Rotating\n6. Technology Stack\nCategoryTechnologyVersion\nWeb FrameworkFastAPI + UvicornLatest\nCNN ModelEfficientNet-B4 (PyTorch)Custom fine-tuned\nVision LLMQwen2-VL-7B-InstructHuggingFace\nMedical LLMBioMistral-7BHuggingFace\nEmbeddingsall-MiniLM-L6-v2sentence-transformers\nVector StoreChromaDBLatest\nHTTP ClienthttpxAsync\nImage ProcessingPillowLatest\nData Processingpandas, numpyLatest\nBalancingimbalanced-learn (SMOTE)Latest\nPythonCPython3.12.3\nGPUNVIDIA L40SCUDA enabled\nPyTorchPyTorch2.11.0\n7. Live System Status\nServiceStatusNotes\nEfficientNet-B4RunningLocal model, 72MB\nChromaDBRunning2,298 records indexed\nB4 ConnectionRunningJWT auto-refresh active\nOllamaNot usedBioMistral via HuggingFace directly\nMetricValue\nTotal diagnoses processed30\nDoctor corrections1\nUrgency distributionP1: 2, P2: 0, P3: 24, P4: 4\n",
+      "category": "External Entity",
+      "subCategory": ""
+    },
+    {
+      "id": "9091454d-1721-44e2-96bf-eea6506e97f3",
+      "name": "logs/Rotating",
+      "dfdType": "Process",
+      "description": "Process: logs/Rotating",
+      "contextChunk": "etdata/RAG_dataset.csv~5 MB\nDiagnoses historydb/diagnoses.jsonFlat JSON\nDoctor correctionsdb/corrections.jsonFlat JSON\nPrompt versionsdb/prompts.jsonFlat JSON\n\nOR2 — Architecture Document\nNLU and Diagnostic Engine | AI vs Cancer — DermaTriage\nAI vs Cancer — DermaTriage | University of Milan | Page 4\nComponentLocationSize\nModel versionsdb/model_versions.jsonFlat JSON\nTraining imagesdata/images/~2 GB\nLogslogs/Rotating\n6. Technology Stack\nCategoryTechnologyVersion\nWeb FrameworkFastAPI + UvicornLatest\nCNN ModelEfficientNet-B4 (PyTorch)Custom fine-tuned\nVision LLMQwen2-VL-7B-InstructHuggingFace\nMedical LLMBioMistral-7BHuggingFace\nEmbeddingsall-MiniLM-L6-v2sentence-transformers\nVector StoreChromaDBLatest\nHTTP ClienthttpxAsync\nImage ProcessingPillowLatest\nData Processingpandas, numpyLatest\nBalancingimbalanced-learn (SMOTE)Latest\nPythonCPython3.12.3\nGPUNVIDIA L40SCUDA enabled\nPyTorchPyTorch2.11.0\n7. Live System Status\nServiceStatusNotes\nEfficientNet-B4RunningLocal model, 72MB\nChromaDBRunning2,298 records indexed\nB4 ConnectionRunningJWT auto-refresh active\nOllamaNot usedBioMistral via HuggingFace directly\nMetricValue\nTotal diagnoses processed30\nDoctor corrections1\nUrgency distributionP1: 2, P2: 0, P3: 24, P4: 4\n",
+      "category": "Process",
+      "subCategory": ""
+    }
+  ],
+  "flows": [
+    {
+      "id": "7b05176f-b9c8-4cf8-ac88-d7fe39cee977",
+      "fromId": "5355a7b3-6b48-4eec-801b-388b12cb7b9b",
+      "toId": "0d64122a-eed0-4a16-a74d-7ae13e56697f",
+      "label": "test"
+    }
+  ]
 }
