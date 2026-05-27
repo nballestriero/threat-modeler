@@ -16,7 +16,7 @@ router.post('/test-connection', async (req, res) => {
         try {
             const response = await axios.get(`${baseUrl}/api/v1/heartbeat`, { timeout: 5000 });
             if (response.status === 200) {
-                return res.json({ connected: true, message: '✅ Connesso a ChromaDB (v1)' });
+                return res.json({ connected: true, message: '✅ Connesso a ChromaDB (v1 legacy)' });
             }
         } catch (e) {
             return res.json({ connected: false, message: `❌ ${e.message}` });

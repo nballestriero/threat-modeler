@@ -16,8 +16,12 @@ const analysisRoutes = require('./routes/analysis');      // contiene anche /rag
 const analysisDfdRoutes = require('./routes/analysisDfd');
 const dfdRoutes = require('./routes/dfd');
 const testRoutes = require('./routes/test');
+const ragRoutes = require('./routes/rag');
+
+
 
 // Registra le route
+
 app.use('/api', assetsRoutes);
 app.use('/api', configRoutes);
 app.use('/api', filesRoutes);
@@ -26,6 +30,9 @@ app.use('/api', analysisRoutes);
 app.use('/api', analysisDfdRoutes);
 app.use('/api', dfdRoutes);
 app.use('/api', testRoutes);
+//app.use('/api', ragRoutes);
+app.use('/api/rag', ragRoutes)
+
 
 // Log di avvio per ogni modulo (facoltativo)
 console.log('✅ Route registrate:');
