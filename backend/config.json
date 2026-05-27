@@ -1,0 +1,21 @@
+{
+  "ollama": {
+    "enabled": true,
+    "baseUrl": "http://localhost:11434",
+    "model": "llama3.1:8b"
+  },
+  "project": {
+    "name": "Default Project"
+  },
+  "database": {
+    "enabled": false,
+    "type": "sqlite",
+    "path": "./data.db"
+  },
+  "jsonStoragePath": "./threat-models/",
+  "rag": {
+    "enabled": true,
+    "baseUrl": "http://localhost:8000",
+    "embeddingModel": "nomic-embed-text"
+  }
+}

@@ -1,0 +1,283 @@
+{
+  "meta": {
+    "name": "ThreatModeler Asset Taxonomy",
+    "version": "1.0",
+    "description": "Classificazione strutturata degli asset per threat modeling secondo STRIDE-AI, ENISA, OWASP, Microsoft SDL."
+  },
+  "categories": [
+    {
+      "id": "CAT-01",
+      "name": "Data",
+      "color": "#27500A",
+      "colorBg": "#EAF3DE",
+      "description": "Tutti i dati generati, trasformati o consumati lungo il ciclo di vita del sistema. Include dati di training ML, dati operativi, log e configurazioni.",
+      "strideRelevance": [ "Tampering", "Information Disclosure", "Spoofing" ],
+      "subcategories": [
+        {
+          "name": "Raw Data",
+          "description": "Dati grezzi raccolti da fonti esterne prima di qualsiasi trasformazione. Vulnerabili a selection bias e perturbation attacks."
+        },
+        {
+          "name": "Labeled Data",
+          "description": "Dataset etichettati per training supervisionato. Soggetti ad append attack, backdoor attack, label flipping."
+        },
+        {
+          "name": "Validation Data",
+          "description": "Dataset per valutare il modello durante il training. Anche una singola modifica può interrompere prematuramente il training."
+        },
+        {
+          "name": "Augmented Data",
+          "description": "Dati generati artificialmente per aumentare la diversità del training set. Vulnerabili ad adversarial augmentation."
+        },
+        {
+          "name": "Pre-processed Data",
+          "description": "Dati puliti e trasformati pronti per il training. Errori di pre-processing si propagano a tutti gli step successivi."
+        },
+        {
+          "name": "Test Cases",
+          "description": "Held-out test cases usati in produzione per monitorare la performance. Soggetti a slicing attacks."
+        },
+        {
+          "name": "Inferences",
+          "description": "Output generati dal modello su dati reali in produzione. Soggetti a eavesdropping."
+        },
+        {
+          "name": "Configuration Data",
+          "description": "File di configurazione del sistema: variabili d'ambiente, secrets, parametri di connessione, chiavi API."
+        },
+        {
+          "name": "Logs & Audit Trails",
+          "description": "Log applicativi, di accesso e audit trail di sistema. Essenziali per la non-repudiation."
+        }
+      ]
+    },
+    {
+      "id": "CAT-02",
+      "name": "Models",
+      "color": "#3C3489",
+      "colorBg": "#EEEDFE",
+      "description": "Componenti ML: algoritmi, parametri, modelli in training e in produzione. Specifici dell'ecosistema AI.",
+      "strideRelevance": [ "Tampering", "Information Disclosure", "Elevation of Privilege" ],
+      "subcategories": [
+        {
+          "name": "Trained Model",
+          "description": "Modello i cui parametri sono stati ottimizzati su dati di training. Soggetto a model poisoning attacks."
+        },
+        {
+          "name": "Deployed Model",
+          "description": "Modello in produzione che riceve input reali. Bersaglio di evasion, inversion, membership inference attacks."
+        },
+        {
+          "name": "Model Parameters",
+          "description": "Pesi interni del modello (es. pesi di una rete neurale). Vulnerabili a model extraction via query ripetute."
+        },
+        {
+          "name": "Hyper-parameters",
+          "description": "Parametri che controllano il training (learning rate, batch size). Soggetti a hyper-parameter stealing attacks."
+        },
+        {
+          "name": "Learning Algorithm",
+          "description": "Algoritmo di ottimizzazione per il training. Un algoritmo online è più esposto ad attacchi di drift."
+        },
+        {
+          "name": "Pre-processing Algorithm",
+          "description": "Algoritmi di trasformazione dati (scaling, encoding). Vulnerabili a image-scaling attacks."
+        }
+      ]
+    },
+    {
+      "id": "CAT-03",
+      "name": "Infrastructure",
+      "color": "#0C447C",
+      "colorBg": "#E6F1FB",
+      "description": "Componenti fisici e logici dell'infrastruttura IT: server, database, reti, API. Categoria aggiunta per coprire sistemi IT classici.",
+      "strideRelevance": [ "Spoofing", "Denial of Service", "Elevation of Privilege", "Tampering" ],
+      "subcategories": [
+        {
+          "name": "Server / Host",
+          "description": "Macchine fisiche o virtuali che ospitano servizi. Entry point per privilege escalation."
+        },
+        {
+          "name": "Database",
+          "description": "Sistemi RDBMS, NoSQL, graph database. Bersaglio di SQL injection, data exfiltration."
+        },
+        {
+          "name": "Network Component",
+          "description": "Router, firewall, load balancer, switch. Bersaglio di MitM, sniffing, DoS."
+        },
+        {
+          "name": "API / Endpoint",
+          "description": "Interfacce REST, GraphQL, gRPC. Vulnerabili a injection, broken auth, rate limit bypass."
+        },
+        {
+          "name": "Storage System",
+          "description": "Filesystem, object storage (S3, Azure Blob), NAS. Rischio di unauthorized access, ransomware."
+        },
+        {
+          "name": "Container / VM",
+          "description": "Container Docker/Kubernetes, macchine virtuali. Rischio di container escape, misconfiguration."
+        },
+        {
+          "name": "Cloud Service",
+          "description": "Servizi esterni cloud (AWS, Azure, GCP). Rischio di IAM misconfiguration, shared responsibility gap."
+        },
+        {
+          "name": "IoT / Sensor Device",
+          "description": "Dispositivi fisici connessi: sensori, attuatori, data logger. Spesso privi di patch management."
+        }
+      ]
+    },
+    {
+      "id": "CAT-04",
+      "name": "Actors",
+      "color": "#633806",
+      "colorBg": "#FAEEDA",
+      "description": "Entità umane, sistemi o agenti che interagiscono con il sistema, sia legittimi che avversariali.",
+      "strideRelevance": [ "Spoofing", "Repudiation", "Elevation of Privilege" ],
+      "subcategories": [
+        {
+          "name": "User (Human)",
+          "description": "Utente finale del sistema. Può essere vittima di social engineering, credential theft."
+        },
+        {
+          "name": "Administrator",
+          "description": "Operatore con privilegi elevati. La compromissione delle credenziali equivale a EoP immediata."
+        },
+        {
+          "name": "Developer",
+          "description": "Sviluppatore con accesso al codice e pipeline CI/CD. Rischio di supply chain attack."
+        },
+        {
+          "name": "AI Agent",
+          "description": "Agente autonomo basato su LLM o ML. Rischio di prompt injection, goal hijack."
+        },
+        {
+          "name": "External System",
+          "description": "Sistema esterno che interagisce via API. Deve avere trust level separato nel DFD."
+        },
+        {
+          "name": "Third-party Service",
+          "description": "Servizio SaaS esterno (es. Stripe, OAuth). Rischio supply chain."
+        },
+        {
+          "name": "Attacker (modelled)",
+          "description": "Attore avversariale modellato esplicitamente per l'analisi."
+        }
+      ]
+    },
+    {
+      "id": "CAT-05",
+      "name": "Processes",
+      "color": "#085041",
+      "colorBg": "#E1F5EE",
+      "description": "Processi e flussi operativi del sistema, sia IT classici che ML-specifici.",
+      "strideRelevance": [ "Tampering", "Repudiation", "Denial of Service", "Elevation of Privilege" ],
+      "subcategories": [
+        {
+          "name": "Data Collection",
+          "description": "Raccolta e ingestion dati da fonti multiple. Vulnerabile a data poisoning alla fonte."
+        },
+        {
+          "name": "Data Pre-processing",
+          "description": "Pulizia, normalizzazione, trasformazione. Un errore si propaga a tutti gli step."
+        },
+        {
+          "name": "Model Training",
+          "description": "Ottimizzazione dei parametri del modello. Bersaglio di data poisoning e backdoor attacks."
+        },
+        {
+          "name": "Model Tuning",
+          "description": "Fine-tuning degli hyper-parameter. Vulnerabile a manipolazione per over-fitting."
+        },
+        {
+          "name": "Model Deployment",
+          "description": "Transizione da sviluppo a produzione. Rischio di model substitution e misconfiguration."
+        },
+        {
+          "name": "Monitoring",
+          "description": "Monitoraggio continuo delle performance in produzione. L'assenza facilita attacchi silenti."
+        },
+        {
+          "name": "Business Process",
+          "description": "Processo aziendale IT classico (ordine, pagamento). Vulnerabile a business logic bypass."
+        },
+        {
+          "name": "Authentication Flow",
+          "description": "Autenticazione, autorizzazione, gestione sessioni. Bersaglio di spoofing, brute force."
+        }
+      ]
+    },
+    {
+      "id": "CAT-06",
+      "name": "Tools",
+      "color": "#712B13",
+      "colorBg": "#FAECE7",
+      "description": "Strumenti software usati durante il ciclo di sviluppo e operativo.",
+      "strideRelevance": [ "Tampering", "Information Disclosure" ],
+      "subcategories": [
+        {
+          "name": "ML Framework",
+          "description": "Framework ML (TensorFlow, PyTorch). Vulnerabile a dependency confusion, malicious weights."
+        },
+        {
+          "name": "Data Exploration Tool",
+          "description": "Strumenti di analisi dati (Jupyter, pandas). Rischio di code injection."
+        },
+        {
+          "name": "Visualization Tool",
+          "description": "Strumenti di visualizzazione (Grafana, Kibana). Rischio di dashboard tampering."
+        },
+        {
+          "name": "CI/CD Pipeline",
+          "description": "Pipeline di integrazione e deployment (GitHub Actions, Jenkins). Supply chain attack vector."
+        },
+        {
+          "name": "Security Tool",
+          "description": "SIEM, vulnerability scanner, IDS/IPS. La loro compromissione rende invisibili gli attacchi."
+        },
+        {
+          "name": "Development Library",
+          "description": "Librerie e dipendenze (npm, pip). Vettore di supply chain attacks."
+        }
+      ]
+    },
+    {
+      "id": "CAT-07",
+      "name": "Artefacts",
+      "color": "#444441",
+      "colorBg": "#F1EFE8",
+      "description": "Documenti, schemi e artefatti tecnici prodotti e consumati dal sistema.",
+      "strideRelevance": [ "Information Disclosure", "Spoofing", "Tampering" ],
+      "subcategories": [
+        {
+          "name": "Model Architecture",
+          "description": "Specifica dell'architettura del pipeline ML. La sua divulgazione facilita adversarial attacks."
+        },
+        {
+          "name": "Hardware Design",
+          "description": "Design hardware del modello ML (FPGA, neuromorphic). Vulnerabile a side-channel attacks."
+        },
+        {
+          "name": "Metadata Schema",
+          "description": "Schema dei metadati dei dati ML. Può facilitare model inversion attacks."
+        },
+        {
+          "name": "Learned Index",
+          "description": "Indice ML che mappa chiavi a posizioni dati. Soggetto a index poisoning attacks."
+        },
+        {
+          "name": "Use Case Document",
+          "description": "Documentazione dei casi d'uso. La sua compromissione altera i requisiti di sicurezza."
+        },
+        {
+          "name": "API Contract",
+          "description": "Specifica OpenAPI/Swagger. L'esposizione facilita la ricognizione."
+        },
+        {
+          "name": "Threat Model Document",
+          "description": "Il documento di threat modeling stesso. Rivela le vulnerabilità note."
+        }
+      ]
+    }
+  ]
+}

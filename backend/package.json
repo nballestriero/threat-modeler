@@ -11,11 +11,14 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "axios": "^1.16.1",
+    "chromadb": "^3.4.3",
     "cors": "^2.8.6",
     "csv-parser": "^3.2.1",
     "express": "^5.2.1",
     "multer": "^2.1.1",
-    "pdf-parse": "^2.4.5",
+    "pdf-parse": "^1.1.1",
+    "tesseract.js": "^7.0.0",
     "uuid": "^14.0.0",
     "zod": "^4.4.3",
     "zustand": "^5.0.13"

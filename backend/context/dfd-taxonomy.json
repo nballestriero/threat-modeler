@@ -1,0 +1,30 @@
+{
+  "meta": {
+    "name": "DFD Base Taxonomy",
+    "version": "1.0",
+    "description": "Tassonomia semplificata per Data Flow Diagram di primo livello"
+  },
+  "categories": [
+    {
+      "name": "External Entity",
+      "color": "#1E40AF",
+      "colorBg": "#DBEAFE",
+      "description": "Attori esterni, sistemi, utenti che interagiscono con il sistema",
+      "shape": "([\"{name}\"])"
+    },
+    {
+      "name": "Process",
+      "color": "#B45309",
+      "colorBg": "#FEF3C7",
+      "description": "Processi, attività, trasformazioni di dati",
+      "shape": "[\"{name}\"]"
+    },
+    {
+      "name": "Data Store",
+      "color": "#047857",
+      "colorBg": "#D1FAE5",
+      "description": "Archivi, database, file, qualsiasi deposito persistente",
+      "shape": "[({name})]"
+    }
+  ]
+}

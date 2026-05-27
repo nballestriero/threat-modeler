@@ -1,0 +1,12 @@
+{
+  "categories": ["Data", "Models", "Infrastructure", "Actors", "Processes", "Tools", "Artefacts"],
+  "subcategories": {
+    "Data": ["Raw Data", "Labeled Data", "Validation Data", "Pre-processed Data", "Inference Data", "Configuration Data", "Logs & Audit Trails"],
+    "Models": ["Trained Model", "Deployed Model", "Model Parameters", "Hyper-parameters", "Learning Algorithm", "Pre-processing Algorithm"],
+    "Infrastructure": ["Server / Host", "Database", "Network Component", "API / Endpoint", "Storage System", "Container / VM", "Cloud Service", "IoT / Sensor Device"],
+    "Actors": ["User (Human)", "Administrator", "Developer", "AI Agent", "External System", "Third-party Service", "Attacker"],
+    "Processes": ["Data Collection", "Data Pre-processing", "Model Training", "Model Tuning", "Model Deployment", "Monitoring", "Business Process", "Authentication Flow"],
+    "Tools": ["ML Framework", "Data Exploration Tool", "Visualization Tool", "CI/CD Pipeline", "Security Tool", "Development Library"],
+    "Artefacts": ["Model Architecture", "Metadata Schema", "Use Case Document", "API Contract", "Threat Model Document"]
+  }
+}
