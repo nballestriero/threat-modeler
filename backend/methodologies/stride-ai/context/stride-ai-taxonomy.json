@@ -1,0 +1,152 @@
+{
+  "meta": {
+    "name": "STRIDE-AI Taxonomy",
+    "version": "1.0",
+    "description": "Tassonomia degli asset per la metodologia STRIDE-AI (Mauri & Damiani, 2022), basata sul paper 'Modeling Threats to AI-ML Systems Using STRIDE'.",
+    "source": "https://doi.org/10.3390/s22176662"
+  },
+  "categories": [
+    {
+      "name": "Data",
+      "color": "#2E7D32",
+      "colorBg": "#E8F5E9",
+      "description": "Tutti i dati generati, trasformati o consumati lungo il ciclo di vita del sistema ML. Include dati di training, test, validation, inferences, configurazioni, log.",
+      "strideRelevance": [ "Tampering", "Information Disclosure", "Spoofing" ],
+      "subcategories": [
+        {
+          "name": "Raw Data",
+          "description": "Dati grezzi raccolti da fonti esterne prima di qualsiasi trasformazione. Vulnerabili a selection bias e perturbation attacks."
+        },
+        {
+          "name": "Pre-processed Data",
+          "description": "Dati puliti e trasformati pronti per il training. Errori di pre-processing si propagano a tutti gli step."
+        },
+        {
+          "name": "Labeled Data",
+          "description": "Dataset etichettati per training supervisionato. Soggetti a append attack, backdoor attack, label flipping."
+        },
+        {
+          "name": "Validation Data",
+          "description": "Dataset usati per valutare il modello durante il training. Anche una singola modifica può interrompere il training."
+        },
+        {
+          "name": "Augmented Data",
+          "description": "Dati generati artificialmente per aumentare la diversità del training set. Vulnerabili ad adversarial augmentation."
+        },
+        {
+          "name": "Held-out Test Cases",
+          "description": "Input speciali usati per testare il modello in produzione. Vulnerabili a slicing attacks."
+        },
+        {
+          "name": "Inferences",
+          "description": "Output generati dal modello su dati reali. Soggetti a eavesdropping."
+        },
+        {
+          "name": "Configuration Data",
+          "description": "File di configurazione, variabili d'ambiente, secrets, parametri di connessione."
+        },
+        {
+          "name": "Logs & Audit Trails",
+          "description": "Log applicativi, di accesso e audit trail, essenziali per la non-repudiation."
+        }
+      ]
+    },
+    {
+      "name": "Models",
+      "color": "#1A237E",
+      "colorBg": "#E8EAF6",
+      "description": "Componenti ML: algoritmi, parametri, modelli in training e in produzione. Specifici dell'ecosistema AI.",
+      "strideRelevance": [ "Tampering", "Information Disclosure", "Elevation of Privilege" ],
+      "subcategories": [
+        {
+          "name": "Data Pre-processing Algorithms",
+          "description": "Algoritmi di trasformazione dati prima del training (scaling, encoding). Vulnerabili a image-scaling attacks."
+        },
+        {
+          "name": "Hyper-parameters",
+          "description": "Parametri che controllano il training (learning rate, batch size). Soggetti a hyper-parameter stealing."
+        },
+        {
+          "name": "Learning Algorithms",
+          "description": "Algoritmo di ottimizzazione per il training. Un algoritmo online è più esposto ad attacchi di drift."
+        },
+        {
+          "name": "Model Parameters",
+          "description": "Pesi interni del modello. Vulnerabili a model extraction via query ripetute."
+        },
+        {
+          "name": "Trained Models",
+          "description": "Modello i cui parametri sono stati ottimizzati. Soggetto a model poisoning attacks."
+        },
+        {
+          "name": "Deployed Models",
+          "description": "Modello in produzione che riceve input reali. Bersaglio di evasion, inversion, membership inference attacks."
+        }
+      ]
+    },
+    {
+      "name": "Actors",
+      "color": "#BF360C",
+      "colorBg": "#FBE9E7",
+      "description": "Entità umane, sistemi o agenti che interagiscono con il sistema ML.",
+      "strideRelevance": [ "Spoofing", "Repudiation", "Elevation of Privilege" ],
+      "subcategories": [
+        {
+          "name": "Actors",
+          "description": "Qualsiasi entità che interagisce con il sistema, inclusi utenti, amministratori, sviluppatori, sistemi esterni, attaccanti modellati."
+        }
+      ]
+    },
+    {
+      "name": "Processes",
+      "color": "#E65100",
+      "colorBg": "#FFF3E0",
+      "description": "Processi e flussi operativi del sistema ML, che coprono l'intero ciclo di vita.",
+      "strideRelevance": [ "Tampering", "Repudiation", "Denial of Service", "Elevation of Privilege" ],
+      "subcategories": [
+        {
+          "name": "Processes",
+          "description": "Qualsiasi processo, inclusi data ingestion, training, tuning, deployment, monitoring, business process, autenticazione."
+        }
+      ]
+    },
+    {
+      "name": "Tools",
+      "color": "#AD1457",
+      "colorBg": "#FCE4EC",
+      "description": "Strumenti software usati durante il ciclo di sviluppo e operativo (framework, pipeline CI/CD, librerie).",
+      "strideRelevance": [ "Tampering", "Information Disclosure" ],
+      "subcategories": [
+        {
+          "name": "Tools",
+          "description": "Qualsiasi strumento, incluse ML framework, data exploration, visualization, CI/CD, security tools, librerie."
+        }
+      ]
+    },
+    {
+      "name": "Artefacts",
+      "color": "#455A64",
+      "colorBg": "#ECEFF1",
+      "description": "Documenti, schemi e artefatti tecnici prodotti e consumati dal sistema ML.",
+      "strideRelevance": [ "Information Disclosure", "Spoofing", "Tampering" ],
+      "subcategories": [
+        {
+          "name": "Model Architecture",
+          "description": "Specifica dell'architettura del pipeline ML. La sua divulgazione facilita adversarial attacks."
+        },
+        {
+          "name": "Hardware Design",
+          "description": "Design hardware del modello ML (FPGA, neuromorphic). Vulnerabile a side-channel attacks."
+        },
+        {
+          "name": "Data & Metadata Schemata",
+          "description": "Schema dei metadati dei dati ML. Può facilitare model inversion attacks."
+        },
+        {
+          "name": "Learned Data Indexes",
+          "description": "Indice ML che mappa chiavi a posizioni dati. Soggetto a index poisoning attacks."
+        }
+      ]
+    }
+  ]
+}

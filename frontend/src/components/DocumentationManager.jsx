@@ -79,39 +79,12 @@ export default function DocumentationManager() {
         if (type === 'context') setSelectedContext(prev => prev.filter(f => f.name !== filename));
     };
 
-    const runLLMExtraction = async () => {
-        if (!llmEnabled) return alert('LLM non abilitato nella configurazione.');
-        if (selectedDocs.length === 0) return alert('Seleziona almeno un documento.');
-
-        setLoading(true);
-        setLlmStatus({ state: 'testing', message: '🤖 Analisi LLM completa in corso...' });
-
-        try {
-            const res = await axios.post(`${API_BASE}/analyze/extract-assets`, {
-                docFiles: selectedDocs.map(f => f.path),
-                contextFiles: selectedContext.map(f => f.path)
-            });
-
-            if (res.data.error) {
-                setLlmStatus({ state: 'error', message: res.data.error });
-            } else {
-                setLlmStatus({ state: 'connected', message: `✅ Estratti ${res.data.count} asset.` });
-                await syncExtractedAssets(res.data.assets);
-                alert(`Analisi completata: ${res.data.count} asset trovati. Passa alla fase Asset per rivederli.`);
-            }
-        } catch (e) {
-            console.error(e);
-            setLlmStatus({ state: 'error', message: 'Errore comunicazione backend o LLM offline.' });
-        }
-        setLoading(false);
-    };
-
     const runDfdExtraction = async () => {
         if (!llmEnabled) return alert('LLM non abilitato nella configurazione.');
         if (selectedDocs.length === 0) return alert('Seleziona almeno un documento.');
 
         setLoading(true);
-        setLlmStatus({ state: 'testing', message: '🤖 Analisi DFD base (veloce) in corso...' });
+        setLlmStatus({ state: 'testing', message: '🤖 Analisi DFD base in corso...' });
 
         try {
             const res = await axios.post(`${API_BASE}/analyze/extract-assets-dfd`, {
@@ -122,18 +95,14 @@ export default function DocumentationManager() {
             if (res.data.error) {
                 setLlmStatus({ state: 'error', message: res.data.error });
             } else {
-                const assetsWithCategory = res.data.assets.map(a => ({
-                    ...a,
-                    category: a.dfdType,   // mappa dfdType -> category per compatibilità
-                    subCategory: '',
-                }));
-                await syncExtractedAssets(assetsWithCategory);
+                // ✅ Invio diretto degli asset (il backend restituisce già 'category')
+                await syncExtractedAssets(res.data.assets);
                 setLlmStatus({ state: 'connected', message: `✅ Estratti ${res.data.count} asset (DFD base).` });
-                alert(`Analisi DFD base completata: ${res.data.count} asset trovati. Passa alla fase Asset per visualizzarli.`);
+                alert(`Analisi DFD base completata: ${res.data.count} asset trovati. Passa alla fase Asset per rivederli.`);
             }
         } catch (e) {
             console.error(e);
-            setLlmStatus({ state: 'error', message: 'Errore comunicazione backend.' });
+            setLlmStatus({ state: 'error', message: 'Errore comunicazione backend o LLM offline.' });
         }
         setLoading(false);
     };
@@ -168,8 +137,8 @@ export default function DocumentationManager() {
 
     return (
         <div className="bg-white rounded-xl shadow p-6">
-            <h2 className="text-xl font-semibold mb-4">📄 Fase 1: Caricamento e Analisi</h2>
-            <p className="text-sm text-gray-500 mb-6">Carica documentazione, file CSV di asset, e contesto. Usa l'LLM per estrarre asset automaticamente.</p>
+            <h2 className="text-xl font-semibold mb-4">📄 Fase 1: Caricamento e Analisi DFD Base</h2>
+            <p className="text-sm text-gray-500 mb-6">Carica documentazione, file CSV di asset, e contesto. Usa l'LLM per estrarre asset secondo la tassonomia DFD (External Entity, Process, Data Store).</p>
 
             <div className="flex gap-4 mb-6 border-b">
                 {['docs', 'csv', 'context'].map(t => (
@@ -193,19 +162,11 @@ export default function DocumentationManager() {
                         <div className="h-8 w-px bg-gray-300 mx-2"></div>
 
                         <button
-                            onClick={runLLMExtraction}
-                            disabled={isAnalyzeDisabled}
-                            className={`px-5 py-2.5 rounded-lg flex items-center gap-2 font-medium text-sm shadow-sm transition-all ${isAnalyzeDisabled ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-purple-600 text-white hover:bg-purple-700'}`}>
-                            {loading ? <Loader2 size={18} className="animate-spin" /> : <Play size={18} fill="currentColor" />}
-                            Analisi completa (STRIDE-AI)
-                        </button>
-
-                        <button
                             onClick={runDfdExtraction}
                             disabled={isAnalyzeDisabled}
                             className={`px-5 py-2.5 rounded-lg flex items-center gap-2 font-medium text-sm shadow-sm transition-all ${isAnalyzeDisabled ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-green-600 text-white hover:bg-green-700'}`}>
                             {loading ? <Loader2 size={18} className="animate-spin" /> : <Play size={18} fill="currentColor" />}
-                            Analisi DFD base (veloce)
+                            Analizza DFD base
                         </button>
 
                         {!llmEnabled && <span className="ml-auto text-xs text-red-600">⚠️ LLM non abilitato</span>}

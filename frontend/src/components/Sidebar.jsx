@@ -1,22 +1,26 @@
 import React from 'react';
 import { useAppStore } from '../store/useAppStore';
-import { Upload, Package, Share2, Shield } from 'lucide-react';
-
-const phases = [
-    { id: 1, name: '1. Caricamento', icon: Upload, description: 'Carica documenti e analizza (DFD base)' },
-    { id: 2, name: '2. Asset Base', icon: Package, description: 'Gestisci asset (External Entity, Process, Data Store)' },
-    { id: 3, name: '3. DFD', icon: Share2, description: 'Crea Data Flow Diagram e flussi' },
-    { id: 4, name: '4. Asset Avanzati', icon: Shield, description: 'Arricchisci con tassonomia completa (STRIDE-AI)' },
-];
+import { Upload, Package, Share2, Brain, GitBranch } from 'lucide-react';
 
 export default function Sidebar() {
-    const { currentPhase, setCurrentPhase } = useAppStore();
+    const { currentPhase, setCurrentPhase, activeMethodology } = useAppStore();
+
+    const phases = [
+        { id: 1, name: '1. Caricamento', icon: Upload, description: 'Carica e analizza DFD base' },
+        { id: 2, name: '2. Asset Base', icon: Package, description: 'Gestisci asset DFD' },
+        { id: 3, name: '3. DFD Base', icon: Share2, description: 'Diagramma base con flussi' },
+        { id: 4, name: '4. Metodologia', icon: Brain, description: 'Seleziona metodologia e arricchisci' },
+    ];
+
+    if (activeMethodology) {
+        phases.push({ id: 5, name: `5. DFD ${activeMethodology}`, icon: GitBranch, description: `DFD per ${activeMethodology}` });
+    }
 
     return (
         <div className="w-64 bg-white border-r shadow-sm flex flex-col h-screen sticky top-0">
             <div className="p-4 border-b">
                 <h1 className="font-bold text-lg text-blue-700">🛡️ Threat Modeler</h1>
-                <p className="text-xs text-gray-500">Pipeline in 4 fasi</p>
+                <p className="text-xs text-gray-500">Pipeline iterativa</p>
             </div>
             <nav className="flex-1 p-4 space-y-1">
                 {phases.map((phase) => (

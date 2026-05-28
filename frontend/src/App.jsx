@@ -3,7 +3,8 @@ import Sidebar from './components/Sidebar';
 import DocumentationManager from './components/DocumentationManager';
 import AssetInventory from './components/AssetInventory';
 import DfdEditor from './components/DfdEditor';
-import Phase4AdvancedAssets from './components/Phase4AdvancedAssets';
+import MethodologyManager from './components/MethodologyManager';
+import MethodologyDfdView from './components/MethodologyDfdView';
 import ConfigPanel from './components/ConfigPanel';
 import { useAppStore } from './store/useAppStore';
 
@@ -16,7 +17,8 @@ function App() {
             case 1: return <DocumentationManager />;
             case 2: return <AssetInventory />;
             case 3: return <DfdEditor />;
-            case 4: return <Phase4AdvancedAssets />;
+            case 4: return <MethodologyManager />;
+            case 5: return <MethodologyDfdView />;
             default: return <DocumentationManager />;
         }
     };

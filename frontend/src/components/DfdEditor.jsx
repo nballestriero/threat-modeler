@@ -20,25 +20,12 @@ export default function DfdEditor() {
     const [newFlowLabel, setNewFlowLabel] = useState('');
     const [dfdTaxonomy, setDfdTaxonomy] = useState(null);
 
-    // Carica la tassonomia DFD (con colori)
-    useEffect(() => {
-        fetch('/api/dfd-taxonomy')
-            .then(res => res.json())
-            .then(data => setDfdTaxonomy(data))
-            .catch(err => {
-                console.error('Errore caricamento tassonomia DFD, uso default', err);
-                setDfdTaxonomy({
-                    categories: [
-                        { name: 'External Entity', color: '#1E40AF', colorBg: '#DBEAFE' },
-                        { name: 'Process', color: '#B45309', colorBg: '#FEF3C7' },
-                        { name: 'Data Store', color: '#047857', colorBg: '#D1FAE5' }
-                    ]
-                });
-            });
-    }, []);
-
     useEffect(() => {
         fetchFlows();
+        fetch('/api/dfd-taxonomy')
+            .then(res => res.json())
+            .then(setDfdTaxonomy)
+            .catch(() => setDfdTaxonomy({ categories: [] }));
     }, []);
 
     // Sanitizza stringhe per Mermaid
@@ -53,9 +40,7 @@ export default function DfdEditor() {
             .trim();
     };
 
-    const sanitizeLabel = (label) => {
-        return label.replace(/[^\w\s\-\.]/g, '').trim();
-    };
+    const sanitizeLabel = (label) => label.replace(/[^\w\s\-\.]/g, '').trim();
 
     const mapToBaseType = (category) => {
         const mapping = {
@@ -79,11 +64,11 @@ export default function DfdEditor() {
         'Data Store': '[({name})]'
     };
 
-    // Genera il codice Mermaid con colori
+    // Genera il codice Mermaid
     useEffect(() => {
         setMermaidError('');
         if (!assets.length) {
-            const code = 'flowchart TD\n    A[Nessun asset. Torna alla fase Gestione Asset per aggiungerne.]';
+            const code = 'flowchart TD\n    A[Nessun asset. Torna alla fase 2 per aggiungerne.]';
             setMermaidCode(code);
             setEditableCode(code);
             return;
@@ -105,14 +90,13 @@ export default function DfdEditor() {
             let code = 'flowchart TD\n';
             for (const [baseType, nodeList] of groups.entries()) {
                 const subgraphId = baseType.replace(/\s/g, '_');
-                const categoryStyle = dfdTaxonomy?.categories?.find(c => c.name === baseType);
-                const bgColor = categoryStyle?.colorBg || '#f3f4f6';
-                const borderColor = categoryStyle?.color || '#6b7280';
+                const catStyle = dfdTaxonomy?.categories?.find(c => c.name === baseType);
+                const bg = catStyle?.colorBg || '#f3f4f6';
+                const border = catStyle?.color || '#6b7280';
                 code += `    subgraph ${subgraphId} ["${baseType}"]\n`;
+                code += `        style ${subgraphId} fill:${bg},stroke:${border},stroke-width:2px\n`;
                 code += nodeList.join('\n');
                 code += `\n    end\n`;
-                code += `    classDef ${subgraphId} fill:${bgColor},stroke:${borderColor},stroke-width:2px\n`;
-                code += `    class ${subgraphId} ${subgraphId}\n`;
             }
 
             if (flows.length) {
@@ -145,37 +129,25 @@ export default function DfdEditor() {
                     setMermaidError('');
                 } catch (err) {
                     console.error('Mermaid render error:', err);
-                    setMermaidError(`Errore di sintassi Mermaid: verifica il codice`);
+                    setMermaidError('Errore di sintassi Mermaid. Controlla il codice.');
                 }
             }
         };
         render();
     }, [mermaidCode]);
 
-    // Aggiungi flusso dal pannello
     const handleAddFlow = async () => {
-        if (!selectedFromId || !selectedToId || !newFlowLabel.trim()) {
-            alert('Seleziona origine, destinazione e inserisci un’etichetta');
-            return;
-        }
-        if (selectedFromId === selectedToId) {
-            alert('Origine e destinazione non possono essere uguali');
-            return;
-        }
+        if (!selectedFromId || !selectedToId || !newFlowLabel.trim()) return alert('Completa tutti i campi');
         setLoading(true);
         try {
             await addFlow({ fromId: selectedFromId, toId: selectedToId, label: newFlowLabel });
             setSelectedFromId('');
             setSelectedToId('');
             setNewFlowLabel('');
-        } catch (err) {
-            alert('Errore durante l’aggiunta del flusso');
-        } finally {
-            setLoading(false);
-        }
+        } catch (err) { alert('Errore aggiunta flusso'); }
+        setLoading(false);
     };
 
-    // Modifica flusso (dialog)
     const handleEditFlow = (flow) => {
         setEditFlow(flow);
         setFlowLabel(flow.label);
@@ -193,19 +165,13 @@ export default function DfdEditor() {
     };
 
     const handleDeleteFlow = async (id) => {
-        if (window.confirm('Eliminare questo flusso?')) {
-            await deleteFlow(id);
-        }
+        if (window.confirm('Eliminare questo flusso?')) await deleteFlow(id);
     };
 
     const copyToClipboard = async () => {
-        try {
-            await navigator.clipboard.writeText(editableCode);
-            setCopied(true);
-            setTimeout(() => setCopied(false), 2000);
-        } catch (err) {
-            console.error('Copia fallita:', err);
-        }
+        await navigator.clipboard.writeText(editableCode);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
     };
 
     const handleCodeChange = (e) => {
@@ -216,92 +182,47 @@ export default function DfdEditor() {
 
     return (
         <div className="bg-white rounded-xl shadow p-6">
-            <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold">📊 Fase 3: Data Flow Diagram (DFD)</h2>
-            </div>
+            <h2 className="text-xl font-semibold mb-4">Fase 3: Data Flow Diagram (DFD) Base</h2>
 
-            {/* Diagramma Mermaid */}
+            {/* Diagramma */}
             <div className="border rounded p-4 bg-gray-50 overflow-auto min-h-[300px] mb-6">
-                {mermaidError && (
-                    <div className="mb-4 p-3 bg-red-50 text-red-700 rounded flex items-center gap-2">
-                        <AlertCircle size={18} />
-                        <span className="text-sm">{mermaidError}</span>
-                    </div>
-                )}
+                {mermaidError && <div className="mb-2 p-2 bg-red-100 text-red-700 rounded">{mermaidError}</div>}
                 <div className="mermaid">{mermaidCode}</div>
             </div>
 
-            {/* PANNELLO PER AGGIUNGERE FLUSSI */}
+            {/* Pannello aggiungi flusso */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                <h3 className="font-medium text-blue-800 mb-3 flex items-center gap-2">
-                    <Link size={18} /> Aggiungi nuovo flusso
-                </h3>
+                <h3 className="font-medium flex items-center gap-2 mb-3"><Link size={18} /> Aggiungi flusso</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                        <label className="block text-xs font-medium text-gray-600 mb-1">Origine</label>
-                        <select
-                            value={selectedFromId}
-                            onChange={(e) => setSelectedFromId(e.target.value)}
-                            className="w-full p-2 border rounded bg-white"
-                        >
-                            <option value="">Seleziona asset...</option>
-                            {assets.map(asset => (
-                                <option key={asset.id} value={asset.id}>{asset.name}</option>
-                            ))}
-                        </select>
-                    </div>
-                    <div>
-                        <label className="block text-xs font-medium text-gray-600 mb-1">Destinazione</label>
-                        <select
-                            value={selectedToId}
-                            onChange={(e) => setSelectedToId(e.target.value)}
-                            className="w-full p-2 border rounded bg-white"
-                        >
-                            <option value="">Seleziona asset...</option>
-                            {assets.map(asset => (
-                                <option key={asset.id} value={asset.id}>{asset.name}</option>
-                            ))}
-                        </select>
-                    </div>
-                    <div>
-                        <label className="block text-xs font-medium text-gray-600 mb-1">Etichetta</label>
-                        <input
-                            type="text"
-                            value={newFlowLabel}
-                            onChange={(e) => setNewFlowLabel(e.target.value)}
-                            placeholder="es. 'invia immagine', 'richiede'"
-                            className="w-full p-2 border rounded"
-                        />
-                    </div>
+                    <select value={selectedFromId} onChange={e => setSelectedFromId(e.target.value)} className="p-2 border rounded bg-white">
+                        <option value="">Origine</option>
+                        {assets.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+                    </select>
+                    <select value={selectedToId} onChange={e => setSelectedToId(e.target.value)} className="p-2 border rounded bg-white">
+                        <option value="">Destinazione</option>
+                        {assets.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+                    </select>
+                    <input value={newFlowLabel} onChange={e => setNewFlowLabel(e.target.value)} placeholder="Etichetta" className="p-2 border rounded" />
                 </div>
-                <button
-                    onClick={handleAddFlow}
-                    disabled={loading}
-                    className="mt-3 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm flex items-center gap-2"
-                >
-                    {loading ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
-                    Collega
+                <button onClick={handleAddFlow} disabled={loading} className="mt-3 bg-blue-600 text-white px-4 py-2 rounded flex items-center gap-2">
+                    {loading ? <Loader2 className="animate-spin" size={16} /> : <Plus size={16} />} Collega
                 </button>
             </div>
 
             {/* Lista flussi esistenti */}
             <div className="mt-6 mb-6">
-                <h3 className="font-medium text-gray-700 mb-2">Flussi esistenti</h3>
-                {flows.length === 0 ? (
-                    <p className="text-sm text-gray-400">Nessun flusso definito. Usa il pannello sopra per crearne uno.</p>
-                ) : (
+                <h3 className="font-medium mb-2">Flussi definiti</h3>
+                {flows.length === 0 ? <p className="text-sm text-gray-400">Nessun flusso. Usa il pannello sopra.</p> : (
                     <table className="w-full text-sm border">
-                        <thead className="bg-gray-100">
-                            <tr><th className="p-2">Da</th><th className="p-2">A</th><th className="p-2">Etichetta</th><th className="p-2">Azioni</th></tr>
-                        </thead>
+                        <thead className="bg-gray-100"><tr><th className="p-2">Da</th><th className="p-2">A</th><th className="p-2">Etichetta</th><th className="p-2">Azioni</th></tr></thead>
                         <tbody>
                             {flows.map(flow => {
-                                const fromAsset = assets.find(a => a.id === flow.fromId);
-                                const toAsset = assets.find(a => a.id === flow.toId);
+                                const from = assets.find(a => a.id === flow.fromId);
+                                const to = assets.find(a => a.id === flow.toId);
                                 return (
                                     <tr key={flow.id} className="border-b">
-                                        <td className="p-2">{fromAsset?.name || '?'}</td>
-                                        <td className="p-2">{toAsset?.name || '?'}</td>
+                                        <td className="p-2">{from?.name || '?'}</td>
+                                        <td className="p-2">{to?.name || '?'}</td>
                                         <td className="p-2">{flow.label}</td>
                                         <td className="p-2 flex gap-2">
                                             <button onClick={() => handleEditFlow(flow)} className="text-amber-600"><Edit size={16} /></button>
@@ -318,43 +239,21 @@ export default function DfdEditor() {
             {/* Editor codice Mermaid */}
             <div className="mt-4">
                 <div className="flex justify-between items-center mb-2">
-                    <label className="text-sm font-medium text-gray-700">Codice Mermaid (modificabile manualmente)</label>
-                    <button onClick={copyToClipboard} className="flex items-center gap-1 px-2 py-1 text-xs bg-gray-200 rounded">
-                        {copied ? <Check size={14} /> : <Copy size={14} />}
-                        {copied ? 'Copiato!' : 'Copia'}
+                    <label className="text-sm font-medium">Codice Mermaid (modificabile)</label>
+                    <button onClick={copyToClipboard} className="bg-gray-200 px-2 py-1 rounded text-xs flex items-center gap-1">
+                        {copied ? <Check size={14} /> : <Copy size={14} />} Copia
                     </button>
                 </div>
-                <textarea
-                    value={editableCode}
-                    onChange={handleCodeChange}
-                    rows={12}
-                    className="w-full p-3 border rounded font-mono text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    spellCheck={false}
-                />
+                <textarea value={editableCode} onChange={handleCodeChange} rows={12} className="w-full p-3 border rounded font-mono text-sm" />
             </div>
 
-            {/* Dialog per modificare etichetta flusso */}
+            {/* Dialog modifica etichetta */}
             {showFlowDialog && (
                 <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
                     <div className="bg-white rounded-xl p-6 w-full max-w-md">
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-lg font-bold">Modifica etichetta flusso</h3>
-                            <button onClick={() => { setShowFlowDialog(false); setEditFlow(null); setFlowLabel(''); }} className="text-gray-400"><X size={20} /></button>
-                        </div>
-                        <input
-                            type="text"
-                            value={flowLabel}
-                            onChange={e => setFlowLabel(e.target.value)}
-                            className="w-full p-2 border rounded mb-4"
-                        />
-                        <button
-                            onClick={handleUpdateFlow}
-                            disabled={loading}
-                            className="w-full py-2 bg-green-600 text-white rounded flex items-center justify-center gap-2"
-                        >
-                            {loading ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-                            Salva modifiche
-                        </button>
+                        <div className="flex justify-between"><h3 className="text-lg font-bold">Modifica etichetta</h3><button onClick={() => setShowFlowDialog(false)}><X size={20} /></button></div>
+                        <input value={flowLabel} onChange={e => setFlowLabel(e.target.value)} className="w-full border p-2 rounded my-4" />
+                        <button onClick={handleUpdateFlow} className="w-full bg-green-600 text-white p-2 rounded">Salva</button>
                     </div>
                 </div>
             )}

@@ -1,61 +1,79 @@
+// backend/routes/dfd.js
 const express = require('express');
 const router = express.Router();
-const { loadModel, saveModel } = require('../models/assetModel');
-const { v4: uuidv4 } = require('uuid');
+const { loadModel } = require('../models/assetModel');
 
-function generateMermaidDFD(assets, options = { groupByCategory: true }) {
-    const categoryToShape = {
-        Actors: '(["{name}"])',
-        Processes: '["{name}"]',
-        Data: '[({name})]',
-        Infrastructure: '[({name})]',
-        Tools: '["{name}"]',
-        Artefacts: '(("{name}"))',
-        Models: '["{name}"]',
-        default: '(("{name}"))',
-    };
+function generateMermaidDFD(assets, taxonomy, flows) {
+    if (!assets.length) return 'flowchart TD\n    A[Nessun asset. Crea asset base nella fase 2.]';
 
-    // Sostituisce qualsiasi carattere non alfanumerico con underscore
-    const sanitizeId = (id) => id.replace(/[^a-zA-Z0-9]/g, '_');
+    const assetMap = new Map();
+    for (const asset of assets) {
+        const safeId = asset.id.replace(/[^a-zA-Z0-9]/g, '_');
+        assetMap.set(asset.id, { safeId, name: asset.name, category: asset.category });
+    }
 
-    let mermaid = 'flowchart TD\n';
-    if (options.groupByCategory) {
-        const subgraphs = new Map();
-        for (const asset of assets) {
-            const safeId = sanitizeId(asset.id);
-            const safeName = asset.name.replace(/"/g, '&quot;');
-            const shape = categoryToShape[asset.category] || categoryToShape.default;
-            const nodeDef = shape.replace('{name}', safeName);
-            if (!subgraphs.has(asset.category)) subgraphs.set(asset.category, []);
-            subgraphs.get(asset.category).push(`    ${safeId}${nodeDef}`);
-        }
-        for (const [category, nodeList] of subgraphs.entries()) {
-            mermaid += `    subgraph ${category}\n${nodeList.join('\n')}\n    end\n`;
+    // Raggruppa per categoria; se vuota, usa "Unclassified"
+    const groups = new Map();
+    for (const [id, { safeId, name, category }] of assetMap.entries()) {
+        const groupName = category || 'Unclassified';
+        const shape = {
+            'Data': '[({name})]',
+            'Models': '["{name}"]',
+            'Actors': '(["{name}"])',
+            'Processes': '["{name}"]',
+            'Tools': '["{name}"]',
+            'Artefacts': '(("{name}"))',
+            'Unclassified': '["{name}"]'
+        }[groupName] || '["{name}"]';
+        const safeName = name.replace(/"/g, '&quot;');
+        const nodeDef = shape.replace('{name}', safeName);
+        if (!groups.has(groupName)) groups.set(groupName, []);
+        groups.get(groupName).push(`    ${safeId}${nodeDef}`);
+    }
+
+    let code = 'flowchart TD\n';
+    for (const [groupName, nodeList] of groups.entries()) {
+        const catInfo = taxonomy.categories.find(c => c.name === groupName);
+        const bgColor = catInfo?.colorBg || (groupName === 'Unclassified' ? '#e5e7eb' : '#f3f4f6');
+        const borderColor = catInfo?.color || (groupName === 'Unclassified' ? '#6b7280' : '#6b7280');
+        const subgraphId = groupName.replace(/\s/g, '_');
+        code += `    subgraph ${subgraphId} ["${groupName}"]\n`;
+        code += `        style ${subgraphId} fill:${bgColor},stroke:${borderColor},stroke-width:2px\n`;
+        code += nodeList.join('\n');
+        code += `\n    end\n`;
+    }
+
+    if (flows && flows.length) {
+        code += `\n    %% Flussi\n`;
+        for (const flow of flows) {
+            if (assetMap.has(flow.fromId) && assetMap.has(flow.toId)) {
+                const fromId = assetMap.get(flow.fromId).safeId;
+                const toId = assetMap.get(flow.toId).safeId;
+                const safeLabel = flow.label.replace(/"/g, '&quot;');
+                code += `    ${fromId} -->|"${safeLabel}"| ${toId}\n`;
+            }
         }
     }
-    return mermaid;
+    return code;
 }
 router.get('/dfd', async (req, res) => {
     const model = await loadModel();
-    const mermaid = generateMermaidDFD(model.assets, { groupByCategory: true });
-    res.json({ mermaid, assets: model.assets });
-});
+    const advanced = await loadAdvanced();
+    const myAdvanced = advanced.filter(a => a.method === METHOD_NAME);
 
-router.put('/dfd/asset/:id', async (req, res) => {
-    const model = await loadModel();
-    const idx = model.assets.findIndex(a => a.id === req.params.id);
-    if (idx === -1) return res.status(404).json({ error: 'Asset non trovato' });
-    model.assets[idx] = { ...model.assets[idx], ...req.body, id: req.params.id };
-    await saveModel(model);
-    res.json(model.assets[idx]);
-});
+    // Crea una lista di tutti gli asset base, aggiungendo la categoria da advanced se presente
+    const assetsWithCategories = model.assets.map(base => {
+        const adv = myAdvanced.find(a => a.originalAssetId === base.id);
+        return {
+            id: base.id,
+            name: base.name,
+            category: adv?.category || ''   // vuoto se non ancora arricchito
+        };
+    });
 
-router.post('/dfd/asset', async (req, res) => {
-    const model = await loadModel();
-    const newAsset = { id: uuidv4(), ...req.body };
-    model.assets.push(newAsset);
-    await saveModel(model);
-    res.status(201).json(newAsset);
+    const flows = model.flows || [];
+    const mermaid = generateMermaidDFD(assetsWithCategories, TAXONOMY, flows);
+    res.json({ mermaid, assets: assetsWithCategories });
 });
 
 module.exports = router;
