@@ -1,32 +1,33 @@
+/**
+ * @file Modello per la gestione del file threat-model.json
+ * @module models/assetModel
+ */
+
 const fs = require('fs').promises;
-const fsSync = require('fs');
 const path = require('path');
-const { v4: uuidv4 } = require('uuid');
 
-const JSON_FILE = path.join(__dirname, '../threat-model.json');
-const DEFAULT_CONFIG = {
-    ollama: { baseUrl: 'http://localhost:11434', model: 'llama3', enabled: true },
-    project: { name: 'Nuovo Progetto' }
-};
-
+const DEFAULT_JSON_FILE = path.join(__dirname, '../threat-model.json');
+const JSON_FILE = process.env.TEST_JSON_FILE || DEFAULT_JSON_FILE;
+/**
+ * Carica il modello completo (assets + flows)
+ * @async
+ * @returns {Promise<{assets: Array, flows: Array}>}
+ */
 async function loadModel() {
     try {
         const data = await fs.readFile(JSON_FILE, 'utf-8');
-        const model = JSON.parse(data);
-        if (!model.flows) model.flows = [];
-        return model;
+        return JSON.parse(data);
     } catch {
-        const init = {
-            project: { name: 'Nuovo Progetto', version: '1.0', owner: '' },
-            config: DEFAULT_CONFIG,
-            assets: [],
-            flows: []
-        };
-        await fs.writeFile(JSON_FILE, JSON.stringify(init, null, 2));
-        return init;
+        return { assets: [], flows: [] };
     }
 }
 
+/**
+ * Salva il modello completo
+ * @async
+ * @param {Object} model - Modello da salvare
+ * @returns {Promise<void>}
+ */
 async function saveModel(model) {
     await fs.writeFile(JSON_FILE, JSON.stringify(model, null, 2));
 }

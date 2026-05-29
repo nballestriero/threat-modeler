@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+    <meta charset="utf-8">
+    <title>server.js - Documentation</title>
+    
+    
+    <script src="scripts/prettify/prettify.js"></script>
+    <script src="scripts/prettify/lang-css.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc.css">
+    <script src="scripts/nav.js" defer></script>
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+
+<input type="checkbox" id="nav-trigger" class="nav-trigger" />
+<label for="nav-trigger" class="navicon-button x">
+  <div class="navicon"></div>
+</label>
+
+<label for="nav-trigger" class="overlay"></label>
+
+<nav >
+    
+    
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="module-services_ragService-ChromaHttpClient.html">ChromaHttpClient</a></li><li><a href="module-services_ragService-RagService.html">RagService</a></li></ul><h3>Modules</h3><ul><li><a href="module-controllers_assetController.html">controllers/assetController</a><ul class='methods'><li data-type='method'><a href="module-controllers_assetController.html#~createAsset">createAsset</a></li><li data-type='method'><a href="module-controllers_assetController.html#~deleteAsset">deleteAsset</a></li><li data-type='method'><a href="module-controllers_assetController.html#~getAllAssets">getAllAssets</a></li><li data-type='method'><a href="module-controllers_assetController.html#~importAssets">importAssets</a></li><li data-type='method'><a href="module-controllers_assetController.html#~updateAsset">updateAsset</a></li></ul></li><li><a href="module-controllers_assetExtractionController.html">controllers/assetExtractionController</a><ul class='methods'><li data-type='method'><a href="module-controllers_assetExtractionController.html#~extractAssets">extractAssets</a></li></ul></li><li><a href="module-controllers_flowController.html">controllers/flowController</a><ul class='methods'><li data-type='method'><a href="module-controllers_flowController.html#~createFlow">createFlow</a></li><li data-type='method'><a href="module-controllers_flowController.html#~deleteFlow">deleteFlow</a></li><li data-type='method'><a href="module-controllers_flowController.html#~getAllFlows">getAllFlows</a></li><li data-type='method'><a href="module-controllers_flowController.html#~updateFlow">updateFlow</a></li></ul></li><li><a href="module-models_assetModel.html">models/assetModel</a><ul class='methods'><li data-type='method'><a href="module-models_assetModel.html#~loadModel">loadModel</a></li><li data-type='method'><a href="module-models_assetModel.html#~saveModel">saveModel</a></li></ul></li><li><a href="module-routes_analysis.html">routes/analysis</a></li><li><a href="module-server.html">server</a></li><li><a href="module-services_assetExtractionPipeline.html">services/assetExtractionPipeline</a></li><li><a href="module-services_assetMergeService.html">services/assetMergeService</a><ul class='methods'><li data-type='method'><a href="module-services_assetMergeService.html#~calculateStringSimilarity">calculateStringSimilarity</a></li><li data-type='method'><a href="module-services_assetMergeService.html#~getTrigrams">getTrigrams</a></li><li data-type='method'><a href="module-services_assetMergeService.html#~mergeAssetsBySimilarity">mergeAssetsBySimilarity</a></li></ul></li><li><a href="module-services_assetService.html">services/assetService</a><ul class='methods'><li data-type='method'><a href="module-services_assetService.html#~createAsset">createAsset</a></li><li data-type='method'><a href="module-services_assetService.html#~deleteAsset">deleteAsset</a></li><li data-type='method'><a href="module-services_assetService.html#~getAllAssets">getAllAssets</a></li><li data-type='method'><a href="module-services_assetService.html#~importAssets">importAssets</a></li><li data-type='method'><a href="module-services_assetService.html#~updateAsset">updateAsset</a></li></ul></li><li><a href="module-services_chunkService.html">services/chunkService</a><ul class='methods'><li data-type='method'><a href="module-services_chunkService.html#~splitTextIntoChunks">splitTextIntoChunks</a></li></ul></li><li><a href="module-services_flowService.html">services/flowService</a><ul class='methods'><li data-type='method'><a href="module-services_flowService.html#~createFlow">createFlow</a></li><li data-type='method'><a href="module-services_flowService.html#~deleteFlow">deleteFlow</a></li><li data-type='method'><a href="module-services_flowService.html#~getAllFlows">getAllFlows</a></li><li data-type='method'><a href="module-services_flowService.html#~updateFlow">updateFlow</a></li></ul></li><li><a href="module-services_ollamaService.html">services/ollamaService</a><ul class='methods'><li data-type='method'><a href="module-services_ollamaService.html#~callOllama">callOllama</a></li></ul></li><li><a href="module-services_ragService.html">services/ragService</a><ul class='methods'><li data-type='method'><a href="module-services_ragService.html#~runPythonBridge">runPythonBridge</a></li><li data-type='method'><a href="module-services_ragService.html#~writeTempPayload">writeTempPayload</a></li></ul></li><li><a href="module-services_textExtractorService.html">services/textExtractorService</a><ul class='methods'><li data-type='method'><a href="module-services_textExtractorService.html#~extractFromHTML">extractFromHTML</a></li><li data-type='method'><a href="module-services_textExtractorService.html#~extractFromMarkdown">extractFromMarkdown</a></li><li data-type='method'><a href="module-services_textExtractorService.html#~extractFromPDF">extractFromPDF</a></li><li data-type='method'><a href="module-services_textExtractorService.html#~extractTextFromFile">extractTextFromFile</a></li><li data-type='method'><a href="module-services_textExtractorService.html#~stripHtml">stripHtml</a></li></ul></li><li><a href="module-utils_configUtils.html">utils/configUtils</a></li></ul>
+    
+</nav>
+
+<div id="main">
+    
+    <h1 class="page-title">server.js</h1>
+    
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * @file Entry point del backend Express per threat-modeler
+ * @module server
+ */
+
+const express = require('express');
+const cors = require('cors');
+const path = require('path');
+const fsSync = require('fs');
+const { ensureUploadDirs } = require('./utils/fileUtils');
+const { loadConfig } = require('./utils/configUtils');
+
+const app = express();
+
+app.use(cors());
+app.use(express.json());
+
+const JSON_FILE = path.join(__dirname, 'threat-model.json');
+const ADVANCED_FILE = path.join(__dirname, 'advanced-assets.json');
+
+// Route modules
+const assetsRoutes = require('./routes/assets');
+const configRoutes = require('./routes/config');
+const filesRoutes = require('./routes/files');
+const taxonomyRoutes = require('./routes/taxonomy');
+const analysisRoutes = require('./routes/analysis');
+const dfdRoutes = require('./routes/dfd');
+const testRoutes = require('./routes/test');         // opzionale per debug
+const ragRoutes = require('./routes/rag');
+const ollamaRoutes = require('./routes/ollama');
+
+const methodologies = require('./methodologies');
+
+// Registra metodologie
+for (const [name, module] of Object.entries(methodologies)) {
+    if (module.router) {
+        app.use(`/api/methodologies/${name}`, module.router);
+        console.log(`✅ Metodologia ${name} montata su /api/methodologies/${name}`);
+    }
+}
+
+// Sincronizzazione advanced-assets (legacy)
+if (fsSync.existsSync(JSON_FILE)) {
+    try {
+        const threatModel = JSON.parse(fsSync.readFileSync(JSON_FILE, 'utf-8'));
+        if (threatModel.assets.length === 0 &amp;&amp; fsSync.existsSync(ADVANCED_FILE)) {
+            fsSync.writeFileSync(ADVANCED_FILE, JSON.stringify([], null, 2));
+            console.log('🧹 Advanced assets resettati perché threat-model è vuoto.');
+        }
+    } catch (err) {
+        console.warn('⚠️ Errore lettura threat-model.json');
+    }
+} else {
+    if (fsSync.existsSync(ADVANCED_FILE)) {
+        fsSync.writeFileSync(ADVANCED_FILE, JSON.stringify([], null, 2));
+        console.log('🧹 Advanced assets resettati (threat-model.json mancante).');
+    }
+}
+
+// Endpoint metodologie
+app.get('/api/methodologies', (req, res) => {
+    res.json(Object.keys(methodologies));
+});
+
+// Rotte
+app.use('/api', assetsRoutes);
+app.use('/api', configRoutes);
+app.use('/api', filesRoutes);
+app.use('/api', taxonomyRoutes);
+app.use('/api', dfdRoutes);
+app.use('/api', testRoutes);
+app.use('/api', ragRoutes);
+app.use('/api', ollamaRoutes);
+app.use('/api/analyze', analysisRoutes);
+
+// ============================================================================
+
+// Caricamento configurazione e inizializzazione RAG (solo se non in test)
+(async () => {
+    try {
+        const config = await loadConfig();
+        app.locals.config = config;
+        console.log('✅ Configurazione caricata e disponibile in app.locals');
+
+        // Inizializzazione RAG – solo in ambiente di sviluppo/produzione, non durante i test
+        if (process.env.NODE_ENV !== 'test' &amp;&amp; config.rag?.enabled) {
+            const { RagService } = require('./services/ragService');
+            const methodologyService = require('./services/methodologyService');
+            const ragService = new RagService(config);
+            try {
+                const manifest = await methodologyService.loadManifest();
+                for (const method of manifest.methodologies) {
+                    if (!method.enabled) continue;
+                    const collectionName = `methodology_${method.id}`;
+                    try {
+                        let taxonomy;
+                        try {
+                            taxonomy = await methodologyService.loadTaxonomy(method.id);
+                        } catch (taxErr) {
+                            console.warn(`⚠️ [INIT] Tassonomia mancante per metodologia ${method.id} (${taxErr.message}), salto indicizzazione.`);
+                            continue;
+                        }
+                        const result = await ragService.query(collectionName, 'test', null, 1);
+                        if (result.count === 0) {
+                            console.log(`📚 [INIT] Indicizzo tassonomia per metodologia ${method.id} (${taxonomy.categories?.length || 0} categorie)...`);
+                            const documents = taxonomy.categories.map(cat => ({
+                                id: `taxonomy_${cat.name}`,
+                                text: `Categoria: ${cat.name}. Descrizione: ${cat.description}. Forma: ${cat.shape}. Colore: ${cat.color}.`,
+                                metadata: { type: 'taxonomy', category: cat.name, methodology: method.id }
+                            }));
+                            await ragService.ingest(collectionName, documents);
+                            console.log(`✅ [INIT] Indicizzati ${documents.length} documenti (categorie) per ${collectionName}.`);
+                        } else {
+                            console.log(`📚 [INIT] Collezione ${collectionName} già popolata.`);
+                        }
+                    } catch (err) {
+                        console.warn(`⚠️ [INIT] Errore per ${collectionName}:`, err.message);
+                    }
+                }
+            } catch (err) {
+                console.warn('⚠️ [INIT] Impossibile inizializzare metodologie RAG:', err.message);
+            }
+        }
+    } catch (err) {
+        console.error('❌ Impossibile caricare configurazione:', err);
+        process.exit(1);
+    }
+})();
+
+const PORT = process.env.PORT || 3001;
+if (require.main === module) {
+    ensureUploadDirs();
+    app.listen(PORT, () => console.log(`✅ Backend attivo su http://localhost:${PORT}`));
+}
+
+module.exports = app;</code></pre>
+        </article>
+    </section>
+
+
+
+
+    
+    
+</div>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 4.0.5</a> on Fri May 29 2026 19:34:24 GMT+0200 (Central European Summer Time) using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
+</footer>
+
+<script>prettyPrint();</script>
+<script src="scripts/polyfill.js"></script>
+<script src="scripts/linenumber.js"></script>
+
+
+
+</body>
+</html>

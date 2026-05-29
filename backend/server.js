@@ -1,36 +1,37 @@
-// backend/server.js
+/**
+ * @file Entry point del backend Express per threat-modeler
+ * @module server
+ */
+
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const fsSync = require('fs');
 const { ensureUploadDirs } = require('./utils/fileUtils');
+const { loadConfig } = require('./utils/configUtils');
 
 const app = express();
+
 app.use(cors());
 app.use(express.json());
 
-// Costanti per i file JSON
 const JSON_FILE = path.join(__dirname, 'threat-model.json');
 const ADVANCED_FILE = path.join(__dirname, 'advanced-assets.json');
 
-// Route normali
+// Route modules
 const assetsRoutes = require('./routes/assets');
 const configRoutes = require('./routes/config');
 const filesRoutes = require('./routes/files');
 const taxonomyRoutes = require('./routes/taxonomy');
-const analysisRoutes = require('./routes/analysis');          // → /api/analyze/extract-assets
-const analysisDfdRoutes = require('./routes/analysisDfd');    // → /api/analyze/extract-assets-dfd ✅ FIX
+const analysisRoutes = require('./routes/analysis');
 const dfdRoutes = require('./routes/dfd');
-const testRoutes = require('./routes/test');
-const advancedAssets = require('./routes/advancedAssets');
-const enrichmentRoutes = require('./routes/enrichment');
+const testRoutes = require('./routes/test');         // opzionale per debug
 const ragRoutes = require('./routes/rag');
 const ollamaRoutes = require('./routes/ollama');
 
-// Caricamento metodologie
 const methodologies = require('./methodologies');
 
-// Registra le rotte di ogni metodologia
+// Registra metodologie
 for (const [name, module] of Object.entries(methodologies)) {
     if (module.router) {
         app.use(`/api/methodologies/${name}`, module.router);
@@ -38,7 +39,7 @@ for (const [name, module] of Object.entries(methodologies)) {
     }
 }
 
-// Sincronizzazione advanced-assets
+// Sincronizzazione advanced-assets (legacy)
 if (fsSync.existsSync(JSON_FILE)) {
     try {
         const threatModel = JSON.parse(fsSync.readFileSync(JSON_FILE, 'utf-8'));
@@ -56,35 +57,80 @@ if (fsSync.existsSync(JSON_FILE)) {
     }
 }
 
-// Endpoint per elencare le metodologie
+// Endpoint metodologie
 app.get('/api/methodologies', (req, res) => {
     res.json(Object.keys(methodologies));
 });
 
-// ============================================================================
-// === REGISTRAZIONE ROUTE - FIX CRITICO PER analysisDfdRoutes ===
-// ============================================================================
-
-// Route base (montate su /api)
-app.use('/api', assetsRoutes);           // → /api/assets, /api/assets/:id
-app.use('/api', configRoutes);           // → /api/config (GET/PUT)
-app.use('/api', filesRoutes);            // → /api/files/docs, /api/files/csv, /api/files/context
-app.use('/api', taxonomyRoutes);         // → /api/taxonomy, /api/dfd-taxonomy
-app.use('/api', analysisRoutes);         // → /api/analyze/extract-assets (se interno ha /analyze/...)
-app.use('/api', dfdRoutes);              // → /api/dfd/..., /api/flows
-app.use('/api', testRoutes);             // → /api/test/ollama, /api/test/db
-app.use('/api', advancedAssets.router);  // → /api/advanced-assets/...
-app.use('/api', enrichmentRoutes);       // → /api/enrichment/...
-app.use('/api', ragRoutes);              // → /api/rag/test-connection, /api/rag/index
-app.use('/api', ollamaRoutes);           // → /api/ollama/models, /api/ollama/test
-
-// ✅ FIX CRITICO: analysisDfdRoutes montato su /api/analyze
-// Se dentro analysisDfd.js hai: router.post('/extract-assets-dfd', ...)
-// Allora l'URL finale sarà: POST /api/analyze/extract-assets-dfd ✅
-app.use('/api/analyze', analysisDfdRoutes);
+// Rotte
+app.use('/api', assetsRoutes);
+app.use('/api', configRoutes);
+app.use('/api', filesRoutes);
+app.use('/api', taxonomyRoutes);
+app.use('/api', dfdRoutes);
+app.use('/api', testRoutes);
+app.use('/api', ragRoutes);
+app.use('/api', ollamaRoutes);
+app.use('/api/analyze', analysisRoutes);
 
 // ============================================================================
 
-const PORT = 3001;
-ensureUploadDirs();
-app.listen(PORT, () => console.log(`✅ Backend attivo su http://localhost:${PORT}`));
+// Caricamento configurazione e inizializzazione RAG (solo se non in test)
+(async () => {
+    try {
+        const config = await loadConfig();
+        app.locals.config = config;
+        console.log('✅ Configurazione caricata e disponibile in app.locals');
+
+        // Inizializzazione RAG – solo in ambiente di sviluppo/produzione, non durante i test
+        if (process.env.NODE_ENV !== 'test' && config.rag?.enabled) {
+            const { RagService } = require('./services/ragService');
+            const methodologyService = require('./services/methodologyService');
+            const ragService = new RagService(config);
+            try {
+                const manifest = await methodologyService.loadManifest();
+                for (const method of manifest.methodologies) {
+                    if (!method.enabled) continue;
+                    const collectionName = `methodology_${method.id}`;
+                    try {
+                        let taxonomy;
+                        try {
+                            taxonomy = await methodologyService.loadTaxonomy(method.id);
+                        } catch (taxErr) {
+                            console.warn(`⚠️ [INIT] Tassonomia mancante per metodologia ${method.id} (${taxErr.message}), salto indicizzazione.`);
+                            continue;
+                        }
+                        const result = await ragService.query(collectionName, 'test', null, 1);
+                        if (result.count === 0) {
+                            console.log(`📚 [INIT] Indicizzo tassonomia per metodologia ${method.id} (${taxonomy.categories?.length || 0} categorie)...`);
+                            const documents = taxonomy.categories.map(cat => ({
+                                id: `taxonomy_${cat.name}`,
+                                text: `Categoria: ${cat.name}. Descrizione: ${cat.description}. Forma: ${cat.shape}. Colore: ${cat.color}.`,
+                                metadata: { type: 'taxonomy', category: cat.name, methodology: method.id }
+                            }));
+                            await ragService.ingest(collectionName, documents);
+                            console.log(`✅ [INIT] Indicizzati ${documents.length} documenti (categorie) per ${collectionName}.`);
+                        } else {
+                            console.log(`📚 [INIT] Collezione ${collectionName} già popolata.`);
+                        }
+                    } catch (err) {
+                        console.warn(`⚠️ [INIT] Errore per ${collectionName}:`, err.message);
+                    }
+                }
+            } catch (err) {
+                console.warn('⚠️ [INIT] Impossibile inizializzare metodologie RAG:', err.message);
+            }
+        }
+    } catch (err) {
+        console.error('❌ Impossibile caricare configurazione:', err);
+        process.exit(1);
+    }
+})();
+
+const PORT = process.env.PORT || 3001;
+if (require.main === module) {
+    ensureUploadDirs();
+    app.listen(PORT, () => console.log(`✅ Backend attivo su http://localhost:${PORT}`));
+}
+
+module.exports = app;

@@ -1,0 +1,7 @@
+Questo è un documento di esempio per testare il chunking. Descrive un sistema software composto da diversi componenti.
+- Il modulo di autenticazione gestisce login e registrazione. Utilizza JWT per i token.
+- Il database utenti memorizza le credenziali in formato cifrato.
+- L'API Gateway instrada le richieste verso i microservizi.
+- Il servizio di notifica invia email tramite SMTP.
+- Il sistema di logging raccoglie eventi su Elasticsearch.
+(ripeti il blocco precedente almeno 5 volte per ottenere circa 2000 caratteri)

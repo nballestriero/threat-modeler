@@ -1,0 +1,25 @@
+{
+  "categories": [
+    {
+      "name": "External Entity",
+      "color": "#1E40AF",
+      "colorBg": "#DBEAFE",
+      "description": "Attori esterni, utenti, sistemi esterni",
+      "shape": "([\"{name}\"])"
+    },
+    {
+      "name": "Process",
+      "color": "#B45309",
+      "colorBg": "#FEF3C7",
+      "description": "Processi, attività, trasformazioni",
+      "shape": "[\"{name}\"]"
+    },
+    {
+      "name": "Data Store",
+      "color": "#047857",
+      "colorBg": "#D1FAE5",
+      "description": "Archivi, database, file",
+      "shape": "[({name})]"
+    }
+  ]
+}

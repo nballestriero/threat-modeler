@@ -1,0 +1,20 @@
+{
+  "methodologies": [
+    {
+      "id": "dfd-base",
+      "name": "DFD Base",
+      "enabled": true,
+      "path": "./dfd-base",
+      "taxonomyFile": "taxonomy.json",
+      "promptFile": "prompts/extraction.md"
+    },
+    {
+      "id": "stride-ai",
+      "name": "STRIDE AI",
+      "enabled": true,
+      "path": "./stride-ai",
+      "taxonomyFile": "taxonomy.json",
+      "promptFile": "prompts/extraction.md"
+    }
+  ]
+}

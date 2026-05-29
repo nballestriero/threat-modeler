@@ -1,0 +1,21 @@
+{
+  "source": {
+    "include": [ "controllers", "services", "models", "utils", "routes", "server.js" ],
+    "exclude": [
+      "node_modules",
+      "uploads",
+      "methodologies",
+      "**/*.test.js"
+    ]
+  },
+  "opts": {
+    "destination": "../docs/backend",
+    "recurse": true,
+    "template": "node_modules/docdash"
+  },
+  "plugins": [ "plugins/markdown" ],
+  "templates": {
+    "cleverLinks": true,
+    "monospaceLinks": true
+  }
+}

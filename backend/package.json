@@ -4,7 +4,24 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "cross-env NODE_ENV=test jest --runInBand --detectOpenHandles",
+    "test:report": "npm run test -- --json --outputFile=test-results.json && node scripts/test-report.js",
+    "test:failed": "npm run test -- --testPathPatterns=ragService --testNamePattern=\"query|health|errore|JSON\"",
+    "docs": "jsdoc -c jsdoc.conf.json",
+    "docs:md": "jsdoc2md --files ./controllers/*.js ./services/*.js ./models/*.js ./utils/*.js ./routes/*.js > ../docs/backend/api.md",
+    "docs:all": "npm run docs && npm run docs:md"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "roots": [
+      "<rootDir>/tests"
+    ],
+    "testMatch": [
+      "**/*.test.js"
+    ],
+    "transformIgnorePatterns": [
+      "/node_modules/(?!uuid)/"
+    ]
   },
   "keywords": [],
   "author": "",
@@ -12,19 +29,31 @@
   "type": "commonjs",
   "dependencies": {
     "axios": "^1.16.1",
+    "cheerio": "^1.2.0",
     "chromadb": "^3.4.3",
     "cors": "^2.8.6",
     "csv-parser": "^3.2.1",
     "express": "^5.2.1",
+    "marked": "^18.0.4",
     "mermaid": "^11.15.0",
     "multer": "^2.1.1",
-    "pdf-parse": "^1.1.1",
+    "pdf-parse": "^1.1.4",
+    "string-similarity": "^4.0.4",
     "tesseract.js": "^7.0.0",
     "uuid": "^14.0.0",
     "zod": "^4.4.3",
     "zustand": "^5.0.13"
   },
   "devDependencies": {
-    "eslint": "^10.4.0"
+    "@babel/core": "^7.29.7",
+    "@babel/preset-env": "^7.29.7",
+    "babel-jest": "^30.4.1",
+    "cross-env": "^10.1.0",
+    "docdash": "^2.0.2",
+    "eslint": "^10.4.0",
+    "jest": "^30.4.2",
+    "jsdoc": "^4.0.5",
+    "jsdoc-to-markdown": "^9.1.3",
+    "supertest": "^7.2.2"
   }
 }

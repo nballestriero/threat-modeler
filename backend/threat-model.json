@@ -1,19 +1,4 @@
 {
-  "project": {
-    "name": "Nuovo Progetto",
-    "version": "1.0",
-    "owner": ""
-  },
-  "config": {
-    "ollama": {
-      "baseUrl": "http://localhost:11434",
-      "model": "llama3",
-      "enabled": true
-    },
-    "project": {
-      "name": "Nuovo Progetto"
-    }
-  },
   "assets": [],
   "flows": []
 }

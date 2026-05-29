@@ -1,3 +1,7 @@
 # backend/requirements.txt
 chromadb==0.4.24
 # sentence-transformers==2.2.2  # decommenta se usi embedding personalizzati
+"scripts": {
+  "docs": "jsdoc -c jsdoc.conf.json",
+  "docs:watch": "jsdoc -c jsdoc.conf.json -w"
+}

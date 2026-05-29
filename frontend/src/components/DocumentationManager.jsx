@@ -1,12 +1,25 @@
+/**
+ * @file Gestore della documentazione e analisi DFD (Fase 1)
+ * @module components/DocumentationManager
+ */
+
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Upload, FileText, Database, BookOpen, CheckCircle, AlertCircle, Loader2, Trash2, Play, Eye } from 'lucide-react';
 import { useThreatModelStore } from '../store/useThreatModelStore';
+import { useAnalysisStore } from '../store/useAnalysisStore';
 
-const API_BASE = 'http://localhost:3001/api';
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:3001/api';
 
+/**
+ * Componente per la gestione dei documenti, estrazione asset via LLM e import CSV
+ * @returns {JSX.Element}
+ */
 export default function DocumentationManager() {
     const { syncExtractedAssets, fetchAssets } = useThreatModelStore();
+    const { runExtraction, isExtracting, extractionError, extractionStats } = useAnalysisStore();
+
+    // Stato UI
     const [activeTab, setActiveTab] = useState('docs');
     const [files, setFiles] = useState({ docs: [], csv: [], context: [] });
     const [loading, setLoading] = useState(false);
@@ -17,11 +30,17 @@ export default function DocumentationManager() {
     const [llmEnabled, setLlmEnabled] = useState(false);
     const [configLoading, setConfigLoading] = useState(true);
 
+    // --- Effetti ---
     useEffect(() => {
         fetchFiles();
         fetchConfig();
     }, []);
 
+    /**
+     * Carica la configurazione del backend (stato di Ollama)
+     * @async
+     * @returns {Promise<void>}
+     */
     const fetchConfig = async () => {
         try {
             const res = await axios.get(`${API_BASE}/config`);
@@ -37,6 +56,11 @@ export default function DocumentationManager() {
         }
     };
 
+    /**
+     * Recupera la lista dei file dalle tre categorie (docs, csv, context)
+     * @async
+     * @returns {Promise<void>}
+     */
     const fetchFiles = async () => {
         const types = ['docs', 'csv', 'context'];
         const newFiles = {};
@@ -49,6 +73,12 @@ export default function DocumentationManager() {
         setFiles(newFiles);
     };
 
+    /**
+     * Carica un file (documento, CSV o contesto) e ne aggiorna la lista
+     * @param {string} type - 'docs', 'csv' o 'context'
+     * @async
+     * @returns {Promise<void>}
+     */
     const handleUpload = async (type) => {
         const input = document.getElementById(`upload-${type}`);
         if (!input.files[0]) return;
@@ -71,6 +101,13 @@ export default function DocumentationManager() {
         setLoading(false);
     };
 
+    /**
+     * Elimina un file (documento, CSV o contesto) e aggiorna la selezione
+     * @param {string} type - 'docs', 'csv' o 'context'
+     * @param {string} filename - Nome del file
+     * @async
+     * @returns {Promise<void>}
+     */
     const deleteFile = async (type, filename) => {
         await axios.delete(`${API_BASE}/files/${type}/${filename}`);
         fetchFiles();
@@ -79,34 +116,42 @@ export default function DocumentationManager() {
         if (type === 'context') setSelectedContext(prev => prev.filter(f => f.name !== filename));
     };
 
-    const runDfdExtraction = async () => {
+    /**
+     * Avvia l'estrazione asset usando la nuova pipeline LLM
+     * @async
+     * @returns {Promise<void>}
+     */
+    const runExtractionWithPipeline = async () => {
         if (!llmEnabled) return alert('LLM non abilitato nella configurazione.');
         if (selectedDocs.length === 0) return alert('Seleziona almeno un documento.');
 
-        setLoading(true);
-        setLlmStatus({ state: 'testing', message: '🤖 Analisi DFD base in corso...' });
-
+        setLlmStatus({ state: 'testing', message: '🤖 Estrazione asset in corso (nuova pipeline)...' });
         try {
-            const res = await axios.post(`${API_BASE}/analyze/extract-assets-dfd`, {
-                docFiles: selectedDocs.map(f => f.path),
-                contextFiles: selectedContext.map(f => f.path)
+            const result = await runExtraction({
+                files: selectedDocs.map(f => f.path),
+                contextFiles: selectedContext.map(f => f.path),
+                methodology: 'dfd-base',
+                options: { useChunking: true, useRag: false }
             });
-
-            if (res.data.error) {
-                setLlmStatus({ state: 'error', message: res.data.error });
-            } else {
-                // ✅ Invio diretto degli asset (il backend restituisce già 'category')
-                await syncExtractedAssets(res.data.assets);
-                setLlmStatus({ state: 'connected', message: `✅ Estratti ${res.data.count} asset (DFD base).` });
-                alert(`Analisi DFD base completata: ${res.data.count} asset trovati. Passa alla fase Asset per rivederli.`);
+            if (result.assets && result.assets.length) {
+                await syncExtractedAssets(result.assets);
             }
-        } catch (e) {
-            console.error(e);
-            setLlmStatus({ state: 'error', message: 'Errore comunicazione backend o LLM offline.' });
+            setLlmStatus({
+                state: 'connected',
+                message: `✅ Estratti ${result.count} asset (${result.saved} nuovi, ${result.duplicates} duplicati).`
+            });
+            alert(`Analisi completata: ${result.count} asset trovati.`);
+        } catch (err) {
+            console.error(err);
+            setLlmStatus({ state: 'error', message: err.message || 'Errore durante l\'estrazione.' });
         }
-        setLoading(false);
     };
 
+    /**
+     * Importa gli asset validati dal CSV
+     * @async
+     * @returns {Promise<void>}
+     */
     const importCSV = async () => {
         if (!csvResult?.assets?.length) return;
         setLoading(true);
@@ -118,6 +163,13 @@ export default function DocumentationManager() {
         setLoading(false);
     };
 
+    /**
+     * Componente interno per la selezione toggle di un file (documento o contesto)
+     * @param {Object} props
+     * @param {Array} props.list - Lista attuale dei selezionati
+     * @param {Object} props.item - File da selezionare/deselezionare
+     * @param {string} props.type - 'docs' o 'context'
+     */
     const ToggleSelect = ({ list, item, type }) => {
         const isActive = list.some(f => f.name === item.name);
         const toggle = type === 'docs' ? setSelectedDocs : setSelectedContext;
@@ -133,8 +185,9 @@ export default function DocumentationManager() {
         );
     };
 
-    const isAnalyzeDisabled = !llmEnabled || selectedDocs.length === 0 || loading || configLoading;
+    const isAnalyzeDisabled = !llmEnabled || selectedDocs.length === 0 || loading || configLoading || isExtracting;
 
+    // --- Render JSX ---
     return (
         <div className="bg-white rounded-xl shadow p-6">
             <h2 className="text-xl font-semibold mb-4">📄 Fase 1: Caricamento e Analisi DFD Base</h2>
@@ -162,11 +215,11 @@ export default function DocumentationManager() {
                         <div className="h-8 w-px bg-gray-300 mx-2"></div>
 
                         <button
-                            onClick={runDfdExtraction}
+                            onClick={runExtractionWithPipeline}
                             disabled={isAnalyzeDisabled}
                             className={`px-5 py-2.5 rounded-lg flex items-center gap-2 font-medium text-sm shadow-sm transition-all ${isAnalyzeDisabled ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-green-600 text-white hover:bg-green-700'}`}>
-                            {loading ? <Loader2 size={18} className="animate-spin" /> : <Play size={18} fill="currentColor" />}
-                            Analizza DFD base
+                            {isExtracting ? <Loader2 size={18} className="animate-spin" /> : <Play size={18} fill="currentColor" />}
+                            {isExtracting ? 'Estrazione in corso...' : 'Analizza DFD base'}
                         </button>
 
                         {!llmEnabled && <span className="ml-auto text-xs text-red-600">⚠️ LLM non abilitato</span>}
@@ -194,14 +247,19 @@ export default function DocumentationManager() {
                         </div>
                     </div>
 
-                    {llmStatus.state !== 'idle' && (
-                        <div className={`p-4 rounded-lg flex items-start gap-3 ${llmStatus.state === 'error' ? 'bg-red-50 text-red-800 border border-red-200' : llmStatus.state === 'connected' ? 'bg-green-50 text-green-800 border border-green-200' : 'bg-blue-50 text-blue-800 border border-blue-200'}`}>
+                    {(llmStatus.state !== 'idle' || extractionError) && (
+                        <div className={`p-4 rounded-lg flex items-start gap-3 ${extractionError ? 'bg-red-50 text-red-800 border border-red-200' : llmStatus.state === 'connected' ? 'bg-green-50 text-green-800 border border-green-200' : 'bg-blue-50 text-blue-800 border border-blue-200'}`}>
                             <div className="mt-0.5">
                                 {llmStatus.state === 'testing' && <Loader2 size={18} className="animate-spin" />}
                                 {llmStatus.state === 'connected' && <CheckCircle size={18} />}
-                                {llmStatus.state === 'error' && <AlertCircle size={18} />}
+                                {extractionError && <AlertCircle size={18} />}
                             </div>
-                            <span className="text-sm font-medium">{llmStatus.message}</span>
+                            <span className="text-sm font-medium">{extractionError || llmStatus.message}</span>
+                        </div>
+                    )}
+                    {extractionStats.saved > 0 && (
+                        <div className="text-xs text-gray-500 mt-2">
+                            📊 Salvati: {extractionStats.saved} | Duplicati: {extractionStats.duplicates} | Chunk: {extractionStats.chunksProcessed}
                         </div>
                     )}
                 </div>

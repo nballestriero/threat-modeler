@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+    <meta charset="utf-8">
+    <title>services/ollamaService.js - Documentation</title>
+    
+    
+    <script src="scripts/prettify/prettify.js"></script>
+    <script src="scripts/prettify/lang-css.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc.css">
+    <script src="scripts/nav.js" defer></script>
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+
+<input type="checkbox" id="nav-trigger" class="nav-trigger" />
+<label for="nav-trigger" class="navicon-button x">
+  <div class="navicon"></div>
+</label>
+
+<label for="nav-trigger" class="overlay"></label>
+
+<nav >
+    
+    
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="module-services_ragService-ChromaHttpClient.html">ChromaHttpClient</a></li><li><a href="module-services_ragService-RagService.html">RagService</a></li></ul><h3>Modules</h3><ul><li><a href="module-controllers_assetController.html">controllers/assetController</a><ul class='methods'><li data-type='method'><a href="module-controllers_assetController.html#~createAsset">createAsset</a></li><li data-type='method'><a href="module-controllers_assetController.html#~deleteAsset">deleteAsset</a></li><li data-type='method'><a href="module-controllers_assetController.html#~getAllAssets">getAllAssets</a></li><li data-type='method'><a href="module-controllers_assetController.html#~importAssets">importAssets</a></li><li data-type='method'><a href="module-controllers_assetController.html#~updateAsset">updateAsset</a></li></ul></li><li><a href="module-controllers_assetExtractionController.html">controllers/assetExtractionController</a><ul class='methods'><li data-type='method'><a href="module-controllers_assetExtractionController.html#~extractAssets">extractAssets</a></li></ul></li><li><a href="module-controllers_flowController.html">controllers/flowController</a><ul class='methods'><li data-type='method'><a href="module-controllers_flowController.html#~createFlow">createFlow</a></li><li data-type='method'><a href="module-controllers_flowController.html#~deleteFlow">deleteFlow</a></li><li data-type='method'><a href="module-controllers_flowController.html#~getAllFlows">getAllFlows</a></li><li data-type='method'><a href="module-controllers_flowController.html#~updateFlow">updateFlow</a></li></ul></li><li><a href="module-models_assetModel.html">models/assetModel</a><ul class='methods'><li data-type='method'><a href="module-models_assetModel.html#~loadModel">loadModel</a></li><li data-type='method'><a href="module-models_assetModel.html#~saveModel">saveModel</a></li></ul></li><li><a href="module-routes_analysis.html">routes/analysis</a></li><li><a href="module-server.html">server</a></li><li><a href="module-services_assetExtractionPipeline.html">services/assetExtractionPipeline</a></li><li><a href="module-services_assetMergeService.html">services/assetMergeService</a><ul class='methods'><li data-type='method'><a href="module-services_assetMergeService.html#~calculateStringSimilarity">calculateStringSimilarity</a></li><li data-type='method'><a href="module-services_assetMergeService.html#~getTrigrams">getTrigrams</a></li><li data-type='method'><a href="module-services_assetMergeService.html#~mergeAssetsBySimilarity">mergeAssetsBySimilarity</a></li></ul></li><li><a href="module-services_assetService.html">services/assetService</a><ul class='methods'><li data-type='method'><a href="module-services_assetService.html#~createAsset">createAsset</a></li><li data-type='method'><a href="module-services_assetService.html#~deleteAsset">deleteAsset</a></li><li data-type='method'><a href="module-services_assetService.html#~getAllAssets">getAllAssets</a></li><li data-type='method'><a href="module-services_assetService.html#~importAssets">importAssets</a></li><li data-type='method'><a href="module-services_assetService.html#~updateAsset">updateAsset</a></li></ul></li><li><a href="module-services_chunkService.html">services/chunkService</a><ul class='methods'><li data-type='method'><a href="module-services_chunkService.html#~splitTextIntoChunks">splitTextIntoChunks</a></li></ul></li><li><a href="module-services_flowService.html">services/flowService</a><ul class='methods'><li data-type='method'><a href="module-services_flowService.html#~createFlow">createFlow</a></li><li data-type='method'><a href="module-services_flowService.html#~deleteFlow">deleteFlow</a></li><li data-type='method'><a href="module-services_flowService.html#~getAllFlows">getAllFlows</a></li><li data-type='method'><a href="module-services_flowService.html#~updateFlow">updateFlow</a></li></ul></li><li><a href="module-services_ollamaService.html">services/ollamaService</a><ul class='methods'><li data-type='method'><a href="module-services_ollamaService.html#~callOllama">callOllama</a></li></ul></li><li><a href="module-services_ragService.html">services/ragService</a><ul class='methods'><li data-type='method'><a href="module-services_ragService.html#~runPythonBridge">runPythonBridge</a></li><li data-type='method'><a href="module-services_ragService.html#~writeTempPayload">writeTempPayload</a></li></ul></li><li><a href="module-services_textExtractorService.html">services/textExtractorService</a><ul class='methods'><li data-type='method'><a href="module-services_textExtractorService.html#~extractFromHTML">extractFromHTML</a></li><li data-type='method'><a href="module-services_textExtractorService.html#~extractFromMarkdown">extractFromMarkdown</a></li><li data-type='method'><a href="module-services_textExtractorService.html#~extractFromPDF">extractFromPDF</a></li><li data-type='method'><a href="module-services_textExtractorService.html#~extractTextFromFile">extractTextFromFile</a></li><li data-type='method'><a href="module-services_textExtractorService.html#~stripHtml">stripHtml</a></li></ul></li><li><a href="module-utils_configUtils.html">utils/configUtils</a></li></ul>
+    
+</nav>
+
+<div id="main">
+    
+    <h1 class="page-title">services/ollamaService.js</h1>
+    
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>// backend/services/ollamaService.js
+/**
+ * @file Servizio per la comunicazione con Ollama (LLM locale)
+ * @module services/ollamaService
+ */
+
+const axios = require('axios');
+
+/**
+ * Chiamata a Ollama per completare un prompt.
+ * @async
+ * @param {string} prompt - Prompt da inviare
+ * @param {Object} config - Configurazione dell'applicazione (contiene ollama.baseUrl, model, timeout)
+ * @param {Object} [options] - Opzioni aggiuntive
+ * @param {number} [options.timeout=300000] - Timeout in ms (default 5 minuti)
+ * @param {number} [options.temperature=0.1] - Temperatura
+ * @param {number} [options.numPredict=256] - Token massimi da generare
+ * @param {string} [options.systemPrompt] - System prompt
+ * @returns {Promise&lt;string>} Risposta testuale
+ * @throws {Error} Se Ollama non risponde o restituisce errore
+ */
+async function callOllama(prompt, config, options = {}) {
+    const { baseUrl, model, timeout = 300000 } = config.ollama || {};
+    const payload = {
+        model: model || 'llama3.1:8b',
+        messages: [
+            { role: 'system', content: options.systemPrompt || 'You are a helpful assistant.' },
+            { role: 'user', content: prompt }
+        ],
+        stream: false,
+        options: {
+            temperature: options.temperature ?? 0.1,
+            num_predict: options.numPredict ?? 512,  
+            stop: ['\n```', '```']
+        }
+    };
+
+    console.log(`📡 [OLLAMA] Invio richiesta a ${baseUrl}/api/chat, modello ${payload.model}, timeout=${timeout}ms`);
+
+    try {
+        const response = await axios.post(`${baseUrl}/api/chat`, payload, {
+            timeout,
+            headers: { 'Content-Type': 'application/json' }
+        });
+        let content = response.data.message?.content || '';
+        if (content.length > 10000) {
+            console.warn(`⚠️ Risposta Ollama troncata da ${content.length} a 10000 caratteri`);
+            content = content.substring(0, 10000);
+        }
+        console.log(`✅ [OLLAMA] Risposta ricevuta (${content.length} caratteri)`);
+        return content;
+    } catch (err) {
+        console.error(`❌ Errore chiamata Ollama: ${err.message}`);
+        throw new Error(`LLM non disponibile: ${err.message}`);
+    }
+}
+
+module.exports = { callOllama };</code></pre>
+        </article>
+    </section>
+
+
+
+
+    
+    
+</div>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 4.0.5</a> on Fri May 29 2026 19:34:24 GMT+0200 (Central European Summer Time) using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
+</footer>
+
+<script>prettyPrint();</script>
+<script src="scripts/polyfill.js"></script>
+<script src="scripts/linenumber.js"></script>
+
+
+
+</body>
+</html>

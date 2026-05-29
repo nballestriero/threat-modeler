@@ -16,15 +16,14 @@
   "rag": {
     "enabled": true,
     "mode": "python-client",
-    "baseUrl": null,
-    "embeddingModel": "nomic-embed-text",
-    "collectionPrefix": "threatmodel_",
     "pythonBridge": {
-      "enabled": true,
-      "scriptPath": "C:\\Users\\user\\Downloads\\uni\\ApplicazioneQwen\\threat-modeler\\backend\\utils\\services\\rag_bridge.py",
+      "scriptPath": "./services/rag_bridge.py",
       "pythonCmd": "./.venv/Scripts/python.exe",
-      "timeout": 120000
+      "enabled": true,
+      "timeout": 30000
     },
-    "persistDirectory": "./chroma_data"
+    "persistDirectory": "./chroma_data",
+    "collectionPrefix": "threatmodel_",
+    "embeddingModel": "nomic-embed-text"
   }
 }
