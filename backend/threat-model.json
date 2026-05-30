@@ -1,11 +1,32 @@
 {
   "assets": [
     {
-      "id": "73a6f4b0-e120-44ad-86e3-8b94cb00b9a0",
-      "createdAt": "2026-05-30T18:23:35.834Z",
-      "name": "Server APIfsfsdfsdfsfs",
+      "id": "951223ad-b059-4ec1-978c-abf62b9c7aab",
+      "createdAt": "2026-05-30T19:17:46.331Z",
+      "name": "EfficientNet-B4",
+      "category": "Data Store",
+      "description": "Modello di intelligenza artificiale utilizzato per la classificazione delle immagini",
+      "source": "llm-extraction",
+      "evidence": {
+        "chunks": [
+          {
+            "index": 0
+          },
+          {
+            "index": 4
+          },
+          {
+            "index": 1
+          }
+        ]
+      }
+    },
+    {
+      "id": "60f1261c-e031-4091-abc6-db16d5c332a3",
+      "createdAt": "2026-05-30T19:17:46.331Z",
+      "name": "_call_qwen2()",
       "category": "Process",
-      "description": "Gestisce le richiestesfsdfdsfsdfsfs",
+      "description": "Funzione che richiama il modello Qwen2-VL-7B-Instruct",
       "source": "llm-extraction",
       "evidence": {
         "chunks": [
@@ -16,11 +37,11 @@
       }
     },
     {
-      "id": "0348d2d2-b4dc-4071-a9ca-3ec8b6239714",
-      "createdAt": "2026-05-30T18:23:35.835Z",
-      "name": "Database Utenti",
+      "id": "ec9c9831-48f1-443a-b717-feecba6ed146",
+      "createdAt": "2026-05-30T19:17:46.331Z",
+      "name": "Qwen2-VL-7B-Instruct",
       "category": "Data Store",
-      "description": "Archivia i dati",
+      "description": "Modello di intelligenza artificiale utilizzato per la generazione del testo clinico",
       "source": "llm-extraction",
       "evidence": {
         "chunks": [
@@ -29,6 +50,225 @@
           }
         ]
       }
+    },
+    {
+      "id": "08292d8a-1986-4610-9c1d-29bb0569de18",
+      "createdAt": "2026-05-30T19:17:46.331Z",
+      "name": "RAG — ChromaDB",
+      "category": "Data Store",
+      "description": "Database utilizzato per la ricerca delle similitudini storiche",
+      "source": "llm-extraction",
+      "evidence": {
+        "chunks": [
+          {
+            "index": 0
+          },
+          {
+            "index": 1
+          },
+          {
+            "index": 4
+          }
+        ]
+      }
+    },
+    {
+      "id": "7d9deaad-1183-40d2-a5a3-bcb3fb6a5ed5",
+      "createdAt": "2026-05-30T19:17:46.331Z",
+      "name": "DermaTriage API",
+      "category": "Process",
+      "description": "API per il triage dermatologico",
+      "source": "llm-extraction",
+      "evidence": {
+        "chunks": [
+          {
+            "index": 1
+          }
+        ]
+      }
+    },
+    {
+      "id": "850d2f5a-4359-4947-af62-7824d420c620",
+      "createdAt": "2026-05-30T19:17:46.331Z",
+      "name": "ManagerPrompt",
+      "category": "Process",
+      "description": "Singleton, thread-safe",
+      "source": "llm-extraction",
+      "evidence": {
+        "chunks": [
+          {
+            "index": 3
+          }
+        ]
+      }
+    },
+    {
+      "id": "c737e6c4-7f02-4c45-bc37-32fefd962322",
+      "createdAt": "2026-05-30T19:17:46.331Z",
+      "name": "Storagedb/prompts.json",
+      "category": "Data Store",
+      "description": "File di database per le promozioni",
+      "source": "llm-extraction",
+      "evidence": {
+        "chunks": [
+          {
+            "index": 3
+          }
+        ]
+      }
+    },
+    {
+      "id": "2efe6716-10f1-412b-9669-1d5cf3f653f1",
+      "createdAt": "2026-05-30T19:17:46.331Z",
+      "name": "db/prompts.json",
+      "category": "Data Store",
+      "description": "File di database per le promozioni",
+      "source": "llm-extraction",
+      "evidence": {
+        "chunks": [
+          {
+            "index": 3
+          }
+        ]
+      }
+    },
+    {
+      "id": "5856cba5-9145-4a69-addc-b1a10ef3ddbb",
+      "createdAt": "2026-05-30T19:17:46.331Z",
+      "name": "ChromaDB vector store",
+      "category": "Data Store",
+      "description": "Archivio vettoriale ChromaDB di circa 15,3 MB",
+      "source": "llm-extraction",
+      "evidence": {
+        "chunks": [
+          {
+            "index": 3
+          }
+        ]
+      }
+    },
+    {
+      "id": "225f9944-37d2-4a7b-a401-588c3ed53dac",
+      "createdAt": "2026-05-30T19:17:46.331Z",
+      "name": "RAG dataset",
+      "category": "Data Store",
+      "description": "Dataset RAG di circa 5 MB",
+      "source": "llm-extraction",
+      "evidence": {
+        "chunks": [
+          {
+            "index": 3
+          }
+        ]
+      }
+    },
+    {
+      "id": "ee03c645-e82d-40e2-b25b-d9651bfc93b3",
+      "createdAt": "2026-05-30T19:17:46.331Z",
+      "name": "Diagnoses history",
+      "category": "Data Store",
+      "description": "Storico delle diagnosi in formato JSON",
+      "source": "llm-extraction",
+      "evidence": {
+        "chunks": [
+          {
+            "index": 3
+          }
+        ]
+      }
+    },
+    {
+      "id": "cd913ba5-dc33-4f3d-9b3d-74c5be719f2f",
+      "createdAt": "2026-05-30T19:17:46.331Z",
+      "name": "Doctor corrections",
+      "category": "Data Store",
+      "description": "Correzioni dei medici in formato JSON",
+      "source": "llm-extraction",
+      "evidence": {
+        "chunks": [
+          {
+            "index": 3
+          }
+        ]
+      }
+    },
+    {
+      "id": "1bd11d14-bb06-444c-b405-7fc04ee3beb4",
+      "createdAt": "2026-05-30T19:17:46.331Z",
+      "name": "Model versions",
+      "category": "Data Store",
+      "description": "Versioni del modello in formato JSON",
+      "source": "llm-extraction",
+      "evidence": {
+        "chunks": [
+          {
+            "index": 3
+          },
+          {
+            "index": 4
+          }
+        ]
+      }
+    },
+    {
+      "id": "c47b4d03-aa15-491b-8b0a-6b882a4caf17",
+      "createdAt": "2026-05-30T19:17:46.331Z",
+      "name": "data/images",
+      "category": "Data Store",
+      "description": "Archivio delle immagini di training",
+      "source": "llm-extraction",
+      "evidence": {
+        "chunks": [
+          {
+            "index": 4
+          }
+        ]
+      }
+    },
+    {
+      "id": "29adedea-c76c-4dc7-b9c9-4d5f530a4d6b",
+      "createdAt": "2026-05-30T19:17:46.331Z",
+      "name": "logs",
+      "category": "Data Store",
+      "description": "Registro degli eventi",
+      "source": "llm-extraction",
+      "evidence": {
+        "chunks": [
+          {
+            "index": 4
+          }
+        ]
+      }
+    },
+    {
+      "id": "c9cea5ea-d301-4e4c-aef9-1455f6dfc160",
+      "createdAt": "2026-05-30T19:17:46.331Z",
+      "name": "B4 Connection",
+      "category": "Process",
+      "description": "Connettori per il modello EfficientNet-B4",
+      "source": "llm-extraction",
+      "evidence": {
+        "chunks": [
+          {
+            "index": 4
+          }
+        ]
+      }
+    },
+    {
+      "id": "ea77517e-015c-4911-a3cb-e218a6f73281",
+      "createdAt": "2026-05-30T20:49:40.193Z",
+      "name": "sfsdf",
+      "category": "External Entity",
+      "description": "fsfsfd",
+      "trustLevel": "medium"
+    },
+    {
+      "id": "588377eb-80be-4441-ac43-3caa05222d8e",
+      "createdAt": "2026-05-30T20:52:48.987Z",
+      "name": "fsdfdsfsdf",
+      "category": "Process",
+      "description": "fsfsfd"
     }
   ],
   "flows": []
