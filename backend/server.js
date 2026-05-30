@@ -9,6 +9,7 @@ const path = require('path');
 const fsSync = require('fs');
 const { ensureUploadDirs } = require('./utils/fileUtils');
 const { loadConfig } = require('./utils/configUtils');
+const { errorMiddleware } = require('./utils/errorHandler');
 
 const app = express();
 
@@ -25,7 +26,6 @@ const filesRoutes = require('./routes/files');
 const taxonomyRoutes = require('./routes/taxonomy');
 const analysisRoutes = require('./routes/analysis');
 const dfdRoutes = require('./routes/dfd');
-const testRoutes = require('./routes/test');         // opzionale per debug
 const ragRoutes = require('./routes/rag');
 const ollamaRoutes = require('./routes/ollama');
 
@@ -68,21 +68,24 @@ app.use('/api', configRoutes);
 app.use('/api', filesRoutes);
 app.use('/api', taxonomyRoutes);
 app.use('/api', dfdRoutes);
-app.use('/api', testRoutes);
 app.use('/api', ragRoutes);
 app.use('/api', ollamaRoutes);
 app.use('/api/analyze', analysisRoutes);
 
 // ============================================================================
+// MIDDLEWARE GLOBALE DI ERRORE (deve essere l'ultimo)
+// ============================================================================
+app.use(errorMiddleware);
 
+// ============================================================================
 // Caricamento configurazione e inizializzazione RAG (solo se non in test)
+// ============================================================================
 (async () => {
     try {
         const config = await loadConfig();
         app.locals.config = config;
         console.log('✅ Configurazione caricata e disponibile in app.locals');
 
-        // Inizializzazione RAG – solo in ambiente di sviluppo/produzione, non durante i test
         if (process.env.NODE_ENV !== 'test' && config.rag?.enabled) {
             const { RagService } = require('./services/ragService');
             const methodologyService = require('./services/methodologyService');

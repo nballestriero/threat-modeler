@@ -5,7 +5,9 @@
     "model": "llama3.1:8b"
   },
   "project": {
-    "name": "Test Project"
+    "name": "Test Project",
+    "version": "1.0",
+    "owner": ""
   },
   "database": {
     "enabled": false,
@@ -16,14 +18,15 @@
   "rag": {
     "enabled": true,
     "mode": "python-client",
+    "baseUrl": "http://localhost:8000",
+    "embeddingModel": "nomic-embed-text",
+    "collectionPrefix": "threatmodel_",
     "pythonBridge": {
+      "enabled": true,
       "scriptPath": "./services/rag_bridge.py",
       "pythonCmd": "./.venv/Scripts/python.exe",
-      "enabled": true,
       "timeout": 30000
     },
-    "persistDirectory": "./chroma_data",
-    "collectionPrefix": "threatmodel_",
-    "embeddingModel": "nomic-embed-text"
+    "persistDirectory": "./chroma_data"
   }
 }

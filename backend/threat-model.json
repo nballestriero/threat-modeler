@@ -1,4 +1,35 @@
 {
-  "assets": [],
+  "assets": [
+    {
+      "id": "73a6f4b0-e120-44ad-86e3-8b94cb00b9a0",
+      "createdAt": "2026-05-30T18:23:35.834Z",
+      "name": "Server APIfsfsdfsdfsfs",
+      "category": "Process",
+      "description": "Gestisce le richiestesfsdfdsfsdfsfs",
+      "source": "llm-extraction",
+      "evidence": {
+        "chunks": [
+          {
+            "index": 0
+          }
+        ]
+      }
+    },
+    {
+      "id": "0348d2d2-b4dc-4071-a9ca-3ec8b6239714",
+      "createdAt": "2026-05-30T18:23:35.835Z",
+      "name": "Database Utenti",
+      "category": "Data Store",
+      "description": "Archivia i dati",
+      "source": "llm-extraction",
+      "evidence": {
+        "chunks": [
+          {
+            "index": 0
+          }
+        ]
+      }
+    }
+  ],
   "flows": []
 }

@@ -1,333 +1,235 @@
 # PROJECT_CONTEXT.md – threat-modeler
 
-**Ultimo aggiornamento:** 29 maggio 2025  
-**Versione contesto:** 3.0  
+**Ultimo aggiornamento:** 30 maggio 2025  
+**Versione contesto:** 5.4  
 **Manutenuto da:** *(da compilare)*
 
-> 🤖 **Istruzione per LLM:** Se stai leggendo questo file, assumi che rappresenti fedelmente lo stato attuale del progetto. Usalo per contestualizzare le tue risposte. Tutte le convenzioni descritte qui devono essere rispettate nel codice che suggerisci. Non generare codice che violi i pattern documentati.
+> 🤖 **Istruzione per LLM:** Se stai leggendo questo file, assumi che rappresenti fedelmente lo stato attuale del progetto. Usalo per contestualizzare le tue risposte. Tutte le convenzioni descritte qui devono essere rispettate nel codice che suggerisci.
 
 ---
 
-## 📌 Manutenzione di questo file
+## 📌 Scopo dell'applicazione
 
-**Regola fondamentale:** ogni volta che si modifica l'architettura, si aggiunge un pattern, si completa un passo della lista o si cambia un comando, questo file va aggiornato.
+**threat-modeler** è uno strumento assistito da intelligenza artificiale (LLM) progettato per:
 
-**Serve come:**
-- Contesto per LLM (forniscilo all'inizio di ogni sessione di assistenza)
-- Onboarding per nuovi sviluppatori
-- Memoria storica delle decisioni tecniche
+- **Aiutare esperti di threat modeling** ad automatizzare l'estrazione di asset, la generazione di DFD e l'applicazione di metodologie di analisi dei rischi (STRIDE, PASTA, LINDDUN, FMEA, ecc.).
+- **Supportare studenti** nell'apprendimento del threat modeling, guidandoli passo passo attraverso le fasi di analisi di un sistema software.
 
-> ⚠️ Non esiste generazione automatica – è scritto e mantenuto manualmente.
+L'applicazione si integra con **Ollama** (LLM locale) e **ChromaDB** (RAG) per arricchire il contesto, suggerire miglioramenti e generare report automatici.
 
 ---
 
-## 1. Pattern di sviluppo
+## 🎯 Obiettivi funzionali (visione completa)
+
+| Fase | Descrizione |
+|------|-------------|
+| **Configurazione** | Pagine dedicate per impostare RAG, Ollama, database (alternativa ai JSON), e progetto corrente. |
+| **Raccolta documenti** | Caricamento di documenti di progetto (specifiche, codice, architettura) e contesto (paper, best practice). |
+| **Analisi iniziale** | Estrazione automatica degli asset (con tassonomia DFD base) usando LLM e RAG, per creare il DFD base. |
+| **Metodologie multiple** | Applicazione di metodologie (PASTA, STRIDE, STRIDE-AI, FMEA, LINDDUN) partendo dall'asset base e dal DFD base, generando nuovi asset specifici per ogni metodologia. |
+| **Miglioramento assistito** | In ogni fase, possibilità di usare l'LLM per affinare descrizioni, suggerire nuovi asset o arricchire i flussi. |
+| **Analisi rischi** | Ricavare un elenco ordinato di rischi (con priorità) per supportare le decisioni di mitigazione, anche in contesti regolamentati (es. medico, energetico). |
+| **Report automatico** | Generazione di un report finale (PDF o HTML) contenente asset, DFD, rischi e raccomandazioni. |
+
+---
+
+## 🧠 Architettura realizzata (al 30 maggio 2025)
 
 ### Backend (Node.js + Express)
-**Layered architecture** (non MVC classico, ma separazione chiara):
+
+**Layered architecture** consolidata:
 
 | Layer | Ruolo | Esempio |
 |-------|-------|---------|
-| **Routes** | Gestione HTTP (richiesta/risposta) | `routes/assets.js` |
-| **Controllers** | Orchestrano i service, gestiscono errori, formattano risposta | `controllers/assetController.js` |
-| **Services** | Logica di business pura (no req/res) | `services/assetService.js` |
-| **Models** | I/O su file JSON (lettura/scrittura persistenza) | `models/assetModel.js` |
-| **Utils** | Helper puri (file, stringhe, chiamate esterne) | `utils/errorHandler.js` |
+| **Routes** | Gestione HTTP (chiamano controller) | `analysis.js`, `assets.js` |
+| **Controllers** | Orchestrazione, gestione errori | `assetExtractionController.js` |
+| **Services** | Logica di business pura | `assetExtractionPipeline.js`, `ragService.js` |
+| **Models** | I/O su file JSON | `assetModel.js` |
+| **Utils** | Helper (config, errorHandler, file) | `configUtils.js`, `errorHandler.js` |
 
-**Flusso:**  
-`route` → `controller` → `service` → `model` → `service` → `controller` → `route` → risposta
+**Servizi principali implementati:**
+- `TextExtractorService` – PDF, Markdown, TXT, HTML
+- `ChunkService` – suddivisione con overlap
+- `OllamaService` – chiamate a Ollama (timeout 120s)
+- `RagService` – bridge Python o HTTP server per ChromaDB
+- `MethodologyService` – gestione metodologie (manifesto, tassonomie, prompt)
+- `AssetMergeService` – merging per similarità (trigrammi)
+- `AssetExtractionPipeline` – orchestratore completo
+- `AssetService`, `FlowService` – CRUD asset e flussi
 
-### Frontend (React + Zustand)
-**Unidirectional Data Flow** (Flux pattern):
+**RAG e metodologie:**
+- Ogni metodologia ha una collezione ChromaDB dedicata (`methodology_{id}`).
+- All'avvio (se RAG abilitato) viene indicizzata automaticamente la tassonomia della metodologia (un documento per categoria).
+- Durante l'estrazione, la pipeline arricchisce la query RAG con i nomi delle categorie.
+- L'utente può caricare file di contesto che vengono indicizzati nella stessa collezione.
 
-- **Components:** solo UI, dispatchano azioni tramite store o props
-- **Store (Zustand):** stato globale e azioni (business logic frontend)
-- **API layer:** chiamate HTTP centralizzate (`src/api/*.js`)
-- **Config:** istanza axios con base URL variabile d'ambiente
+**Test:**
+- ✅ 12 suite, 53 test → tutti passanti.
+- ✅ Test di integrazione con ChromaDB reale e con mock di Ollama.
 
-**Flusso:**  
-`component` → `store action` → `api` → (HTTP) → backend → `store update` → componente rerender
+### Frontend (React + Zustand + Vite)
+
+**Architettura unidirectional data flow:**
+```
+UI components → Zustand store → API calls → Backend → Aggiornamento store → UI re-render
+```
+
+**API layer** – `src/api/` (assetsApi, taxonomyApi, configApi, analysisApi)  
+**Config** – `src/config/api.js` (axios instance con `VITE_API_BASE`)
+
+**Store Zustand – architettura consolidata:**
+- ✅ **Store monolitico intelligente**: `useThreatModelStore.js` (unica fonte di verità per asset e flussi)
+- **Motivazione**: i flussi dipendono strettamente dagli asset (collegano due asset); mantenerli nello stesso store garantisce:
+  - Aggiornamenti atomici e coerenti
+  - Nessuna necessità di sincronizzazione tra store multipli
+  - Semplificazione dei componenti (un solo hook da usare)
+- **Miglioramenti applicati**:
+  - Flag `assetsLoaded` / `flowsLoaded` per prevenire fetch duplicati
+  - CRUD completi per asset e flussi (add, update, delete)
+  - Documentazione interna chiara per sezioni asset/flows
+  - Export compatibile con tutti i componenti esistenti
+
+**Inizializzazione centralizzata (`AppInitializer`):**
+- Componente React montato una sola volta in `App.jsx` all'avvio dell'applicazione.
+- **Scopo**: chiamare `fetchAssets()` e `fetchFlows()` immediatamente, prima del rendering di altri componenti.
+- **Risolve**: chiamate duplicate al backend e diagrammi vuoti per dati non ancora pronti al primo render.
+- **Fallback**: i componenti (`AssetInventory`, `DfdEditor`) mantengono le proprie `useEffect` con fetch, ma i flag nello store prevengono duplicati.
+- ⚠️ **Da verificare**: `<AppInitializer />` è correttamente montato in `App.jsx` (prima del routing/layout) e non causa side-effect o re-render indesiderati.
+
+**Componenti migrati:**
+- `DocumentationManager` – usa `useThreatModelStore` e `assetsApi`
+- `BaseAssetsManager` (precedentemente `AssetInventory`) – usa `useThreatModelStore` e `taxonomyApi`
+- `Sidebar` – usa `useAppStore` per la navigazione (fasi)
+- `App` – orchestratore delle fasi, include `AppInitializer`
+
+**Componenti ancora da migrare (priorità):**
+- `ConfigPanel` → userà `configApi` e `taxonomyApi`
+- `DfdEditor` → creare `flowsApi` (lo store rimane `useThreatModelStore`)
+- `MethodologyManager` → creare `methodologiesApi`
+
+**Variabili d'ambiente:**
+```env
+VITE_API_BASE=http://localhost:3001/api
+```
 
 ---
 
-## 2. Documentazione
-
-### Per umani (HTML navigabile)
-| Caratteristica | Dettaglio |
-|---------------|-----------|
-| **Strumento** | JSDoc + tema docdash |
-| **Generazione** | `npm run docs` in `backend/` e `frontend/` |
-| **Output** | `docs/backend/index.html` e `docs/frontend/index.html` |
-| **Contenuto** | Commenti JSDoc di tutte le funzioni pubbliche (parametri, return, esempi) |
-
-### Per LLM (Markdown leggibile)
-| Caratteristica | Dettaglio |
-|---------------|-----------|
-| **Strumento** | jsdoc-to-markdown |
-| **Generazione** | `npm run docs:md` (backend) → produce `docs/backend/api.md` |
-| **Contenuto** | Stesso dei commenti JSDoc, ma in formato markdown puro, ideale per essere passato come contesto a un LLM |
-
-### Regole di scrittura JSDoc (obbligatorie per tutte le funzioni pubbliche)
-```javascript
-/**
- * Breve descrizione
- * @param {string} param - Descrizione
- * @returns {Promise<Array>} Descrizione
- * @throws {Error} Se ...
- * @example
- * const result = await myFunction('test');
- */
-```
-
-### Perché documentare in questo modo?
-- ✅ **Automatico:** nessuna documentazione manuale separata
-- ✅ **Sempre aggiornata:** rigeneri quando il codice cambia
-- ✅ **Doppio formato:** HTML per navigazione interattiva, Markdown per LLM
-- ✅ **Integrabile in CI:** si può generare la documentazione a ogni push
-
----
-
-## 3. Test
-
-### Framework
-- **Jest:** test runner, asserzioni
-- **Supertest:** test HTTP per Express
-
-### Struttura dei test
-```
-backend/tests/
-├── unit/            # Test unitari (servizi, modelli, utility)
-│   ├── assetService.test.js
-│   ├── flowService.test.js
-│   ├── textExtractorService.test.js
-│   ├── ragService.test.js
-│   ├── methodologyService.test.js
-│   ├── assetMergeService.test.js
-│   └── assetExtractionPipeline.test.js
-├── integration/     # Test di integrazione (route + controller)
-│   ├── assets.integration.test.js
-│   └── server.integration.test.js
-└── helpers/         # Setup, mock, utility
-    └── setup.js     (opzionale)
-```
-
-### Esecuzione dei test (comandi)
-```bash
-cd backend
-
-# Esegui tutti i test una volta
-npm test
-
-# Esegui in modalità watch (riesegue automaticamente i test salvati)
-npm run test:watch
-
-# Esegui test con report di copertura (genera cartella coverage/)
-npm run test:coverage
-
-# Esegui test per un singolo file
-npm test -- --testPathPatterns=assetExtractionPipeline
-```
-
-### Perché test automatici?
-- 🔁 **Regressione:** le modifiche non rompono funzionalità esistenti
-- 🛡️ **Refactoring sicuro:** abbiamo già iniziato a migrare verso layered architecture
-- 📚 **Documentazione eseguibile:** i test mostrano come usare le API
-- 🚀 **CI/CD:** possono essere eseguiti in pipeline prima del deploy
-
-### Stato attuale dei test
-| Feature | Stato |
-|---------|-------|
-| ✅ Asset CRUD | test unitari e di integrazione passano |
-| ✅ Flussi (flows) | test unitari e di integrazione passano |
-| ✅ Pipeline estrazione asset | test unitari e di integrazione passano |
-| ✅ Server e route | test di integrazione passano |
-
----
-
-## 4. Passi fatti (dal 29 maggio 2025)
-
-- ✅ Pulizia file morti (`OLD_`, test, boilerplate, PDF)
-- ✅ Rimosso `backend/config.json` dal tracking git (sicurezza)
-- ✅ Centralizzata `API_BASE` nel frontend (`config/api.js`)
-- ✅ Eliminato `ragIndexer.js` (inutilizzato e buggato)
-- ✅ Configurato JSDoc + docdash per backend e frontend
-- ✅ Installato `jsdoc-to-markdown` per generare Markdown per LLM
-- ✅ Creata struttura layered per gli **assets**:
-  - `models/assetModel.js`
-  - `services/assetService.js`
-  - `controllers/assetController.js`
-  - `routes/assets.js` (thin router)
-- ✅ Scritti test unitari e di integrazione per asset CRUD (passano)
-- ✅ Configurato Jest con Babel per supportare ES modules (`uuid`)
-- ✅ Modificato `server.js` per esportare `app` e permettere test con supertest
-- ✅ Generata documentazione HTML e Markdown per il backend
-- ✅ Migrata gestione dei **flussi (flows)** con stessa struttura layered:
-  - `services/flowService.js`
-  - `controllers/flowController.js`
-  - Route integrate in `routes/assets.js`
-  - Test unitari e di integrazione (passano)
-- ✅ **Implementata e testata nuova pipeline di estrazione asset:**
-  - Servizi implementati: `TextExtractorService`, `ChunkService`, `OllamaService`, `RagService`, `MethodologyService`, `AssetMergeService`
-  - Orchestratore: `AssetExtractionPipeline`
-  - Controller: `assetExtractionController.js`
-  - Route: `POST /api/analyze/extract-assets`
-  - Supporto a PDF, Markdown, TXT, HTML
-  - RAG in due modalità (`http-server` e `python-client`)
-  - Metodologie gestite via manifesto `methodologies/manifest.json`
-  - Test unitari e di integrazione superati
-- ✅ Aggiornato `server.js` con configurazione in `app.locals` e documentazione JSDoc
-- ✅ Aggiornato `PROJECT_CONTEXT.md` alla versione 3.0
-
----
-
-## 5. Passi mancanti (priorità)
+## ✅ Passi fatti (dal 29 maggio 2025)
 
 ### Backend
-- [ ] Migrare enrichment e advanced assets verso nuova architettura (opzionale, legacy)
-- [ ] Aggiungere validazione input con **Zod** (già installato)
-- [ ] Aggiungere middleware di errore centralizzato (già in `utils/errorHandler.js`, da integrare)
-- [ ] Supporto a ulteriori formati (DOCX, ODT) in `TextExtractorService`
+- [x] Refactoring completo pipeline estrazione asset (modulare, testata)
+- [x] Implementazione RAG con bridge Python e ChromaDB
+- [x] Indicizzazione automatica delle tassonomie per metodologia
+- [x] Migrazione asset e flows a layered architecture
+- [x] Pulizia codice legacy (`analysisDfd.js`, `enrichment.js`, `advancedAssets.js`, `OLD_*`, `config.json.bak`)
+- [x] Creazione middleware error handler centralizzato
+- [x] Test di integrazione con file reali e RAG reale
+- [x] Documentazione JSDoc generabile (HTML + Markdown)
 
 ### Frontend
-- [ ] Creare API layer per tutti i domini (assets, flows, analysis, rag, config)
-- [ ] Separare store Zustand per dominio (`useAssetStore`, `useAnalysisStore`)
-- [ ] Rimuovere axios diretto dai componenti
-- [ ] Test frontend (Jest + React Testing Library) – ancora da impostare
-- [ ] Documentazione JSDoc per componenti React
-
-### Documentazione generale
-- [ ] Aggiungere badge nel README per documentazione e test
-- [ ] Automatizzare generazione documentazione in CI (GitHub Actions o simile)
-
-### Test
-- [ ] Aggiungere test per errori (404, 400, 500) già coperti in parte
-- [ ] Mockare chiamate a Ollama nei test di integrazione (già fatto in pipeline)
-- [ ] Aumentare copertura (target > 80%)
+- [x] Creazione API layer (`assetsApi`, `taxonomyApi`, `configApi`, `analysisApi`)
+- [x] Rafforzamento store monolitico `useThreatModelStore` (flag, CRUD completi, documentazione)
+- [x] Creazione e integrazione pattern `AppInitializer` per caricamento dati centralizzato
+- [x] Migrazione di `DocumentationManager` e `AssetInventory` → `BaseAssetsManager`
+- [x] Aggiornamento `Sidebar` e `App` per usare i nuovi pattern
+- [x] Risoluzione errori di import (percorsi relativi, cache Vite)
+- [x] Allineamento store e visibilità asset in `DfdEditor`
 
 ---
 
-## 6. Comandi utili riassunti
+## ⚠️ Known issues
 
-### Backend
+### Orphan flows (collegamenti orfani)
+**Problema**: cancellando un asset che ha flussi associati, i flussi rimangono nel database e nello store.
+
+**Conseguenza**: nel DFD compaiono archi verso asset inesistenti, senza possibilità di eliminarli (l'asset non è più nella lista).
+
+**Soluzione decisa – Opzione C**:
+1. Visualizzare i flussi orfani in rosso nel diagramma Mermaid, con tooltip "Collegamento interrotto"
+2. Permettere l'eliminazione manuale di tali flussi dalla tabella dei flussi
+
+**Priorità**: media (da realizzare dopo il completamento della migrazione frontend)
+
+---
+
+## 🚧 Passi mancanti (priorità)
+
+### Frontend (immediati)
+- [ ] Migrare `ConfigPanel.jsx` a `configApi` e `taxonomyApi`
+- [ ] Creare `flowsApi.js` per migrare `DfdEditor` (lo store rimane `useThreatModelStore`)
+- [ ] Creare `methodologiesApi.js` per `MethodologyManager`
+- [ ] ✅ **Verifica AppInitializer**: confermare montaggio in `App.jsx`, assenza di fetch duplicate e corretta gestione fallback
+
+### Backend (opzionali/migliorativi)
+- [ ] Aggiungere validazione input con Zod sugli endpoint critici
+- [ ] Supporto a ulteriori formati di documento (DOCX, ODT)
+- [ ] Generare report automatico (PDF/HTML) da template
+
+### Cleanup (priorità bassa)
+- [ ] Eliminare file legacy:
+  ```
+  backend/OLD_2_server.js
+  backend/OLD_server.js
+  backend/testServer.js
+  backend/advanced-assets.json
+  frontend/src/OLDApp.jsx
+  frontend/src/components/OLD_AssetInventory.jsx
+  frontend/src/components/OLD_DocumentationManager.jsx
+  ```
+
+### Generali
+- [ ] Aggiungere test frontend (Jest + React Testing Library)
+- [ ] Impostare GitHub Actions per esecuzione automatica test
+- [ ] Completare la documentazione dell'API (Swagger/OpenAPI)
+
+---
+
+## 🔧 Comandi utili
+
 ```bash
+# Backend
 cd backend
+npm test                 # esegue tutti i test
+npm run docs:all         # genera HTML (docs/backend) + Markdown per LLM
+npm start                # avvia server (porta 3001)
 
-# Avvio server in sviluppo
-npm start
-
-# Test
-npm test                # Esegue tutti i test
-npm run test:watch      # Esegue i test in watch mode
-npm run test:coverage   # Esegue test con report di copertura
-
-# Documentazione
-npm run docs            # Genera HTML (JSDoc)
-npm run docs:md         # Genera Markdown per LLM (jsdoc-to-markdown)
-npm run docs:all        # Genera entrambi (HTML + MD)
-
-# Utilità
-npm install --save-dev <pacchetto>   # Aggiunge dipendenza di sviluppo
-```
-
-### Frontend
-```bash
+# Frontend
 cd frontend
-
-# Avvio in sviluppo
-npm run dev
-
-# Build produzione
-npm run build
-
-# Test (ancora da configurare completamente)
-npm test                # (da impostare)
-
-# Documentazione (da configurare analogamente al backend)
-npm run docs            # (da impostare)
-```
-
-### Generale (cross-platform)
-```bash
-# Pulire cache npm
-npm cache clean --force
-
-# Installare pacchetti con registro alternativo (se timeout)
-npm install --registry=https://registry.npmmirror.com
-
-# Su Windows (PowerShell) per eseguire test con variabili d'ambiente
-$env:NODE_ENV='test'; jest --runInBand --detectOpenHandles
-```
-
-### Configurazione degli script in `backend/package.json` (assicurati che esistano)
-```json
-{
-  "scripts": {
-    "test": "cross-env NODE_ENV=test jest --runInBand --detectOpenHandles",
-    "test:watch": "cross-env NODE_ENV=test jest --watch",
-    "test:coverage": "cross-env NODE_ENV=test jest --coverage",
-    "docs": "jsdoc -c jsdoc.conf.json",
-    "docs:md": "jsdoc2md --files ./services/*.js ./controllers/*.js ./models/*.js ./utils/*.js > ../docs/backend/api.md",
-    "docs:all": "npm run docs && npm run docs:md"
-  }
-}
+npm run dev              # avvia Vite (porta 5173)
+npm run build            # build produzione
+# (test e documentazione da configurare)
 ```
 
 ---
 
-## 7. Architettura della pipeline di estrazione (stato attuale)
+## 📌 Note tecniche importanti
 
-### Servizi implementati e testati
-| Servizio | Responsabilità | File |
-|----------|---------------|------|
-| `TextExtractorService` | Estrae testo da PDF, MD, TXT, HTML | `services/textExtractorService.js` |
-| `ChunkService` | Suddivide testo in chunk con overlap | `services/chunkService.js` |
-| `OllamaService` | Chiamata LLM con timeout e troncamento | `services/ollamaService.js` |
-| `RagService` | ChromaDB via HTTP o Python bridge | `services/ragService.js` |
-| `MethodologyService` | Carica tassonomia e prompt da manifesto | `services/methodologyService.js` |
-| `AssetMergeService` | Unisce asset per similarità (trigrammi) | `services/assetMergeService.js` |
+**Estensione dei file JavaScript** – Nel frontend, i file `.js` o `.jsx` sono equivalenti per Vite. Si consiglia di usare `.js` per moduli che non contengono JSX (es. API, store, config) e `.jsx` solo per componenti con JSX. `taxonomyApi.js` (e simili) possono essere `.js`.
 
-### Orchestratore
-- **`AssetExtractionPipeline`**: coordina tutti i servizi
-- **Input**: `files`, `contextFiles`, `methodology`, `options` (`useChunking`, `useRag`)
-- **Output**: `{ assets, rawOccurrences, chunksProcessed }`
+**Percorsi relativi** – I componenti in `src/components/` importano store e API con `../store/...` e `../api/...` (un solo `..` per salire a `src`). Non usare `../../` se non per livelli superiori.
 
-### Controller e route
-- **`AssetExtractionController`**: valida richiesta, chiama pipeline, salva asset via `assetService.importAssets`
-- **Route**: `POST /api/analyze/extract-assets`
+**Cache di Vite** – In caso di errori di import dopo modifiche, cancellare `node_modules/.vite` e riavviare.
 
-### Persistenza asset avanzati
-- Unificati in `threat-model.json` (campo `advancedAssets` annidato)
-- Migrazione automatica all'avvio (se esiste `advanced-assets.json` separato, convertito e poi eliminato)
+**Store monolitico** – `useThreatModelStore` gestisce sia asset che flussi: non frammentare senza una motivazione architetturale forte.
+
+**AppInitializer** – Deve essere montato una volta sola in `App.jsx`. Non renderizza UI visibile, esegue solo `useEffect` per popolare lo store. Separare la logica di inizializzazione dal store segue il principio di separazione delle responsabilità e aggira i limiti di inizializzazione nativa di Zustand.
 
 ---
 
-## 8. Note per LLM
-
-Se stai leggendo questo file come LLM, tieni presente:
-
-1. La documentazione JSDoc in formato Markdown è in `docs/backend/api.md` (se generata)
-2. I pattern di sviluppo sono **layer backend** e **unidirectional data flow frontend**
-3. I test sono una garanzia di correttezza – se modifichi il codice, assicurati di aggiornare i test
-4. Le priorità sono elencate sopra: concentrati sul frontend e sulla rimozione del codice legacy
-5. Ogni funzione pubblica deve avere **JSDoc completo**
-6. Non aggiungere dipendenze senza validare l'impatto sui test e sulla documentazione
-7. Questo file è la **fonte di verità** per lo stato del progetto. Se qualcosa qui non corrisponde al codice, aggiorna il file
-8. Per la modalità `python-client` del RAG, lo script `rag_bridge.py` è già presente in `backend/services/`. Assicurati che Chromadb sia installato nell'ambiente Python configurato.
-
----
-
-## 9. Contatti e riferimenti
+## 📎 Riferimenti
 
 | Risorsa | Link / Percorso |
 |---------|----------------|
-| **Repository** | https://github.com/nballestriero/threat-modeler |
-| **Documentazione generata** | `docs/backend/index.html` (locale) |
-| **Contesto LLM** | Questo file (`PROJECT_CONTEXT.md`) |
-| **Script RAG Python** | `backend/services/rag_bridge.py` |
-| **Manifesto metodologie** | `backend/methodologies/manifest.json` |
+| Repository | https://github.com/nballestriero/threat-modeler |
+| Documentazione backend | `docs/backend/index.html` |
+| Contesto LLM | Questo file (`PROJECT_CONTEXT.md`) |
+| Script RAG Python | `backend/services/rag_bridge.py` |
+| Manifesto metodologie | `backend/methodologies/manifest.json` |
+| Store frontend | `frontend/src/store/useThreatModelStore.js` |
+| Inizializzatore | `frontend/src/components/AppInitializer.jsx` |
 
 ---
 
-> ✅ **Prossimo passo suggerito:** Procedere con il frontend: creare API layer, separare store Zustand e impostare i test con React Testing Library.
-
-*Fine del documento.*
+> 🔚 Fine del documento  
+> Ultima verifica: 30 maggio 2025  
+> Prossima revisione: al completamento della verifica di `AppInitializer` e migrazione di `ConfigPanel.jsx`

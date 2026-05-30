@@ -1,12 +1,45 @@
+/**
+ * DfdEditor - Fase 3: Data Flow Diagram (DFD) Base
+ * 
+ * @module components/DfdEditor
+ * 
+ * @description
+ * Questo componente permette di visualizzare, creare e modificare il Data Flow Diagram (DFD)
+ * di un sistema software, partendo dagli asset (nodi) e flussi (archi) definiti nelle fasi precedenti.
+ * 
+ * ## Funzionalità principali
+ * - **Visualizzazione DFD**: diagramma interattivo con Mermaid, nodi raggruppati per categoria in box colorati.
+ *   I colori sono presi dalla tassonomia DFD (endpoint `/api/dfd-taxonomy`).
+ * - **Aggiunta flussi**: pannello con selezione origine/destinazione e campo etichetta.
+ * - **Gestione flussi esistenti**: tabella riassuntiva con azioni modifica etichetta ed eliminazione.
+ * - **Editor di codice Mermaid**: textarea modificabile; pulsanti per copiare, scaricare (file .mmd), ripristinare automatico e applicare le modifiche manuali.
+ * - **Validazione sintassi**: messaggio di errore se il codice Mermaid non è valido.
+ * 
+ * ## Dipendenze
+ * - `useThreatModelStore` (Zustand): fornisce `assets`, `flows`, `fetchAssets`, `fetchFlows`, `addFlow`, `updateFlow`, `deleteFlow`.
+ * - `mermaid`: libreria per il rendering dei diagrammi.
+ * - `lucide-react`: icone.
+ * 
+ * ## Flusso dati
+ * 1. All'avvio, recupera asset e flussi dallo store (se non già presenti), e la tassonomia DFD dal backend.
+ * 2. Genera automaticamente il codice Mermaid (subgraph per categoria, nodi con forma DFD, archi con etichetta).
+ * 3. Il rendering avviene tramite `mermaid.run()`.
+ * 4. Le operazioni CRUD sui flussi aggiornano lo store, che a sua volta rigenera il diagramma.
+ * 5. L'utente può modificare manualmente il codice; "Applica & aggiorna" usa il codice manuale per il rendering (senza alterare i dati).
+ * 
+ * @see {@link https://mermaid.js.org/} Documentazione Mermaid
+ */
+
 import React, { useEffect, useState } from 'react';
 import { useThreatModelStore } from '../store/useThreatModelStore';
 import mermaid from 'mermaid';
-import { Plus, Trash, Edit, Save, X, Loader2, Copy, Check, AlertCircle, Link } from 'lucide-react';
+import { Plus, Trash, Edit, Save, X, Loader2, Copy, Check, AlertCircle, Link, Download, RefreshCw } from 'lucide-react';
 
 mermaid.initialize({ startOnLoad: false, theme: 'default' });
 
 export default function DfdEditor() {
-    const { assets, flows, fetchFlows, addFlow, updateFlow, deleteFlow } = useThreatModelStore();
+    // Aggiunto fetchAssets per caricare gli asset autonomamente
+    const { assets, flows, fetchAssets, fetchFlows, addFlow, updateFlow, deleteFlow } = useThreatModelStore();
     const [mermaidCode, setMermaidCode] = useState('');
     const [editableCode, setEditableCode] = useState('');
     const [copied, setCopied] = useState(false);
@@ -20,13 +53,19 @@ export default function DfdEditor() {
     const [newFlowLabel, setNewFlowLabel] = useState('');
     const [dfdTaxonomy, setDfdTaxonomy] = useState(null);
 
+    // All'avvio, carica asset e flussi se non ancora presenti, e recupera la tassonomia DFD
     useEffect(() => {
-        fetchFlows();
+        if (assets.length === 0) {
+            fetchAssets();
+        }
+        if (flows.length === 0) {
+            fetchFlows();
+        }
         fetch('/api/dfd-taxonomy')
             .then(res => res.json())
             .then(setDfdTaxonomy)
             .catch(() => setDfdTaxonomy({ categories: [] }));
-    }, []);
+    }, []); // Dipendenze vuote: eseguito solo al mount
 
     // Sanitizza stringhe per Mermaid
     const sanitizeForMermaid = (str) => {
@@ -64,8 +103,8 @@ export default function DfdEditor() {
         'Data Store': '[({name})]'
     };
 
-    // Genera il codice Mermaid
-    useEffect(() => {
+    // Genera il codice Mermaid automatico da assets e flows
+    const generateMermaidCode = () => {
         setMermaidError('');
         if (!assets.length) {
             const code = 'flowchart TD\n    A[Nessun asset. Torna alla fase 2 per aggiungerne.]';
@@ -115,27 +154,32 @@ export default function DfdEditor() {
             console.error('Errore generazione Mermaid:', err);
             setMermaidError('Errore interno durante la generazione del diagramma.');
         }
+    };
+
+    // Rigenera il codice ogni volta che assets, flows o taxonomy cambiano
+    useEffect(() => {
+        generateMermaidCode();
     }, [assets, flows, dfdTaxonomy]);
 
     // Render mermaid
+    const renderDiagram = async (codeToRender = mermaidCode) => {
+        const element = document.querySelector('.mermaid');
+        if (!element) return;
+        element.removeAttribute('data-processed');
+        try {
+            await mermaid.run({ nodes: [element], suppressErrors: true });
+            setMermaidError('');
+        } catch (err) {
+            console.error('Mermaid render error:', err);
+            setMermaidError('Errore di sintassi Mermaid. Controlla il codice.');
+        }
+    };
+
     useEffect(() => {
-        if (!mermaidCode) return;
-        const render = async () => {
-            const element = document.querySelector('.mermaid');
-            if (element) {
-                element.removeAttribute('data-processed');
-                try {
-                    await mermaid.run({ nodes: [element], suppressErrors: true });
-                    setMermaidError('');
-                } catch (err) {
-                    console.error('Mermaid render error:', err);
-                    setMermaidError('Errore di sintassi Mermaid. Controlla il codice.');
-                }
-            }
-        };
-        render();
+        if (mermaidCode) renderDiagram();
     }, [mermaidCode]);
 
+    // Gestione flussi
     const handleAddFlow = async () => {
         if (!selectedFromId || !selectedToId || !newFlowLabel.trim()) return alert('Completa tutti i campi');
         setLoading(true);
@@ -168,16 +212,35 @@ export default function DfdEditor() {
         if (window.confirm('Eliminare questo flusso?')) await deleteFlow(id);
     };
 
+    // Funzioni per l'editor di codice
     const copyToClipboard = async () => {
         await navigator.clipboard.writeText(editableCode);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
     };
 
+    const downloadFile = () => {
+        const blob = new Blob([editableCode], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'dfd_diagram.mmd';
+        a.click();
+        URL.revokeObjectURL(url);
+    };
+
+    const resetToAuto = () => {
+        setEditableCode(mermaidCode);
+        renderDiagram(mermaidCode);
+    };
+
+    const applyManualCode = () => {
+        setMermaidCode(editableCode);
+        renderDiagram(editableCode);
+    };
+
     const handleCodeChange = (e) => {
-        const newCode = e.target.value;
-        setEditableCode(newCode);
-        setMermaidCode(newCode);
+        setEditableCode(e.target.value);
     };
 
     return (
@@ -214,7 +277,9 @@ export default function DfdEditor() {
                 <h3 className="font-medium mb-2">Flussi definiti</h3>
                 {flows.length === 0 ? <p className="text-sm text-gray-400">Nessun flusso. Usa il pannello sopra.</p> : (
                     <table className="w-full text-sm border">
-                        <thead className="bg-gray-100"><tr><th className="p-2">Da</th><th className="p-2">A</th><th className="p-2">Etichetta</th><th className="p-2">Azioni</th></tr></thead>
+                        <thead className="bg-gray-100">
+                            <tr><th className="p-2">Da</th><th className="p-2">A</th><th className="p-2">Etichetta</th><th className="p-2">Azioni</th></tr>
+                        </thead>
                         <tbody>
                             {flows.map(flow => {
                                 const from = assets.find(a => a.id === flow.fromId);
@@ -236,15 +301,30 @@ export default function DfdEditor() {
                 )}
             </div>
 
-            {/* Editor codice Mermaid */}
+            {/* Editor codice Mermaid con pulsanti */}
             <div className="mt-4">
                 <div className="flex justify-between items-center mb-2">
                     <label className="text-sm font-medium">Codice Mermaid (modificabile)</label>
-                    <button onClick={copyToClipboard} className="bg-gray-200 px-2 py-1 rounded text-xs flex items-center gap-1">
-                        {copied ? <Check size={14} /> : <Copy size={14} />} Copia
-                    </button>
+                    <div className="flex gap-2">
+                        <button onClick={resetToAuto} className="bg-gray-200 px-2 py-1 rounded text-xs flex items-center gap-1">
+                            <RefreshCw size={14} /> Ripristina automatico
+                        </button>
+                        <button onClick={copyToClipboard} className="bg-gray-200 px-2 py-1 rounded text-xs flex items-center gap-1">
+                            {copied ? <Check size={14} /> : <Copy size={14} />} Copia
+                        </button>
+                        <button onClick={downloadFile} className="bg-gray-200 px-2 py-1 rounded text-xs flex items-center gap-1">
+                            <Download size={14} /> Scarica
+                        </button>
+                        <button onClick={applyManualCode} className="bg-blue-600 text-white px-2 py-1 rounded text-xs flex items-center gap-1">
+                            <Save size={14} /> Applica & aggiorna
+                        </button>
+                    </div>
                 </div>
                 <textarea value={editableCode} onChange={handleCodeChange} rows={12} className="w-full p-3 border rounded font-mono text-sm" />
+                <p className="text-xs text-gray-500 mt-1">
+                    Modifica il codice liberamente e usa "Applica & aggiorna" per vedere le modifiche nel diagramma.
+                    "Ripristina automatico" rigenera il codice dagli asset e flussi correnti.
+                </p>
             </div>
 
             {/* Dialog modifica etichetta */}

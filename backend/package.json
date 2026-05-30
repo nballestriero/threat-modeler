@@ -2,58 +2,51 @@
   "name": "backend",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
+    "start": "node server.js",
     "test": "cross-env NODE_ENV=test jest --runInBand --detectOpenHandles",
-    "test:report": "npm run test -- --json --outputFile=test-results.json && node scripts/test-report.js",
-    "test:failed": "npm run test -- --testPathPatterns=ragService --testNamePattern=\"query|health|errore|JSON\"",
+    "test:watch": "cross-env NODE_ENV=test jest --watch",
+    "test:coverage": "cross-env NODE_ENV=test jest --coverage",
+    "test:report": "cross-env NODE_ENV=test jest --runInBand --detectOpenHandles --json --outputFile=test-results.json && node scripts/test-report.js",
     "docs": "jsdoc -c jsdoc.conf.json",
     "docs:md": "jsdoc2md --files ./controllers/*.js ./services/*.js ./models/*.js ./utils/*.js ./routes/*.js > ../docs/backend/api.md",
     "docs:all": "npm run docs && npm run docs:md"
   },
-  "jest": {
-    "testEnvironment": "node",
-    "roots": [
-      "<rootDir>/tests"
-    ],
-    "testMatch": [
-      "**/*.test.js"
-    ],
-    "transformIgnorePatterns": [
-      "/node_modules/(?!uuid)/"
-    ]
-  },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
   "dependencies": {
-    "axios": "^1.16.1",
-    "cheerio": "^1.2.0",
-    "chromadb": "^3.4.3",
-    "cors": "^2.8.6",
-    "csv-parser": "^3.2.1",
-    "express": "^5.2.1",
-    "marked": "^18.0.4",
-    "mermaid": "^11.15.0",
-    "multer": "^2.1.1",
-    "pdf-parse": "^1.1.4",
-    "string-similarity": "^4.0.4",
-    "tesseract.js": "^7.0.0",
-    "uuid": "^14.0.0",
-    "zod": "^4.4.3",
-    "zustand": "^5.0.13"
+    "axios": "^1.6.2",
+    "cheerio": "^1.0.0-rc.12",
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "marked": "^11.1.1",
+    "multer": "^1.4.5-lts.1",
+    "pdf-parse": "^1.1.1",
+    "uuid": "^9.0.1"
   },
   "devDependencies": {
-    "@babel/core": "^7.29.7",
-    "@babel/preset-env": "^7.29.7",
-    "babel-jest": "^30.4.1",
-    "cross-env": "^10.1.0",
+    "@babel/core": "^7.23.9",
+    "@babel/preset-env": "^7.23.9",
+    "babel-jest": "^29.7.0",
+    "cross-env": "^7.0.3",
     "docdash": "^2.0.2",
-    "eslint": "^10.4.0",
-    "jest": "^30.4.2",
-    "jsdoc": "^4.0.5",
-    "jsdoc-to-markdown": "^9.1.3",
-    "supertest": "^7.2.2"
+    "jest": "^29.7.0",
+    "jsdoc": "^4.0.2",
+    "jsdoc-to-markdown": "^8.0.1",
+    "supertest": "^6.3.4"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "roots": [ "<rootDir>/tests" ],
+    "testMatch": [ "**/*.test.js" ],
+    "transformIgnorePatterns": [
+      "/node_modules/(?!(marked|uuid)/)"
+    ],
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "/routes/test.js"
+    ]
   }
 }
