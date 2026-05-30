@@ -1,27 +1,6 @@
 {
   "assets": [
     {
-      "id": "951223ad-b059-4ec1-978c-abf62b9c7aab",
-      "createdAt": "2026-05-30T19:17:46.331Z",
-      "name": "EfficientNet-B4",
-      "category": "Data Store",
-      "description": "Modello di intelligenza artificiale utilizzato per la classificazione delle immagini",
-      "source": "llm-extraction",
-      "evidence": {
-        "chunks": [
-          {
-            "index": 0
-          },
-          {
-            "index": 4
-          },
-          {
-            "index": 1
-          }
-        ]
-      }
-    },
-    {
       "id": "60f1261c-e031-4091-abc6-db16d5c332a3",
       "createdAt": "2026-05-30T19:17:46.331Z",
       "name": "_call_qwen2()",

@@ -1,6 +1,27 @@
 /**
- * Pannello di configurazione a tabs per impostare LLM, RAG, Database, JSON Storage e Progetto.
+ * ConfigPanel - Pannello di configurazione a tab per impostare LLM, RAG, Database, JSON Storage e Progetto
+ * 
  * @module components/ConfigPanel
+ * 
+ * @description
+ * Componente modale per la configurazione globale dell'applicazione:
+ * - 🤖 LLM (Ollama): URL, modello, toggle attivazione, test connessione, fetch modelli disponibili
+ * - 🧠 RAG (ChromaDB): modalità HTTP/Python, URL/script path, embedding model, toggle, test connessione
+ * - 🗄️ Database: tipo (SQLite), percorso file, toggle, test connessione
+ * - 📁 JSON Storage: percorso directory di salvataggio
+ * - 📌 Progetto: nome, versione, proprietario
+ * 
+ * Utilizza `configApi` per le operazioni CRUD sulla configurazione e `apiClient` per endpoint diagnostici specifici.
+ * 
+ * ## Flusso dati
+ * 1. All'apertura, carica la configurazione via `configApi.get()`
+ * 2. Popola i form con i valori letti
+ * 3. I toggle abilitano/disabilitano sezioni UI dinamicamente
+ * 4. I test di connessione chiamano endpoint dedicati (`/test/ollama`, `/rag/test-connection`, `/test/db`)
+ * 5. Il salvataggio invia la configurazione pulita via `configApi.update()`
+ * 
+ * @see {@link ../api/configApi.js} Layer API per operazioni di configurazione
+ * @see {@link ../config/api.js} Istanza axios per chiamate diagnostiche
  */
 
 import React, { useState, useEffect } from 'react';
@@ -8,6 +29,10 @@ import { X, Save, Play, CheckCircle, AlertCircle, Loader2, RefreshCw, Wrench, Da
 import { configApi } from '../api/configApi';
 import { apiClient } from '../config/api';
 
+/**
+ * Definizione delle tab disponibili nel pannello.
+ * @type {Array<{id: string, label: string, icon: JSX.Element}>}
+ */
 const tabs = [
     { id: 'ollama', label: '🤖 LLM (Ollama)', icon: <Wrench size={16} /> },
     { id: 'rag', label: '🧠 RAG (ChromaDB)', icon: <Database size={16} /> },
@@ -16,8 +41,17 @@ const tabs = [
     { id: 'project', label: '📌 Progetto', icon: <Settings size={16} /> }
 ];
 
+/**
+ * Componente modale per la configurazione globale a tab.
+ * @param {Object} props - Proprietà del componente
+ * @param {() => void} props.onClose - Callback da chiamare alla chiusura del modale
+ * @returns {JSX.Element} Interfaccia di configurazione con tab e toggle
+ */
 export default function ConfigPanel({ onClose }) {
+    // Stato tab attiva
     const [activeTab, setActiveTab] = useState('ollama');
+
+    // Stato configurazione (valori di default + caricati dal backend)
     const [config, setConfig] = useState({
         ollama: { enabled: true, baseUrl: 'http://localhost:11434', model: 'llama3.1:8b' },
         project: { name: 'Nuovo Progetto', version: '1.0', owner: '' },
@@ -38,6 +72,8 @@ export default function ConfigPanel({ onClose }) {
             persistDirectory: './chroma_data'
         }
     });
+
+    // Stato UI: modelli Ollama, status test, loading
     const [availableModels, setAvailableModels] = useState([]);
     const [isLoadingModels, setIsLoadingModels] = useState(false);
     const [ollamaStatus, setOllamaStatus] = useState({ state: 'idle', message: '' });
@@ -45,26 +81,37 @@ export default function ConfigPanel({ onClose }) {
     const [dbStatus, setDbStatus] = useState({ state: 'idle', message: '' });
     const [isSaving, setIsSaving] = useState(false);
 
-    // Carica configurazione al mount
+    /**
+     * Carica la configurazione dal backend all'apertura del modale.
+     */
     useEffect(() => {
         loadConfig();
     }, []);
 
-    // Fetch modelli Ollama quando cambia baseUrl o enabled
+    /**
+     * Fetch automatico dei modelli Ollama quando cambiano baseUrl o enabled.
+     */
     useEffect(() => {
         if (config.ollama.enabled && config.ollama.baseUrl) {
             fetchModels();
         }
     }, [config.ollama.enabled, config.ollama.baseUrl]);
 
+    /**
+     * Recupera la configurazione completa dal backend.
+     */
     const loadConfig = async () => {
         try {
-            const data = await configApi.get();
+            const data = await configApi.getConfig();
             setConfig(prev => ({
                 ...prev,
                 ...data,
                 ollama: { ...prev.ollama, ...data.ollama },
-                rag: { ...prev.rag, ...data.rag, pythonBridge: { ...prev.rag.pythonBridge, ...data.rag?.pythonBridge } },
+                rag: {
+                    ...prev.rag,
+                    ...data.rag,
+                    pythonBridge: { ...prev.rag.pythonBridge, ...data.rag?.pythonBridge }
+                },
                 database: { ...prev.database, ...data.database },
                 project: { ...prev.project, ...data.project }
             }));
@@ -74,12 +121,16 @@ export default function ConfigPanel({ onClose }) {
         }
     };
 
+    /**
+     * Recupera la lista dei modelli disponibili da Ollama.
+     */
     const fetchModels = async () => {
         setIsLoadingModels(true);
         try {
-            const res = await apiClient.get('/ollama/models');
-            const models = Array.isArray(res.data) ? res.data : (res.data.models || []);
+            const res = await configApi.getOllamaModels();
+            const models = Array.isArray(res) ? res : (res.models || []);
             setAvailableModels(models);
+            // Se il modello corrente non è nella lista, seleziona il primo disponibile
             if (models.length > 0 && !models.includes(config.ollama.model)) {
                 setConfig(prev => ({ ...prev, ollama: { ...prev.ollama, model: models[0] } }));
             }
@@ -92,6 +143,9 @@ export default function ConfigPanel({ onClose }) {
         }
     };
 
+    /**
+     * Testa la connettività verso Ollama con fallback diretto all'API.
+     */
     const testOllama = async () => {
         if (!config.ollama.baseUrl) {
             setOllamaStatus({ state: 'error', message: 'Inserisci un URL valido per Ollama' });
@@ -99,9 +153,9 @@ export default function ConfigPanel({ onClose }) {
         }
         setOllamaStatus({ state: 'testing', message: 'Verifica in corso...' });
         try {
-            // Prova a chiamare l'endpoint di test Ollama (se esiste nel backend)
+            // Prova endpoint di test backend
             const url = new URL(config.ollama.baseUrl);
-            const res = await apiClient.post('/test/ollama', {
+            const res = await apiClient.post('/ollama/test', {
                 host: url.protocol + '//' + url.hostname,
                 port: url.port || (url.protocol === 'https:' ? '443' : '80')
             }, { timeout: 5000 });
@@ -112,7 +166,7 @@ export default function ConfigPanel({ onClose }) {
             });
             if (res.data.connected) fetchModels();
         } catch (err) {
-            // Fallback: prova a chiamare direttamente l'API di Ollama
+            // Fallback: chiamata diretta all'API di Ollama
             try {
                 await apiClient.get(`${config.ollama.baseUrl}/api/tags`, { timeout: 3000 });
                 setOllamaStatus({ state: 'connected', message: '✅ Ollama raggiungibile' });
@@ -126,6 +180,9 @@ export default function ConfigPanel({ onClose }) {
         }
     };
 
+    /**
+     * Testa la connettività verso ChromaDB (RAG).
+     */
     const testRag = async () => {
         const rag = config.rag;
         if (rag.mode === 'http-server' && !rag.baseUrl) {
@@ -161,6 +218,9 @@ export default function ConfigPanel({ onClose }) {
         }
     };
 
+    /**
+     * Testa la connettività verso il database configurato.
+     */
     const testDB = async () => {
         setDbStatus({ state: 'testing', message: 'Verifica in corso...' });
         try {
@@ -177,13 +237,17 @@ export default function ConfigPanel({ onClose }) {
         }
     };
 
+    /**
+     * Salva la configurazione aggiornata sul backend.
+     */
     const handleSave = async () => {
         setIsSaving(true);
         try {
+            // Pulisce valori null/undefined prima dell'invio
             const cleanConfig = JSON.parse(JSON.stringify(config, (key, value) =>
                 value === null || value === undefined ? undefined : value
             ));
-            await configApi.update(cleanConfig);
+            await configApi.updateConfig(cleanConfig);
             setRagStatus({ state: 'connected', message: '✅ Configurazione salvata!' });
             setTimeout(() => onClose(), 800);
         } catch (err) {
@@ -194,6 +258,11 @@ export default function ConfigPanel({ onClose }) {
         }
     };
 
+    /**
+     * Aggiorna un campo annidato nella configurazione (supporta path tipo 'rag.pythonBridge.scriptPath').
+     * @param {string} path - Percorso del campo (dot notation)
+     * @param {any} value - Nuovo valore
+     */
     const updateField = (path, value) => {
         const keys = path.split('.');
         setConfig(prev => {
@@ -208,6 +277,11 @@ export default function ConfigPanel({ onClose }) {
         });
     };
 
+    /**
+     * Componente badge per visualizzare lo stato dei test di connessione.
+     * @param {{ status: { state: string, message: string } }} props
+     * @returns {JSX.Element}
+     */
     const StatusBadge = ({ status }) => {
         const colors = {
             idle: 'bg-gray-100 text-gray-500 border-gray-200',
@@ -232,17 +306,18 @@ export default function ConfigPanel({ onClose }) {
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl p-6 relative max-h-[90vh] overflow-y-auto">
+                {/* Pulsante chiudi */}
                 <button
                     onClick={onClose}
                     className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-full p-1 transition"
-                    aria-label="Chiudi"
+                    aria-label="Chiudi configurazione"
                 >
                     <X size={20} />
                 </button>
 
                 <h2 className="text-2xl font-bold mb-6 text-gray-800">⚙️ Configurazione Sistema</h2>
 
-                {/* Tabs */}
+                {/* ========== TAB NAVIGATION ========== */}
                 <div className="flex flex-wrap gap-2 border-b mb-6">
                     {tabs.map(tab => (
                         <button
@@ -259,9 +334,10 @@ export default function ConfigPanel({ onClose }) {
                     ))}
                 </div>
 
-                {/* Contenuto Tabs */}
+                {/* ========== TAB CONTENT ========== */}
                 <div className="space-y-6">
-                    {/* Tab OLLAMA */}
+
+                    {/* 🤖 Tab OLLAMA */}
                     {activeTab === 'ollama' && (
                         <section className="border border-gray-200 p-5 rounded-xl bg-gradient-to-br from-gray-50 to-white">
                             <label className="flex items-center gap-3 font-semibold mb-4 cursor-pointer group">
@@ -333,7 +409,7 @@ export default function ConfigPanel({ onClose }) {
                         </section>
                     )}
 
-                    {/* Tab RAG */}
+                    {/* 🧠 Tab RAG */}
                     {activeTab === 'rag' && (
                         <section className="border border-gray-200 p-5 rounded-xl bg-gradient-to-br from-indigo-50/50 to-white">
                             <label className="flex items-center gap-3 font-semibold mb-4 cursor-pointer group">
@@ -353,7 +429,10 @@ export default function ConfigPanel({ onClose }) {
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1.5">Modalità di connessione</label>
                                         <div className="flex gap-3">
-                                            <label className={`flex-1 p-3 border rounded-lg cursor-pointer transition ${config.rag.mode === 'http-server' ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200' : 'border-gray-300 hover:border-gray-400'}`}>
+                                            <label className={`flex-1 p-3 border rounded-lg cursor-pointer transition ${config.rag.mode === 'http-server'
+                                                    ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200'
+                                                    : 'border-gray-300 hover:border-gray-400'
+                                                }`}>
                                                 <input
                                                     type="radio"
                                                     name="rag-mode"
@@ -365,7 +444,10 @@ export default function ConfigPanel({ onClose }) {
                                                 <div className="text-sm font-medium text-gray-800">🌐 Server HTTP</div>
                                                 <div className="text-xs text-gray-500 mt-1">ChromaDB avviato con <code className="bg-gray-200 px-1 rounded">chroma run</code> o Docker</div>
                                             </label>
-                                            <label className={`flex-1 p-3 border rounded-lg cursor-pointer transition ${config.rag.mode === 'python-client' ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200' : 'border-gray-300 hover:border-gray-400'}`}>
+                                            <label className={`flex-1 p-3 border rounded-lg cursor-pointer transition ${config.rag.mode === 'python-client'
+                                                    ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200'
+                                                    : 'border-gray-300 hover:border-gray-400'
+                                                }`}>
                                                 <input
                                                     type="radio"
                                                     name="rag-mode"
@@ -461,7 +543,7 @@ export default function ConfigPanel({ onClose }) {
                         </section>
                     )}
 
-                    {/* Tab DATABASE */}
+                    {/* 🗄️ Tab DATABASE */}
                     {activeTab === 'database' && (
                         <section className="border border-gray-200 p-5 rounded-xl bg-gradient-to-br from-gray-50 to-white">
                             <label className="flex items-center gap-3 font-semibold mb-4 cursor-pointer">
@@ -513,7 +595,7 @@ export default function ConfigPanel({ onClose }) {
                         </section>
                     )}
 
-                    {/* Tab JSON STORAGE */}
+                    {/* 📁 Tab JSON STORAGE */}
                     {activeTab === 'storage' && (
                         <section className="border border-gray-200 p-5 rounded-xl bg-gradient-to-br from-gray-50 to-white">
                             <label className="font-semibold mb-3 block text-lg">📁 Cartella salvataggio JSON</label>
@@ -527,7 +609,7 @@ export default function ConfigPanel({ onClose }) {
                         </section>
                     )}
 
-                    {/* Tab PROGETTO */}
+                    {/* 📌 Tab PROGETTO */}
                     {activeTab === 'project' && (
                         <section className="border border-gray-200 p-5 rounded-xl bg-gradient-to-br from-gray-50 to-white">
                             <div className="space-y-4">
@@ -563,7 +645,7 @@ export default function ConfigPanel({ onClose }) {
                     )}
                 </div>
 
-                {/* Pulsante salva globale */}
+                {/* ========== PULSANTE SALVA GLOBALE ========== */}
                 <button
                     onClick={handleSave}
                     disabled={isSaving}

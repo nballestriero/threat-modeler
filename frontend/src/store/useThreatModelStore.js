@@ -1,13 +1,15 @@
 /**
  * @file Store centralizzato per la gestione dello stato dell'applicazione
- * @description Gestisce asset e flussi del threat model, con persistenza su backend
+ * @description Gestisce asset e flussi del threat model in modo monolitico, con persistenza su backend e pulizia automatica dei collegamenti orfani.
  * @module useThreatModelStore
+ * 
+ * @see {@link ../api/assetsApi.js} Layer API per operazioni CRUD su asset
+ * @see {@link ../api/flowsApi.js} Layer API per operazioni CRUD su flussi
  */
 
 import { create } from 'zustand';
-import axios from 'axios';
-
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:3000/api';
+import { assetsApi } from '../api/assetsApi';
+import { flowsApi } from '../api/flowsApi';
 
 /**
  * @typedef {Object} Asset
@@ -22,14 +24,11 @@ const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:3000/api';
 /**
  * @typedef {Object} Flow
  * @property {string} id - Identificativo univoco
- * @property {string} source - ID dell'asset sorgente
- * @property {string} target - ID dell'asset destinazione
- * @property {string} dataType - Tipo di dato scambiato
- * @property {string} [protocol] - Protocollo (es. HTTPS)
- * @property {string} [description] - Descrizione
+ * @property {string} fromId - ID dell'asset sorgente
+ * @property {string} toId - ID dell'asset destinazione
+ * @property {string} label - Etichetta del flusso
  */
 
-// Creazione dello store Zustand
 const useThreatModelStore = create((set, get) => ({
     // ========== STATO ==========
     /** @type {Asset[]} */
@@ -38,16 +37,13 @@ const useThreatModelStore = create((set, get) => ({
     flows: [],
     loading: false,
     error: null,
-    /** Flag per evitare fetch multiple degli asset */
     assetsLoaded: false,
-    /** Flag per evitare fetch multiple dei flussi */
     flowsLoaded: false,
 
     // ========== AZIONI PER ASSET ==========
 
     /**
      * Recupera tutti gli asset dal backend.
-     * Utilizza il flag assetsLoaded per evitare chiamate ripetute.
      * @async
      * @returns {Promise<void>}
      */
@@ -57,8 +53,8 @@ const useThreatModelStore = create((set, get) => ({
 
         set({ loading: true, error: null });
         try {
-            const response = await axios.get(`${API_BASE}/assets`);
-            set({ assets: response.data, assetsLoaded: true, loading: false });
+            const data = await assetsApi.getAll();
+            set({ assets: data, assetsLoaded: true, loading: false });
         } catch (error) {
             console.error('Errore fetchAssets:', error);
             set({ error: error.message, loading: false, assetsLoaded: false });
@@ -73,8 +69,7 @@ const useThreatModelStore = create((set, get) => ({
     addAsset: async (assetData) => {
         set({ loading: true, error: null });
         try {
-            const response = await axios.post(`${API_BASE}/assets`, assetData);
-            const newAsset = response.data;
+            const newAsset = await assetsApi.create(assetData);
             set((state) => ({ assets: [...state.assets, newAsset], loading: false }));
         } catch (error) {
             console.error('Errore addAsset:', error);
@@ -91,8 +86,7 @@ const useThreatModelStore = create((set, get) => ({
     updateAsset: async (id, updates) => {
         set({ loading: true, error: null });
         try {
-            const response = await axios.put(`${API_BASE}/assets/${id}`, updates);
-            const updatedAsset = response.data;
+            const updatedAsset = await assetsApi.update(id, updates);
             set((state) => ({
                 assets: state.assets.map((a) => (a.id === id ? updatedAsset : a)),
                 loading: false,
@@ -104,16 +98,17 @@ const useThreatModelStore = create((set, get) => ({
     },
 
     /**
-     * Elimina un asset.
+     * Elimina un asset e pulisce automaticamente i flussi orfani associati.
      * @param {string} id - ID dell'asset da eliminare
      * @returns {Promise<void>}
      */
     deleteAsset: async (id) => {
         set({ loading: true, error: null });
         try {
-            await axios.delete(`${API_BASE}/assets/${id}`);
+            await assetsApi.delete(id);
             set((state) => ({
                 assets: state.assets.filter((a) => a.id !== id),
+                flows: state.flows.filter((f) => f.fromId !== id && f.toId !== id),
                 loading: false,
             }));
         } catch (error) {
@@ -126,7 +121,6 @@ const useThreatModelStore = create((set, get) => ({
 
     /**
      * Recupera tutti i flussi dal backend.
-     * Utilizza il flag flowsLoaded.
      * @async
      * @returns {Promise<void>}
      */
@@ -136,8 +130,8 @@ const useThreatModelStore = create((set, get) => ({
 
         set({ loading: true, error: null });
         try {
-            const response = await axios.get(`${API_BASE}/flows`);
-            set({ flows: response.data, flowsLoaded: true, loading: false });
+            const data = await flowsApi.getFlows();
+            set({ flows: data, flowsLoaded: true, loading: false });
         } catch (error) {
             console.error('Errore fetchFlows:', error);
             set({ error: error.message, loading: false, flowsLoaded: false });
@@ -152,8 +146,7 @@ const useThreatModelStore = create((set, get) => ({
     addFlow: async (flowData) => {
         set({ loading: true, error: null });
         try {
-            const response = await axios.post(`${API_BASE}/flows`, flowData);
-            const newFlow = response.data;
+            const newFlow = await flowsApi.createFlow(flowData);
             set((state) => ({ flows: [...state.flows, newFlow], loading: false }));
         } catch (error) {
             console.error('Errore addFlow:', error);
@@ -170,8 +163,7 @@ const useThreatModelStore = create((set, get) => ({
     updateFlow: async (id, updates) => {
         set({ loading: true, error: null });
         try {
-            const response = await axios.put(`${API_BASE}/flows/${id}`, updates);
-            const updatedFlow = response.data;
+            const updatedFlow = await flowsApi.updateFlow(id, updates);
             set((state) => ({
                 flows: state.flows.map((f) => (f.id === id ? updatedFlow : f)),
                 loading: false,
@@ -190,7 +182,7 @@ const useThreatModelStore = create((set, get) => ({
     deleteFlow: async (id) => {
         set({ loading: true, error: null });
         try {
-            await axios.delete(`${API_BASE}/flows/${id}`);
+            await flowsApi.deleteFlow(id);
             set((state) => ({
                 flows: state.flows.filter((f) => f.id !== id),
                 loading: false,
@@ -204,13 +196,12 @@ const useThreatModelStore = create((set, get) => ({
     // ========== UTILITY ==========
 
     /**
-     * Resetta manualmente i flag (utile per refresh forzato)
+     * Resetta manualmente i flag di caricamento.
      */
     resetLoadedFlags: () => {
         set({ assetsLoaded: false, flowsLoaded: false });
     },
 }));
 
-// Esportazione sia come default che come nominativo per compatibilità con tutti i file esistenti
 export default useThreatModelStore;
 export { useThreatModelStore };
