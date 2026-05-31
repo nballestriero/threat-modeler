@@ -22,11 +22,12 @@
  * - `useThreatModelStore` (Zustand): fornisce `assets`, `flows`, `fetchAssets`, `fetchFlows`, `addFlow`, `updateFlow`, `deleteFlow`, `resetLoadedFlags`.
  * - `mermaid`: libreria per il rendering dei diagrammi.
  * - `lucide-react`: icone.
+ * - `taxonomyApi`: layer API centralizzato per recuperare la tassonomia DFD.
  * 
  * ## Flusso dati
  * 1. All'avvio, `<AppInitializer />` (montato in `App.jsx`) carica asset e flussi nello store.
  * 2. Questo componente legge direttamente dallo store: nessun fetch condizionale iniziale.
- * 3. Recupera la tassonomia DFD dal backend (dato esterno, non nello store).
+ * 3. Recupera la tassonomia DFD dal backend tramite `taxonomyApi.getDfdTaxonomy()` (dato esterno, non nello store).
  * 4. Genera automaticamente il codice Mermaid (subgraph per categoria, nodi con forma DFD, archi con etichetta).
  * 5. I flussi orfani (con source/target inesistenti) sono stilizzati con linea tratteggiata rossa.
  * 6. Il rendering avviene tramite `mermaid.run()`.
@@ -34,10 +35,14 @@
  * 8. L'utente può modificare manualmente il codice; "Applica & aggiorna" usa il codice manuale per il rendering (senza alterare i dati).
  * 
  * @see {@link https://mermaid.js.org/} Documentazione Mermaid
+ * @see {@link ../store/useThreatModelStore.js} Store monolitico per asset+flows
+ * @see {@link ../api/taxonomyApi.js} Layer API per tassonomie
  */
 
 import React, { useEffect, useState } from 'react';
 import { useThreatModelStore } from '../store/useThreatModelStore';
+import { useShallow } from 'zustand/shallow';
+import { taxonomyApi } from '../api/taxonomyApi';
 import mermaid from 'mermaid';
 import { Plus, Trash, Edit, Save, X, Loader2, Copy, Check, AlertCircle, Link, Download, RefreshCw, AlertTriangle } from 'lucide-react';
 
@@ -54,9 +59,15 @@ const isOrphanFlow = (flow, assets) => {
         !assets.some(a => a.id === flow.toId);
 };
 
+/**
+ * Componente editor DFD con visualizzazione Mermaid e manipolazione flussi.
+ * @returns {JSX.Element} Interfaccia DFD interattiva
+ */
 export default function DfdEditor() {
-    // Sottoscrizione allo store monolitico per asset e flussi
-    // Nota: i dati sono già popolati da AppInitializer, nessun fetch condizionale necessario
+    // ========================================================================
+    // ⚠️ IMPORTANTE: Selector stabili con useShallow per prevenire infinite re-render
+    // useShallow confronta i valori con shallow equality, evitando re-render se i riferimenti non cambiano
+    // ========================================================================
     const {
         assets,
         flows,
@@ -66,7 +77,18 @@ export default function DfdEditor() {
         updateFlow,
         deleteFlow,
         resetLoadedFlags
-    } = useThreatModelStore();
+    } = useThreatModelStore(
+        useShallow(state => ({
+            assets: state.assets,
+            flows: state.flows,
+            fetchAssets: state.fetchAssets,
+            fetchFlows: state.fetchFlows,
+            addFlow: state.addFlow,
+            updateFlow: state.updateFlow,
+            deleteFlow: state.deleteFlow,
+            resetLoadedFlags: state.resetLoadedFlags
+        }))
+    );
 
     // Stato per il codice Mermaid (automatico e manuale)
     const [mermaidCode, setMermaidCode] = useState('');
@@ -89,13 +111,12 @@ export default function DfdEditor() {
     const [dfdTaxonomy, setDfdTaxonomy] = useState(null);
 
     /**
-     * Effetto di inizializzazione: carica SOLO la tassonomia DFD dal backend.
+     * Effetto di inizializzazione: carica SOLO la tassonomia DFD dal backend tramite taxonomyApi.
      * Asset e flussi sono già nello store grazie ad AppInitializer.
      * Eseguito solo al mount del componente.
      */
     useEffect(() => {
-        fetch('/api/dfd-taxonomy')
-            .then(res => res.json())
+        taxonomyApi.getDfdTaxonomy()
             .then(setDfdTaxonomy)
             .catch(() => setDfdTaxonomy({ categories: [] }));
     }, []); // Dipendenze vuote: eseguito solo al mount
@@ -122,7 +143,7 @@ export default function DfdEditor() {
      * @param {string} label - Etichetta del flusso
      * @returns {string} Etichetta sicura
      */
-    const sanitizeLabel = (label) => label.replace(/[^\w\s\-\.]/g, '').trim();
+    const sanitizeLabel = (label) => label.replace(/[^\w\s\-\.\,\/]/g, '').trim();
 
     /**
      * Mappa una categoria personalizzata al tipo base DFD.

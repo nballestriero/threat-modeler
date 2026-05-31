@@ -223,18 +223,13 @@ describe('Flows API - Integrazione HTTP', () => {
         createdFlowId = res.body.id;
     });
 
-    /**
-     * ✅ TEST AGGIORNATO: Ora il backend valida fromId/toId → ci aspettiamo 400
-     */
     test('POST /api/flows restituisce 400 se fromId o toId sono mancanti', async () => {
-        // Test: manca fromId → dovrebbe restituire 400
         await request(app)
             .post('/api/flows')
             .send({ toId: 'target', label: 'Test' })
             .expect('Content-Type', /json/)
             .expect(400);
 
-        // Test: manca toId → dovrebbe restituire 400
         await request(app)
             .post('/api/flows')
             .send({ fromId: 'source', label: 'Test' })
@@ -311,7 +306,11 @@ describe('Flows API - Integrazione HTTP', () => {
 
 describe('Assets & Flows API - Scenari complessi', () => {
 
-    test('Eliminando un asset, i flussi correlati rimangono (orfani) - comportamento attuale', async () => {
+    /**
+     * ✅ TEST AGGIORNATO: Verifica che eliminando un asset, i flussi correlati vengano rimossi automaticamente (cascade delete).
+     */
+    test('Eliminando un asset, i flussi correlati vengono eliminati automaticamente (cascade delete)', async () => {
+        // Crea asset e flusso correlato
         const assetRes = await request(app)
             .post('/api/assets')
             .send({ name: 'Asset da eliminare', category: 'Process' });
@@ -326,13 +325,77 @@ describe('Assets & Flows API - Scenari complessi', () => {
             });
         const flowId = flowRes.body.id;
 
+        // Elimina l'asset
         await request(app).delete(`/api/assets/${assetId}`).expect(200);
 
+        // ✅ Verifica che il flusso NON esista più (cascade delete funzionante)
         const flowsRes = await request(app).get('/api/flows');
-        const orphanFlow = flowsRes.body.find(f => f.id === flowId);
-        expect(orphanFlow).toBeDefined();
+        const remainingFlow = flowsRes.body.find(f => f.id === flowId);
+        expect(remainingFlow).toBeUndefined(); // ✅ Flusso eliminato correttamente
+    });
 
-        await request(app).delete(`/api/flows/${flowId}`);
+    /**
+     * Verifica cascade delete: eliminando un asset, i flussi correlati vengono rimossi automaticamente.
+     * Endpoint: DELETE /api/assets/:id
+     * Expected: 200 OK, response con orphanFlowsDeleted, flussi orfani non presenti in GET /api/flows
+     */
+    test('DELETE /api/assets/:id elimina anche i flussi orfani correlati (cascade delete)', async () => {
+        // Conta i flussi esistenti prima del test (dovrebbero essere 0 grazie a beforeEach)
+        const initialFlowsRes = await request(app).get('/api/flows').expect(200);
+        const initialFlowsCount = initialFlowsRes.body.length;
+
+        // Crea asset sorgente e destinazione SOLO per questo test
+        const sourceRes = await request(app)
+            .post('/api/assets')
+            .send({ name: 'Source Asset Cascade', category: 'External Entity' })
+            .expect(201);
+        const targetRes = await request(app)
+            .post('/api/assets')
+            .send({ name: 'Target Asset Cascade', category: 'Data Store' })
+            .expect(201);
+        const sourceId = sourceRes.body.id;
+        const targetId = targetRes.body.id;
+
+        // Crea flussi SOLO per questo test: alcuni diventeranno orfani quando elimino sourceId
+        await request(app)
+            .post('/api/flows')
+            .send({ fromId: sourceId, toId: targetId, label: 'Flow valid' })
+            .expect(201);
+        await request(app)
+            .post('/api/flows')
+            .send({ fromId: sourceId, toId: 'other-123', label: 'Flow orphan 1' })
+            .expect(201);
+        await request(app)
+            .post('/api/flows')
+            .send({ fromId: 'other-456', toId: sourceId, label: 'Flow orphan 2' })
+            .expect(201);
+
+        // Verifica che siano stati creati esattamente 3 flussi nuovi
+        const beforeFlows = await request(app).get('/api/flows').expect(200);
+        expect(beforeFlows.body).toHaveLength(initialFlowsCount + 3);
+
+        // Elimina l'asset sorgente
+        const deleteRes = await request(app)
+            .delete(`/api/assets/${sourceId}`)
+            .expect('Content-Type', /json/)
+            .expect(200);
+
+        // Verifica risposta: cascade delete confermato
+        expect(deleteRes.body).toHaveProperty('success', true);
+        expect(deleteRes.body.orphanFlowsDeleted).toBe(3); // Tutti e 3 i flussi referenziano sourceId
+
+        // Verifica che l'asset non esista più
+        const afterAssets = await request(app).get('/api/assets');
+        expect(afterAssets.body.some(a => a.id === sourceId)).toBe(false);
+
+        // Verifica che tutti i flussi correlati siano stati eliminati
+        const afterFlows = await request(app).get('/api/flows').expect(200);
+        // Nessun flusso dovrebbe più referenziare sourceId
+        const remainingOrphans = afterFlows.body.filter(f => f.fromId === sourceId || f.toId === sourceId);
+        expect(remainingOrphans).toHaveLength(0);
+
+        // Verifica che il conteggio totale sia tornato a quello iniziale
+        expect(afterFlows.body).toHaveLength(initialFlowsCount);
     });
 
     test('Endpoint inesistente restituisce 404', async () => {

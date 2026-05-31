@@ -102,7 +102,7 @@ const updateAsset = async (req, res) => {
 };
 
 /**
- * Elimina un asset per ID.
+ * Elimina un asset per ID (con cascade delete per flussi orfani).
  * @async
  * @param {Object} req - Express request
  * @param {Object} req.params - URL params
@@ -110,9 +110,17 @@ const updateAsset = async (req, res) => {
  * @param {Object} res - Express response
  * @returns {Promise<void>}
  * @route DELETE /api/assets/:id
- * @response {200} { success: true, message: string }
- * @response {404} { error: string }
- * @response {500} { error: string }
+ * @response {200} { success: true, message: string, orphanFlowsDeleted: number }
+ * @response {404} { error: string } - Asset non trovato
+ * @response {500} { error: string } - Errore interno del server
+ * @example
+ * // Request: DELETE /api/assets/abc-123
+ * // Response: 200 OK
+ * {
+ *   "success": true,
+ *   "message": "Asset abc-123 eliminato con successo",
+ *   "orphanFlowsDeleted": 2
+ * }
  */
 const deleteAsset = async (req, res) => {
     try {

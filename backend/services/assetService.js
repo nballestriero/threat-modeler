@@ -152,26 +152,45 @@ async function updateAsset(id, updates) {
 }
 
 /**
- * Elimina un asset per ID.
+ * Elimina un asset per ID e tutti i flussi correlati (cascade delete).
  * @async
  * @param {string} id - ID univoco dell'asset da eliminare.
- * @returns {Promise<{success: boolean, message: string}>} Conferma dell'eliminazione.
+ * @returns {Promise<{success: boolean, message: string, orphanFlowsDeleted: number}>} 
+ *          Conferma dell'eliminazione con conteggio flussi orfani rimossi.
  * @throws {Error} Se l'asset non esiste nel modello.
  * @example
  * const result = await deleteAsset("abc-123");
- * console.log(result.success); // → true
+ * console.log(result.orphanFlowsDeleted); // → 2 (flussi orfani eliminati)
  */
 async function deleteAsset(id) {
     const model = await loadModel();
     const initialLength = model.assets.length;
-    model.assets = model.assets.filter(a => a.id !== id);
 
-    if (model.assets.length === initialLength) {
+    // Filtra gli asset: rimuovi quello con l'ID specificato
+    const filteredAssets = model.assets.filter(a => a.id !== id);
+
+    if (filteredAssets.length === initialLength) {
         throw new Error(`Asset non trovato: ${id}`);
     }
 
-    await saveModel(model);
-    return { success: true, message: `Asset ${id} eliminato con successo` };
+    // Cascade delete: rimuovi tutti i flussi che referenziano l'asset eliminato
+    const initialFlowsLength = model.flows?.length || 0;
+    const filteredFlows = (model.flows || []).filter(
+        f => f.fromId !== id && f.toId !== id
+    );
+    const orphanFlowsDeleted = initialFlowsLength - filteredFlows.length;
+
+    // Salva il modello aggiornato con asset e flussi filtrati
+    await saveModel({
+        assets: filteredAssets,
+        flows: filteredFlows
+    });
+
+    return {
+        success: true,
+        message: `Asset ${id} eliminato con successo`,
+        orphanFlowsDeleted
+    };
 }
 
 module.exports = {
