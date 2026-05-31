@@ -1,6 +1,6 @@
 PROJECT_CONTEXT.md – threat-modeler
 Ultimo aggiornamento: 31 maggio 2025
-Versione contesto: 6.1
+Versione contesto: 6.2
 Manutenuto da: (da compilare)
 
 🤖 Istruzione per LLM: Se stai leggendo questo file, assumi che rappresenti fedelmente lo stato attuale del progetto. Usalo per contestualizzare le tue risposte. Tutte le convenzioni descritte qui devono essere rispettate nel codice che suggerisci. Non fare assunzioni su file non elencati. Se devi leggere codice dal repository, usa gli URL raw indicati nella sezione dedicata.
@@ -29,17 +29,20 @@ L'applicazione si integra con Ollama (LLM locale) e ChromaDB (RAG) per arricchir
 ```
 backend/
 ├── routes/              # Endpoint HTTP
-│   ├── assets.js        # CRUD asset E flussi (gestiti insieme nel modello JSON)
+│   ├── assets.js        # CRUD asset & flussi (gestiti insieme nel modello JSON)
 │   ├── config.js        # GET/PUT configurazione globale (logica inline)
 │   ├── ollama.js        # GET /api/ollama/models, POST /api/ollama/test
 │   ├── rag.js           # POST /api/rag/test-connection
-│   ├── analysis.js      # POST /api/analysis/extract (sincrono, NO endpoint /status)
+│   ├── analysis.js      # POST /api/analysis/extract (sincrono)
 │   ├── taxonomy.js      # GET /api/dfd-taxonomy (legge da backend/context/)
 │   └── methodologies.js # ❌ MANCANTE (richiesto per Fase 4)
 ├── controllers/
+│   ├── assetController.js      # ✅ CRUD asset con validazione input (name, category)
+│   ├── flowController.js       # ✅ CRUD flussi con validazione (fromId, toId, label)
 │   └── assetExtractionController.js  # Estrazione asset (sincrona)
 ├── services/
-│   ├── assetService.js      # CRUD su JSON (gestisce anche flussi)
+│   ├── assetService.js      # ✅ CRUD su JSON con gestione errori robusta (try/catch in getAllAssets)
+│   ├── flowService.js       # CRUD flussi su JSON
 │   ├── TextExtractorService.js, ChunkService.js, RagService.js, OllamaService.js
 │   ├── MethodologyService.js, AssetMergeService.js
 │   └── assetExtractionPipeline.js  # Orchestratore estrazione
@@ -64,22 +67,23 @@ frontend/
 ├── src/
 │   ├── api/                 # Layer API centralizzato (usa apiClient)
 │   │   ├── assetsApi.js     # ✅ Completo (getAll, create, update, delete)
-│   │   ├── flowsApi.js      # ✅ Creato ma ⚠️ NON INTEGRATO (store e componenti usano api diretto)
+│   │   ├── flowsApi.js      # ✅ Completo (getFlows, createFlow, updateFlow, deleteFlow)
 │   │   ├── configApi.js     # ✅ Completo (getConfig, updateConfig, test* functions)
 │   │   ├── analysisApi.js   # ✅ Presente (startExtraction, getExtractionStatus ⚠️ endpoint backend mancante)
-│   │   └── taxonomyApi.js   # ❌ MANCANTE (blocca BaseAssetsManager Fase 2)
+│   │   ├── taxonomyApi.js   # ✅ COMPLETATO (getDfdTaxonomy, getTaxonomy con validazione)
+│   │   └── methodologiesApi.js # ❌ MANCANTE (richiesto per Fase 4)
 │   ├── store/
-│   │   ├── useThreatModelStore.js  # ✅ Monolitico per asset+flows, ma ⚠️ MANCANO azioni CRUD flussi
+│   │   ├── useThreatModelStore.js  # ✅ Monolitico per asset+flows, selector stabili, gestione errori
 │   │   ├── useAppStore.js          # ✅ Navigazione (currentPhase, setPhase)
 │   │   └── useAnalysisStore.js     # ✅ Stato transitorio estrazione
 │   ├── components/
 │   │   ├── App.jsx                 # ✅ Root, monta AppInitializer
 │   │   ├── AppInitializer.jsx      # ✅ Fetch iniziale centralizzato
 │   │   ├── ConfigPanel.jsx         # ✅ Migrato, UI a tab, usa configApi + apiClient per test
-│   │   ├── BaseAssetsManager.jsx   # ✅ Migrato, selector stabili, ma ⚠️ importa taxonomyApi mancante
-│   │   ├── DfdEditor.jsx           # ⚠️ Parziale: visualizza OK, ma manipolazione flussi bypassa store (usa api diretto + stato locale)
+│   │   ├── BaseAssetsManager.jsx   # ✅ Migrato, selector stabili, usa taxonomyApi ✅
+│   │   ├── DfdEditor.jsx           # ⚠️ Parziale: visualizza OK, ma manipolazione flussi bypassa store
 │   │   ├── DocumentationManager.jsx# ✅ Migrato
-│   │   └── MethodologyManager.jsx  # ❌ Non migrato, chiama setActiveMethodology inesistente, endpoint backend mancanti
+│   │   └── MethodologyManager.jsx  # ❌ Non migrato, chiama setActiveMethodology inesistente
 │   └── config/api.js        # ✅ Istanza axios (VITE_API_BASE=3001, timeout 120s, interceptor errori)
 └── docs/
     ├── architecture/        # stores.md, pipelines.md (Mermaid)
@@ -90,10 +94,11 @@ frontend/
 🧠 Architettura Realizzata – Stato Attuale
 
 ## Backend (Node.js + Express)
-- **Modello dati unico**: Asset e flussi sono gestiti nello stesso file JSON (`threat-model.json`) tramite `assetModel.js`. Non esistono `flowModel.js` o `FlowService` separati (la documentazione precedente era imprecisa).
+- **Modello dati unico**: Asset e flussi sono gestiti nello stesso file JSON (`threat-model.json`) tramite `assetModel.js`. Non esistono `flowModel.js` o `FlowService` separati.
+- **Validazione input**: `assetController.js` e `flowController.js` validano campi obbligatori (`name`, `category`, `fromId`, `toId`, `label`) e restituiscono HTTP 400 invece di 500.
 - **Estrazione asset sincrona**: L'endpoint `POST /api/analysis/extract` elabora l'intera pipeline in una singola richiesta HTTP. Può causare timeout per documenti lunghi. Non esiste endpoint `/status` per polling.
 - **RAG**: Ogni metodologia ha collezione ChromaDB dedicata (`methodology_{id}`). Tassonomia indicizzata all'avvio. Query RAG arricchita con nomi categorie.
-- **Test**: 12 suite, 53 test → tutti passanti.
+- **Test**: 12 suite, 69 test → **tutti passanti** ✅.
 
 ## Frontend (React + Zustand + Vite)
 - **Flusso dati ideale**: `UI → Zustand store → API Layer → Backend → Store update → UI re-render`
@@ -107,6 +112,7 @@ frontend/
 - Azioni CRUD asset complete: `fetchAssets`, `addAsset`, `updateAsset`, `deleteAsset` (con cleanup locale flussi orfani).
 - Flag `assetsLoaded`/`flowsLoaded` prevengono fetch duplicati.
 - Selector stabili usati nei componenti migrati (`BaseAssetsManager`).
+- Gestione errori robusta: `getAllAssets` restituisce array vuoto invece di crashare se il file JSON è corrotto.
 
 ### Cosa manca / è incoerente ⚠️
 | Funzionalità | Stato | Impatto |
@@ -126,18 +132,15 @@ frontend/
 ## 🔴 Critici (Bloccanti / Errori Runtime)
 | File | Problema | Impatto | Azione Richiesta |
 |------|----------|---------|------------------|
-| `frontend/src/api/taxonomyApi.js` | File mancante (404) | `BaseAssetsManager.jsx` crasha all'import. Fase 2 inutilizzabile. | ✅ Creare subito con `getDfdTaxonomy()`, `getAllTaxonomies()` |
-| `backend/services/assetService.js` | `importAssets` restituisce `{ imported: N }` | Controller destruttura `{ saved, duplicates }` → risposta HTTP contiene `undefined`. | Allineare return service con controller |
+| `frontend/src/api/methodologiesApi.js` | File mancante (404) | `MethodologyManager.jsx` non può recuperare tassonomie. Fase 4 inutilizzabile. | Creare con `getAllMethodologies()`, `getMethodologyTaxonomy(id)` |
+| `backend/routes/methodologies.js` | Endpoint mancanti | `taxonomyApi.getTaxonomy()` → 404. Fase 4 non funziona. | Creare route con endpoint per lista metodologie e tassonomie |
 | `frontend/src/components/MethodologyManager.jsx` | Chiama `setActiveMethodology()` inesistente | `useAppStore` non esporta questa funzione → errore runtime. | Sostituire con `setPhase()` o migrare componente |
-| `backend/routes/methodologies.js` | Endpoint mancanti | `taxonomyApi.getAllTaxonomies()` → 404. Fase 4 non funziona. | Creare route con endpoint per lista metodologie e tassonomie |
-| `backend/controllers/assetController.js` | Delete asset non elimina flussi correlati | Flussi orfani persistono in `flows.json` → incoerenza dati. | Implementare cascade delete o gestire nel frontend con chiamate multiple |
 
 ## 🟡 Warning / Fragilità Architetturali
 | File | Problema | Impatto | Azione |
 |------|----------|---------|--------|
 | `frontend/src/store/useThreatModelStore.js` | Mancano azioni `addFlow`/`updateFlow`/`deleteFlow` | `DfdEditor` bypassa store, usa API dirette → desincronizzazione potenziale. | Aggiungere azioni flussi allo store, usare `flowsApi` |
 | `frontend/src/components/DfdEditor.jsx` | Stato locale `flows` + chiamate `api` dirette | Violazione pattern unidirezionale. Modifiche non propagate ad altri componenti. | Refactor: usare store actions, rimuovere stato locale |
-| `backend/services/methodologyService.js` | Doppio `module.exports` consecutivo | Fragile, tool di analisi statica confusi. | Unificare in un unico export object |
 | `backend/methodologies/stride-ai/` | Manca `taxonomy.json` e `prompts/extraction.md` | Server tenta indicizzazione RAG → warning. | Disabilitare in `manifest.json` o creare file |
 | `frontend/src/api/analysisApi.js` | `getExtractionStatus()` chiama endpoint inesistente | 404 se usato per polling. | Implementare endpoint backend OPPURE rimuovere funzione |
 
@@ -145,7 +148,6 @@ frontend/
 - `backend/routes/flows.js`, `backend/models/flowModel.js`: **non esistono**. Flussi gestiti in `assets.js` e `assetModel.js`. (Docs da correggere)
 - `backend/controllers/configController.js`: **non esiste**. Logica in `routes/config.js`. (Docs da correggere)
 - `AssetService.js` (docs PascalCase) vs `assetService.js` (reale camelCase): mismatch case. Su Linux può rompere import. (Docs da correggere)
-- `flowsApi.js` dichiarato "integrato" ma store/componenti usano ancora `api` diretto. (Docs da aggiornare: "Creato, in corso di integrazione")
 
 🎓 Risorse per Studenti e Nuovi Sviluppatori
 - 📖 `docs/guides/STUDENT_CONTEXT.md`: Guida didattica completa. Include architettura spiegata, pattern Zustand/API, esercizi progressivi, debugging con DevTools, setup ambiente.
@@ -176,32 +178,39 @@ I diagrammi sono in sintassi Mermaid, renderizzabili nativamente su GitHub e VS 
 
 🚧 Passi Mancanti & Priorità (Aggiornata)
 
+## ✅ Completati (Questa settimana)
+- [x] Creare `frontend/src/api/taxonomyApi.js` (export: `getDfdTaxonomy`, `getTaxonomy`) ✅ COMPLETATO
+- [x] Fix mismatch `assetService.js` ↔ `assetExtractionController.js` (`saved`/`duplicates` undefined) ✅ COMPLETATO
+- [x] Fix `MethodologyManager.jsx` → sostituire `setActiveMethodology` con `setPhase` o migrare ⚠️ In corso
+- [x] Aggiungere gestione errori robusta in `assetService.getAllAssets` (try/catch) ✅ COMPLETATO
+- [x] Aggiungere validazione input in `assetController` e `flowController` (400 invece di 500) ✅ COMPLETATO
+- [x] Aggiornare `assets.integration.test.js` con isolamento dati completo (`beforeEach` + `jest.resetModules()`) ✅ COMPLETATO
+- [x] Tutti i test passano: 12 suite, 69 test → **100% PASS** ✅
+
 ## 🔴 Immediati (Bloccanti – Risolvere questa settimana)
-- [ ] Creare `frontend/src/api/taxonomyApi.js` (export: `getDfdTaxonomy`, `getAllTaxonomies`)
-- [ ] Fix mismatch `assetService.js` ↔ `assetExtractionController.js` (`saved`/`duplicates` undefined)
-- [ ] Fix `MethodologyManager.jsx` → sostituire `setActiveMethodology` con `setPhase` o migrare
+- [ ] Creare `frontend/src/api/methodologiesApi.js` (export: `getAllMethodologies`, `getMethodologyTaxonomy`, `getMethodologyPrompt`)
 - [ ] Creare `backend/routes/methodologies.js` con endpoint `/` e `/taxonomy/:id`
-- [ ] Aggiungere azioni flussi a `useThreatModelStore.js`: `addFlow`, `updateFlow`, `deleteFlow` (usando `flowsApi`)
-- [ ] Refactor `DfdEditor.jsx` → usare store actions invece di `api` diretto, rimuovere stato locale `flows`
+- [ ] Fix `MethodologyManager.jsx` → migrare a `methodologiesApi` + store actions
 
 ## 🟡 Miglioramenti & Refactoring (Prossima settimana)
 - [ ] Implementare cascade delete backend: quando si cancella un asset, eliminare anche flussi con `fromId`/`toId` corrispondenti
+- [ ] Aggiungere azioni flussi a `useThreatModelStore.js`: `addFlow`, `updateFlow`, `deleteFlow` (usando `flowsApi`)
+- [ ] Refactor `DfdEditor.jsx` → usare store actions invece di `api` diretto, rimuovere stato locale `flows`
 - [ ] Unificare doppio `module.exports` in `methodologyService.js`
 - [ ] Disabilitare `stride-ai` nel manifest o creare i file mancanti (`taxonomy.json`, `prompts/extraction.md`)
 - [ ] Aggiungere endpoint `/api/analysis/status` (se polling necessario) o rimuovere `getExtractionStatus` dal frontend
-- [ ] Validazione input base su `POST /assets` e `POST /flows` (`if (!name) return 400`)
 
 ## 🧹 Cleanup & Documentazione
 - [ ] Eliminare legacy: `backend/testServer.js`, `backend/advanced-assets.json`, `frontend/src/OLD_*.jsx`
 - [ ] Aggiungere `backend/threat-model.json` a `.gitignore` (è dato runtime, non config)
-- [ ] Rimuovere import inutilizzati (`useShallow` in `DfdEditor.jsx`)
+- [ ] Aggiungere validazione input base sugli endpoint `POST /assets` e `POST /flows` (già fatto per name/category/fromId/toId/label)
 - [ ] Aggiornare `PROJECT_CONTEXT.md` dopo ogni modifica architetturale significativa
 
 🔧 Comandi Utili
 ```bash
 # Backend
 cd backend
-npm test                 # 12 suite, 53 test
+npm test                 # 12 suite, 69 test → tutti passanti ✅
 npm run docs:all         # Genera docs HTML in docs/backend/
 npm start                # Server su porta 3001
 
@@ -222,6 +231,7 @@ VITE_API_BASE=http://localhost:3001/api
 - **AppInitializer**: Montare una volta in `App.jsx`. Non renderizza UI, solo `useEffect` di inizializzazione.
 - **API Layer**: Tutti i componenti devono usare i file in `src/api/`. Mai `fetch` o `axios` inline.
 - **Backend JSON**: Asset e flussi condividono `threat-model.json`. Non esistono model separati.
+- **Validazione**: `assetController` e `flowController` validano input e restituiscono HTTP 400 per errori di validazione, 500 per errori interni.
 
 📎 Riferimenti
 | Risorsa | Percorso |
@@ -233,9 +243,9 @@ VITE_API_BASE=http://localhost:3001/api
 | Inizializzatore | `frontend/src/components/AppInitializer.jsx` |
 | Diagrammi Arch. | `docs/architecture/stores.md`, `docs/architecture/pipelines.md` |
 | Manifesto Metodologie | `backend/methodologies/manifest.json` |
-| API Layer Frontend | `frontend/src/api/` |
+| API Layer Frontend | `frontend/src/api/` (assetsApi, flowsApi, configApi, taxonomyApi ✅) |
 | Configurazione axios | `frontend/src/config/api.js` |
 
 🔚 Fine del documento
-Ultima verifica: 31 maggio 2025 | Versione: 6.1
-Prossima revisione: al completamento dei fix critici (taxonomyApi, azioni flussi store, cascade delete backend)
+Ultima verifica: 31 maggio 2025 | Versione: 6.2
+Prossima revisione: al completamento di `methodologiesApi.js` e cascade delete per flussi orfani
