@@ -3,7 +3,7 @@
 <head>
     
     <meta charset="utf-8">
-    <title>services/textExtractorService - Documentation</title>
+    <title>services/projectService - Documentation</title>
     
     
     <script src="scripts/prettify/prettify.js"></script>
@@ -35,7 +35,7 @@
 
 <div id="main">
     
-    <h1 class="page-title">services/textExtractorService</h1>
+    <h1 class="page-title">services/projectService</h1>
     
 
     
@@ -58,7 +58,32 @@
         <div class="container-overview">
         
             
-                <div class="description usertext"><p>Servizio per l'estrazione di testo da formati documentali</p></div>
+                <div class="description usertext"><p>Gestisce il ciclo di vita dei progetti nell'applicazione threat-modeler:</p>
+<ul>
+<li>Creazione con attivazione automatica e inizializzazione directory isolata</li>
+<li>Lettura/Scrittura della lista progetti da <code>projects.json</code></li>
+<li>Gestione stati: <code>draft</code>, <code>active</code>, <code>archived</code></li>
+<li>Isolamento dati: ogni progetto ha la sua cartella con <code>threat-model.json</code>, <code>config.json</code></li>
+</ul>
+<h2>Struttura dati progetto</h2>
+<pre class="prettyprint source lang-json"><code>{
+  &quot;id&quot;: &quot;uuid-v4&quot;,
+  &quot;name&quot;: &quot;Nome Progetto&quot;,
+  &quot;description&quot;: &quot;Descrizione opzionale&quot;,
+  &quot;owner&quot;: &quot;Proprietario opzionale&quot;,
+  &quot;status&quot;: &quot;active|draft|archived&quot;,
+  &quot;createdAt&quot;: &quot;ISO-8601 timestamp&quot;,
+  &quot;updatedAt&quot;: &quot;ISO-8601 timestamp&quot;
+}
+</code></pre>
+<h2>Isolamento dati per progetto</h2>
+<p>Quando un progetto viene creato, viene generata una directory dedicata:</p>
+<pre class="prettyprint source"><code>backend/data/
+├── projects.json                    # Lista metadata progetti
+└── &lt;project-uuid>/                 # Directory isolata del progetto
+    ├── threat-model.json           # Asset e flussi del progetto
+    └── config.json                 # Configurazione specifica del progetto
+</code></pre></div>
             
 
             
@@ -70,13 +95,38 @@
 <dl class="details">
     
     <dt class="tag-description">Description:</dt>
-    <dd class="tag-description"><ul class="dummy"><li><p>Servizio per l'estrazione di testo da formati documentali</p></li></ul></dd>
+    <dd class="tag-description"><ul class="dummy"><li><p>Gestisce il ciclo di vita dei progetti nell'applicazione threat-modeler:</p>
+<ul>
+<li>Creazione con attivazione automatica e inizializzazione directory isolata</li>
+<li>Lettura/Scrittura della lista progetti da <code>projects.json</code></li>
+<li>Gestione stati: <code>draft</code>, <code>active</code>, <code>archived</code></li>
+<li>Isolamento dati: ogni progetto ha la sua cartella con <code>threat-model.json</code>, <code>config.json</code></li>
+</ul>
+<h2>Struttura dati progetto</h2>
+<pre class="prettyprint source lang-json"><code>{
+  &quot;id&quot;: &quot;uuid-v4&quot;,
+  &quot;name&quot;: &quot;Nome Progetto&quot;,
+  &quot;description&quot;: &quot;Descrizione opzionale&quot;,
+  &quot;owner&quot;: &quot;Proprietario opzionale&quot;,
+  &quot;status&quot;: &quot;active|draft|archived&quot;,
+  &quot;createdAt&quot;: &quot;ISO-8601 timestamp&quot;,
+  &quot;updatedAt&quot;: &quot;ISO-8601 timestamp&quot;
+}
+</code></pre>
+<h2>Isolamento dati per progetto</h2>
+<p>Quando un progetto viene creato, viene generata una directory dedicata:</p>
+<pre class="prettyprint source"><code>backend/data/
+├── projects.json                    # Lista metadata progetti
+└── &lt;project-uuid>/                 # Directory isolata del progetto
+    ├── threat-model.json           # Asset e flussi del progetto
+    └── config.json                 # Configurazione specifica del progetto
+</code></pre></li></ul></dd>
     
 
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="services_textExtractorService.js.html">services/textExtractorService.js</a>, <a href="services_textExtractorService.js.html#line2">line 2</a>
+        <a href="services_projectService.js.html">services/projectService.js</a>, <a href="services_projectService.js.html#line1">line 1</a>
     </li></ul></dd>
     
 
@@ -106,6 +156,15 @@
 
     
 
+    
+    <dt class="tag-see">See:</dt>
+    <dd class="tag-see">
+        <ul>
+            <li><code>../middleware/projectScope.js</code> Middleware che usa questo service</li>
+        
+            <li><code>../models/assetModel.js</code> Modello dati che supporta percorsi dinamici</li>
+        </ul>
+    </dd>
     
 
     
@@ -167,7 +226,7 @@
 
     
 
-    <h4 class="name" id="~extractFromHTML"><span class="type-signature type-signature-async, inner">(async, inner) </span>extractFromHTML<span class="signature">(buffer)</span><span class="type-signature"> &rarr; {Promise.&lt;string>}</span></h4>
+    <h4 class="name" id=".createProject"><span class="type-signature type-signature-async, static">(async, static) </span>createProject<span class="signature">(data)</span><span class="type-signature"> &rarr; {Promise.&lt;Object>}</span></h4>
 
     
 
@@ -177,13 +236,14 @@
 <dl class="details">
     
     <dt class="tag-description">Description:</dt>
-    <dd class="tag-description"><ul class="dummy"><li><p>Estrae testo da HTML</p></li></ul></dd>
+    <dd class="tag-description"><ul class="dummy"><li><p>Crea un nuovo progetto e lo imposta AUTOMATICAMENTE come attivo.
+Disattiva eventuali progetti attivi preesistenti (un solo progetto attivo alla volta).</p></li></ul></dd>
     
 
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="services_textExtractorService.js.html">services/textExtractorService.js</a>, <a href="services_textExtractorService.js.html#line69">line 69</a>
+        <a href="services_projectService.js.html">services/projectService.js</a>, <a href="services_projectService.js.html#line165">line 165</a>
     </li></ul></dd>
     
 
@@ -228,6 +288,11 @@
 
 
 
+    <h5 class="h5-examples">Example</h5>
+    
+    <pre class="prettyprint"><code>const project = await projectService.createProject({  name: 'Analisi Sistema Bancario',  description: 'Threat modeling per l'app mobile',  owner: 'Security Team'});console.log(project.id); // → 'a1b2c3d4-...'console.log(project.status); // → 'active' (auto-attivato)</code></pre>
+
+
 
 
     <h5 class="h5-parameters">Parameters:</h5>
@@ -255,13 +320,13 @@
 
         <tr>
             
-                <td class="name"><code>buffer</code></td>
+                <td class="name"><code>data</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">Buffer</span>
+<span class="param-type">Object</span>
 
 
 
@@ -272,274 +337,9 @@
 
             
 
-            <td class="description last"></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<h5 class="h5-returns">Returns:</h5>
-
-        
-
-
-<dl class="param-type">
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">Promise.&lt;string></span>
-
-
-
-    </dd>
-</dl>
-
-    
-
-
-
-        
-            
-
-    
-
-    <h4 class="name" id="~extractFromMarkdown"><span class="type-signature type-signature-async, inner">(async, inner) </span>extractFromMarkdown<span class="signature">(buffer)</span><span class="type-signature"> &rarr; {Promise.&lt;string>}</span></h4>
-
-    
-
-
-
-
-<dl class="details">
-    
-    <dt class="tag-description">Description:</dt>
-    <dd class="tag-description"><ul class="dummy"><li><p>Estrae testo da Markdown (converte in HTML e poi estrae il testo)</p></li></ul></dd>
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="services_textExtractorService.js.html">services/textExtractorService.js</a>, <a href="services_textExtractorService.js.html#line56">line 56</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-    <h5 class="h5-parameters">Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>buffer</code></td>
-            
-
-            <td class="type">
-            
+            <td class="description last"><p>Dati per la creazione del progetto</p>
+                <h6>Properties</h6>
                 
-<span class="param-type">Buffer</span>
-
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<h5 class="h5-returns">Returns:</h5>
-
-        
-
-
-<dl class="param-type">
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">Promise.&lt;string></span>
-
-
-
-    </dd>
-</dl>
-
-    
-
-
-
-        
-            
-
-    
-
-    <h4 class="name" id="~extractFromPDF"><span class="type-signature type-signature-async, inner">(async, inner) </span>extractFromPDF<span class="signature">(buffer)</span><span class="type-signature"> &rarr; {Promise.&lt;string>}</span></h4>
-
-    
-
-
-
-
-<dl class="details">
-    
-    <dt class="tag-description">Description:</dt>
-    <dd class="tag-description"><ul class="dummy"><li><p>Estrae testo da un PDF</p></li></ul></dd>
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="services_textExtractorService.js.html">services/textExtractorService.js</a>, <a href="services_textExtractorService.js.html#line45">line 45</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-    <h5 class="h5-parameters">Parameters:</h5>
-    
 
 <table class="params">
     <thead>
@@ -550,6 +350,8 @@
 
         <th>Type</th>
 
+        
+        <th>Attributes</th>
         
 
         
@@ -563,161 +365,7 @@
 
         <tr>
             
-                <td class="name"><code>buffer</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Buffer</span>
-
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<h5 class="h5-returns">Returns:</h5>
-
-        
-
-
-<dl class="param-type">
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">Promise.&lt;string></span>
-
-
-
-    </dd>
-</dl>
-
-    
-
-
-
-        
-            
-
-    
-
-    <h4 class="name" id="~extractTextFromFile"><span class="type-signature type-signature-async, inner">(async, inner) </span>extractTextFromFile<span class="signature">(filePath)</span><span class="type-signature"> &rarr; {Promise.&lt;string>}</span></h4>
-
-    
-
-
-
-
-<dl class="details">
-    
-    <dt class="tag-description">Description:</dt>
-    <dd class="tag-description"><ul class="dummy"><li><p>Estrae testo da un file in base all'estensione</p></li></ul></dd>
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="services_textExtractorService.js.html">services/textExtractorService.js</a>, <a href="services_textExtractorService.js.html#line20">line 20</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-    <h5 class="h5-parameters">Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>filePath</code></td>
+                <td class="name"><code>name</code></td>
             
 
             <td class="type">
@@ -731,10 +379,93 @@
             </td>
 
             
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
 
             
 
-            <td class="description last"><p>Percorso assoluto del file</p></td>
+            <td class="description last"><p>Nome del progetto (obbligatorio, viene trimmato)</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>description</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>Descrizione opzionale</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>owner</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>Proprietario opzionale</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+            </td>
         </tr>
 
     
@@ -761,7 +492,7 @@
 <dl>
     <dt>
         <div class="param-desc usertext">
-        <p>Se il formato non è supportato o la lettura fallisce</p>
+        <p>Se la scrittura del file fallisce</p>
         </div>
     </dt>
     <dd></dd>
@@ -790,7 +521,7 @@
 
         
 <div class="param-desc">
-    <p>Testo estratto</p>
+    <p>Il progetto creato con ID generato e timestamp</p>
 </div>
 
 
@@ -801,7 +532,7 @@
     </dt>
     <dd>
         
-<span class="param-type">Promise.&lt;string></span>
+<span class="param-type">Promise.&lt;Object></span>
 
 
 
@@ -817,7 +548,7 @@
 
     
 
-    <h4 class="name" id="~stripHtml"><span class="type-signature type-signature-inner">(inner) </span>stripHtml<span class="signature">(html)</span><span class="type-signature"> &rarr; {string}</span></h4>
+    <h4 class="name" id=".getActiveProjectDir"><span class="type-signature type-signature-async, static">(async, static) </span>getActiveProjectDir<span class="signature">()</span><span class="type-signature"> &rarr; {Promise.&lt;(string|null)>}</span></h4>
 
     
 
@@ -827,13 +558,240 @@
 <dl class="details">
     
     <dt class="tag-description">Description:</dt>
-    <dd class="tag-description"><ul class="dummy"><li><p>Rimuove i tag HTML e normalizza spazi</p></li></ul></dd>
+    <dd class="tag-description"><ul class="dummy"><li><p>Recupera il percorso della directory del progetto attualmente attivo.</p></li></ul></dd>
     
 
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="services_textExtractorService.js.html">services/textExtractorService.js</a>, <a href="services_textExtractorService.js.html#line79">line 79</a>
+        <a href="services_projectService.js.html">services/projectService.js</a>, <a href="services_projectService.js.html#line272">line 272</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+    <h5 class="h5-examples">Example</h5>
+    
+    <pre class="prettyprint"><code>const dir = await projectService.getActiveProjectDir();if (dir) {  const assets = await fs.readFile(path.join(dir, 'threat-model.json'));}</code></pre>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5 class="h5-returns">Returns:</h5>
+
+        
+<div class="param-desc">
+    <p>Percorso completo o null se nessun progetto attivo</p>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Promise.&lt;(string|null)></span>
+
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id=".getAllProjects"><span class="type-signature type-signature-async, static">(async, static) </span>getAllProjects<span class="signature">()</span><span class="type-signature"> &rarr; {Promise.&lt;Array.&lt;Object>>}</span></h4>
+
+    
+
+
+
+
+<dl class="details">
+    
+    <dt class="tag-description">Description:</dt>
+    <dd class="tag-description"><ul class="dummy"><li><p>Recupera la lista completa di tutti i progetti.</p></li></ul></dd>
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="services_projectService.js.html">services/projectService.js</a>, <a href="services_projectService.js.html#line142">line 142</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+    <h5 class="h5-examples">Example</h5>
+    
+    <pre class="prettyprint"><code>const projects = await projectService.getAllProjects();console.log(projects.map(p => p.name));</code></pre>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5 class="h5-returns">Returns:</h5>
+
+        
+<div class="param-desc">
+    <p>Lista di progetti con tutti i metadati</p>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Promise.&lt;Array.&lt;Object>></span>
+
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id=".getProjectDir"><span class="type-signature type-signature-async, static">(async, static) </span>getProjectDir<span class="signature">(projectId)</span><span class="type-signature"> &rarr; {Promise.&lt;(string|null)>}</span></h4>
+
+    
+
+
+
+
+<dl class="details">
+    
+    <dt class="tag-description">Description:</dt>
+    <dd class="tag-description"><ul class="dummy"><li><p>Recupera il percorso della directory di un progetto specifico per ID.
+Utile per operazioni amministrative o migrazioni.</p></li></ul></dd>
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="services_projectService.js.html">services/projectService.js</a>, <a href="services_projectService.js.html#line285">line 285</a>
     </li></ul></dd>
     
 
@@ -905,7 +863,7 @@
 
         <tr>
             
-                <td class="name"><code>html</code></td>
+                <td class="name"><code>projectId</code></td>
             
 
             <td class="type">
@@ -922,7 +880,7 @@
 
             
 
-            <td class="description last"></td>
+            <td class="description last"><p>ID del progetto</p></td>
         </tr>
 
     
@@ -947,6 +905,10 @@
 <h5 class="h5-returns">Returns:</h5>
 
         
+<div class="param-desc">
+    <p>Percorso completo o null se il progetto non esiste</p>
+</div>
+
 
 
 <dl class="param-type">
@@ -955,7 +917,449 @@
     </dt>
     <dd>
         
+<span class="param-type">Promise.&lt;(string|null)></span>
+
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id=".setStatus"><span class="type-signature type-signature-async, static">(async, static) </span>setStatus<span class="signature">(id, newStatus)</span><span class="type-signature"> &rarr; {Promise.&lt;Object>}</span></h4>
+
+    
+
+
+
+
+<dl class="details">
+    
+    <dt class="tag-description">Description:</dt>
+    <dd class="tag-description"><ul class="dummy"><li><p>Cambia lo stato di un progetto (draft → active → archived).
+Se si imposta <code>active</code>, disattiva automaticamente gli altri progetti.</p></li></ul></dd>
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="services_projectService.js.html">services/projectService.js</a>, <a href="services_projectService.js.html#line239">line 239</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+    <h5 class="h5-examples">Example</h5>
+    
+    <pre class="prettyprint"><code>// Archivia un progettoawait projectService.setStatus('uuid-123', 'archived');// Attiva un progetto (disattiva gli altri automaticamente)await projectService.setStatus('uuid-456', 'active');</code></pre>
+
+
+
+
+    <h5 class="h5-parameters">Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>id</code></td>
+            
+
+            <td class="type">
+            
+                
 <span class="param-type">string</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>ID univoco del progetto</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>newStatus</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">'draft'</span>
+|
+
+<span class="param-type">'active'</span>
+|
+
+<span class="param-type">'archived'</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Nuovo stato da assegnare</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5 class="h5-throws">Throws:</h5>
+
+        
+
+<dl>
+    <dt>
+        <div class="param-desc usertext">
+        <p>Se lo stato non è valido o il progetto non esiste</p>
+        </div>
+    </dt>
+    <dd></dd>
+    <dt>
+        <dl class="param-type">
+            <dt>
+                Type
+            </dt>
+            <dd>
+                
+<span class="param-type">Error</span>
+
+
+
+            </dd>
+        </dl>
+    </dt>
+    <dd></dd>
+</dl>
+
+
+    
+
+
+<h5 class="h5-returns">Returns:</h5>
+
+        
+<div class="param-desc">
+    <p>Il progetto aggiornato con il nuovo stato</p>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Promise.&lt;Object></span>
+
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id=".updateProject"><span class="type-signature type-signature-async, static">(async, static) </span>updateProject<span class="signature">(id, updates)</span><span class="type-signature"> &rarr; {Promise.&lt;Object>}</span></h4>
+
+    
+
+
+
+
+<dl class="details">
+    
+    <dt class="tag-description">Description:</dt>
+    <dd class="tag-description"><ul class="dummy"><li><p>Aggiorna i metadati di un progetto esistente.
+Non permette la modifica diretta di <code>id</code> o <code>status</code> (usare setStatus per quello).</p></li></ul></dd>
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="services_projectService.js.html">services/projectService.js</a>, <a href="services_projectService.js.html#line205">line 205</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+    <h5 class="h5-examples">Example</h5>
+    
+    <pre class="prettyprint"><code>const updated = await projectService.updateProject('uuid-123', {  name: 'Nome Aggiornato',  description: 'Nuova descrizione'});</code></pre>
+
+
+
+
+    <h5 class="h5-parameters">Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>id</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>ID univoco del progetto da aggiornare</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>updates</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Campi da aggiornare (name, description, owner)</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5 class="h5-throws">Throws:</h5>
+
+        
+
+<dl>
+    <dt>
+        <div class="param-desc usertext">
+        <p>Se il progetto non viene trovato</p>
+        </div>
+    </dt>
+    <dd></dd>
+    <dt>
+        <dl class="param-type">
+            <dt>
+                Type
+            </dt>
+            <dd>
+                
+<span class="param-type">Error</span>
+
+
+
+            </dd>
+        </dl>
+    </dt>
+    <dd></dd>
+</dl>
+
+
+    
+
+
+<h5 class="h5-returns">Returns:</h5>
+
+        
+<div class="param-desc">
+    <p>Il progetto aggiornato con timestamp aggiornato</p>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Promise.&lt;Object></span>
 
 
 

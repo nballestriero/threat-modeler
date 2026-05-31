@@ -3,7 +3,7 @@
 <head>
     
     <meta charset="utf-8">
-    <title>services/assetExtractionPipeline - Documentation</title>
+    <title>routes/assets - Documentation</title>
     
     
     <script src="scripts/prettify/prettify.js"></script>
@@ -35,7 +35,7 @@
 
 <div id="main">
     
-    <h1 class="page-title">services/assetExtractionPipeline</h1>
+    <h1 class="page-title">routes/assets</h1>
     
 
     
@@ -58,7 +58,70 @@
         <div class="container-overview">
         
             
-                <div class="description usertext"><p>Orchestratore principale per l'estrazione di asset da documenti</p></div>
+                <div class="description usertext"><p>Gestisce tutte le operazioni CRUD per asset e flussi, più endpoint avanzati
+per importazione bulk e suggerimenti AI.</p>
+<h2>Endpoint gestiti</h2>
+<table>
+<thead>
+<tr>
+<th>Metodo</th>
+<th>Endpoint</th>
+<th>Descrizione</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GET</td>
+<td><code>/api/assets</code></td>
+<td>Recupera tutti gli asset</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/assets</code></td>
+<td>Crea un nuovo asset</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/assets/import</code></td>
+<td>Importa asset in blocco (LLM extraction)</td>
+</tr>
+<tr>
+<td>PUT</td>
+<td><code>/api/assets/:id</code></td>
+<td>Aggiorna un asset esistente</td>
+</tr>
+<tr>
+<td>DELETE</td>
+<td><code>/api/assets/:id</code></td>
+<td>Elimina un asset (cascade delete flussi orfani)</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/assets/:id/suggest</code></td>
+<td>Suggerimenti AI per migliorare un asset</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/flows</code></td>
+<td>Recupera tutti i flussi</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/flows</code></td>
+<td>Crea un nuovo flusso</td>
+</tr>
+<tr>
+<td>PUT</td>
+<td><code>/api/flows/:id</code></td>
+<td>Aggiorna un flusso esistente</td>
+</tr>
+<tr>
+<td>DELETE</td>
+<td><code>/api/flows/:id</code></td>
+<td>Elimina un flusso</td>
+</tr>
+</tbody>
+</table></div>
             
 
             
@@ -70,13 +133,76 @@
 <dl class="details">
     
     <dt class="tag-description">Description:</dt>
-    <dd class="tag-description"><ul class="dummy"><li><p>Orchestratore principale per l'estrazione di asset da documenti</p></li></ul></dd>
+    <dd class="tag-description"><ul class="dummy"><li><p>Gestisce tutte le operazioni CRUD per asset e flussi, più endpoint avanzati
+per importazione bulk e suggerimenti AI.</p>
+<h2>Endpoint gestiti</h2>
+<table>
+<thead>
+<tr>
+<th>Metodo</th>
+<th>Endpoint</th>
+<th>Descrizione</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GET</td>
+<td><code>/api/assets</code></td>
+<td>Recupera tutti gli asset</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/assets</code></td>
+<td>Crea un nuovo asset</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/assets/import</code></td>
+<td>Importa asset in blocco (LLM extraction)</td>
+</tr>
+<tr>
+<td>PUT</td>
+<td><code>/api/assets/:id</code></td>
+<td>Aggiorna un asset esistente</td>
+</tr>
+<tr>
+<td>DELETE</td>
+<td><code>/api/assets/:id</code></td>
+<td>Elimina un asset (cascade delete flussi orfani)</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/assets/:id/suggest</code></td>
+<td>Suggerimenti AI per migliorare un asset</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/flows</code></td>
+<td>Recupera tutti i flussi</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/flows</code></td>
+<td>Crea un nuovo flusso</td>
+</tr>
+<tr>
+<td>PUT</td>
+<td><code>/api/flows/:id</code></td>
+<td>Aggiorna un flusso esistente</td>
+</tr>
+<tr>
+<td>DELETE</td>
+<td><code>/api/flows/:id</code></td>
+<td>Elimina un flusso</td>
+</tr>
+</tbody>
+</table></li></ul></dd>
     
 
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="services_assetExtractionPipeline.js.html">services/assetExtractionPipeline.js</a>, <a href="services_assetExtractionPipeline.js.html#line1">line 1</a>
+        <a href="routes_assets.js.html">routes/assets.js</a>, <a href="routes_assets.js.html#line1">line 1</a>
     </li></ul></dd>
     
 
@@ -106,6 +232,17 @@
 
     
 
+    
+    <dt class="tag-see">See:</dt>
+    <dd class="tag-see">
+        <ul>
+            <li><code>../controllers/assetController.js</code> Controller per operazioni asset</li>
+        
+            <li><code>../controllers/flowController.js</code> Controller per operazioni flussi</li>
+        
+            <li><code>../controllers/assetSuggestionController.js</code> Controller per suggerimenti AI</li>
+        </ul>
+    </dd>
     
 
     

@@ -104,11 +104,11 @@ router.put('/assets/:id', assetController.updateAsset);
  * @desc Elimina un asset e i flussi orfani correlati (cascade delete)
  * @access Public
  * @param {string} req.params.id - ID dell'asset da eliminare
- * @returns {Object} Conferma eliminazione
+ * @returns {Object} Conferma eliminazione con conteggio flussi rimossi
  * @example
  * DELETE /api/assets/uuid-123
  * → 200 OK
- * { "success": true }
+ * { "success": true, "orphanFlowsDeleted": 3 }
  */
 router.delete('/assets/:id', assetController.deleteAsset);
 
@@ -145,7 +145,7 @@ router.get('/flows', flowController.getAllFlows);
 
 /**
  * @route POST /api/flows
- * @desc Crea un nuovo flusso nel progetto attivo
+ * @desc Crea un nuovo flusso nel progetto attivo con validazione DFD Base
  * @access Public
  * @param {Object} req.body - Dati del flusso
  * @param {string} req.body.fromId - ID asset sorgente (obbligatorio)
@@ -153,6 +153,7 @@ router.get('/flows', flowController.getAllFlows);
  * @param {string} req.body.label - Etichetta del flusso (obbligatoria)
  * @param {string} [req.body.description] - Descrizione opzionale
  * @returns {Object} Flusso creato con id generato e createdAt
+ * @throws {400} Se il flusso viola le regole DFD Base
  * @example
  * POST /api/flows
  * Body: { "fromId": "asset-a", "toId": "asset-b", "label": "API Call" }

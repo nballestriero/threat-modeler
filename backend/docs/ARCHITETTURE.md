@@ -36,3 +36,28 @@
 - `store/` – Zustand stores
 - `api/` – chiamate HTTP
 - `config/` – configurazione (axios instance)
+
+# =============================================================================
+# threat-modeler: Dati runtime (NON committare)
+# =============================================================================
+
+# Directory dati backend con progetti e threat model isolati
+# Ogni progetto ha la sua cartella con threat-model.json e config.json
+backend/data/
+
+# Eccezione: mantieni .gitkeep per tracciare la struttura directory
+!backend/data/.gitkeep
+
+# Directory di test isolate (create automaticamente dai test di integrazione)
+backend/data-test-projects/
+backend/data-test-assets/
+
+# File temporanei di estrazione/analisi
+backend/temp/
+backend/*.tmp
+backend/*.log
+
+# ChromaDB persist directory per test RAG
+backend/tests/tmp_chroma_*/
+
+# =============================================================================

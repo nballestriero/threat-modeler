@@ -3,7 +3,7 @@
 <head>
     
     <meta charset="utf-8">
-    <title>services/assetExtractionPipeline - Documentation</title>
+    <title>services/assetSuggestionService.js - Documentation</title>
     
     
     <script src="scripts/prettify/prettify.js"></script>
@@ -35,138 +35,78 @@
 
 <div id="main">
     
-    <h1 class="page-title">services/assetExtractionPipeline</h1>
+    <h1 class="page-title">services/assetSuggestionService.js</h1>
     
 
     
 
 
 
-
-<section>
-
-<header>
     
-        
-            
-        
-    
-</header>
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>// backend/services/assetSuggestionService.js
+/**
+ * Servizio per generare suggerimenti di miglioramento per un asset usando Ollama
+ * @module services/assetSuggestionService
+ */
 
-<article>
-    
-        <div class="container-overview">
-        
-            
-                <div class="description usertext"><p>Orchestratore principale per l'estrazione di asset da documenti</p></div>
-            
+const { loadModel } = require('../models/assetModel');
+const { callOllama } = require('./ollamaService');
+const methodologyService = require('./methodologyService');
 
-            
-                
+/**
+ * Genera suggerimenti per migliorare un asset basandosi sul contesto e sulla tassonomia.
+ * @param {string} assetId - ID dell'asset
+ * @param {Object} config - Configurazione dell'app (per Ollama)
+ * @returns {Promise&lt;{name: string, category: string, description: string}>}
+ */
+async function suggestAssetImprovements(assetId, config) {
+    const model = await loadModel();
+    const asset = model.assets.find(a => a.id === assetId);
+    if (!asset) throw new Error('Asset non trovato');
 
+    let chunksText = 'Nessun contesto disponibile.';
+    if (asset.evidence &amp;&amp; asset.evidence.chunks &amp;&amp; asset.evidence.chunks.length > 0) {
+        chunksText = asset.evidence.chunks.map(c => c.snippet || 'Contesto non disponibile').join('\n---\n');
+    }
 
+    const taxonomy = await methodologyService.loadTaxonomy('dfd-base');
+    const categories = taxonomy.categories.map(c => c.name).join(', ');
 
+    const prompt = `
+Sei un esperto di threat modeling. Migliora l'asset seguente basandoti sul contesto fornito.
 
-<dl class="details">
-    
-    <dt class="tag-description">Description:</dt>
-    <dd class="tag-description"><ul class="dummy"><li><p>Orchestratore principale per l'estrazione di asset da documenti</p></li></ul></dd>
-    
+Asset corrente:
+- Nome: ${asset.name}
+- Categoria: ${asset.category}
+- Descrizione: ${asset.description || 'nessuna'}
 
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="services_assetExtractionPipeline.js.html">services/assetExtractionPipeline.js</a>, <a href="services_assetExtractionPipeline.js.html#line1">line 1</a>
-    </li></ul></dd>
-    
+Contesto (documentazione):
+${chunksText}
 
-    
+Categorie valide (usa solo queste): ${categories}
 
-    
+Rispondi SOLO con un JSON valido nel formato:
+{
+  "name": "nome migliorato",
+  "category": "categoria migliore",
+  "description": "descrizione migliorata e più dettagliata"
+}
+`;
+    const response = await callOllama(prompt, config, {
+        systemPrompt: 'Sei un assistente tecnico. Rispondi solo con JSON valido.',
+        temperature: 0.3,
+        numPredict: 500
+    });
+    const jsonMatch = response.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error('Nessun JSON valido');
+    return JSON.parse(jsonMatch[0]);
+}
 
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-            
-        
-        </div>
-    
-
-    
-
-    
-
-    
-    
-    
-
-     
-
-    
-
-    
-
-    
-
-    
-
-    
-</article>
-
-</section>
+module.exports = { suggestAssetImprovements };</code></pre>
+        </article>
+    </section>
 
 
 

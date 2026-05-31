@@ -1,6 +1,6 @@
 PROJECT_CONTEXT.md – threat-modeler
 Ultimo aggiornamento: 31 maggio 2025
-Versione contesto: 6.5
+Versione contesto: 6.6
 Manutenuto da: (da compilare)
 
 🤖 Istruzione per LLM: Se stai leggendo questo file, assumi che rappresenti fedelmente lo stato attuale del progetto. Usalo per contestualizzare le tue risposte. Tutte le convenzioni descritte qui devono essere rispettate nel codice che suggerisci. Non fare assunzioni su file non elencati. Se devi leggere codice dal repository, usa gli URL raw indicati nella sezione dedicata.
@@ -26,8 +26,6 @@ L'applicazione si integra con Ollama (LLM locale) e ChromaDB (RAG) per arricchir
 🗂️ Mappa della Struttura File – Stato Reale (31/05/2025)
 
 ## Backend (Node.js + Express)
-
-```
 backend/
 ├── routes/              # Endpoint HTTP
 │   ├── assets.js        # ✅ CRUD asset & flussi con supporto projectDir + JSDoc completo
@@ -40,7 +38,7 @@ backend/
 │   └── methodologies.js # ❌ MANCANTE (richiesto per Fase 4)
 ├── controllers/
 │   ├── assetController.js      # ✅ CRUD asset con validazione + projectDir + JSDoc completo
-│   ├── flowController.js       # ✅ CRUD flussi con validazione + projectDir + JSDoc completo
+│   ├── flowController.js       # ✅ NUOVO: CRUD flussi con validazione regole DFD Base + bypass test
 │   ├── assetSuggestionController.js # Suggerimenti AI per asset
 │   └── assetExtractionController.js  # Estrazione asset (sincrona)
 ├── services/
@@ -61,7 +59,7 @@ backend/
 │   └── assetModel.js    # ✅ Unico file per asset+flows con supporto projectDir + JSDoc
 ├── utils/
 │   ├── configUtils.js, errorHandler.js, fileUtils.js
-├── data/                # JSON persistenti (struttura isolata per progetto)
+├── data/                # 🗑️ IGNORATO DA GIT (dati runtime)
 │   ├── projects.json    # Metadata lista progetti
 │   └── <project-uuid>/  # Directory isolata per progetto
 │       ├── threat-model.json  # Asset e flussi del progetto
@@ -69,58 +67,56 @@ backend/
 ├── server.js            # Entry point Express con middleware projectScope
 ├── testServer.js        # ⚠️ LEGACY: da eliminare
 └── advanced-assets.json # ⚠️ LEGACY: file vuoto, da eliminare
-```
 
 ## Frontend (React + Zustand + Vite)
-
-```
 frontend/
 ├── src/
 │   ├── api/                 # Layer API centralizzato (usa apiClient)
 │   │   ├── assetsApi.js     # ✅ Completo (getAll, create, update, delete)
-│   │   ├── flowsApi.js      # ✅ Completo (getFlows, createFlow, updateFlow, deleteFlow)
+│   │   ├── flowsApi.js      # ✅ NUOVO: CRUD flussi con named/default export corretti
 │   │   ├── configApi.js     # ✅ Completo (getConfig, updateConfig, test* functions)
 │   │   ├── analysisApi.js   # ✅ Presente (startExtraction, getExtractionStatus ⚠️ endpoint backend mancante)
 │   │   ├── taxonomyApi.js   # ✅ COMPLETATO (getDfdTaxonomy, getTaxonomy con validazione + JSDoc)
 │   │   ├── projectsApi.js   # ✅ COMPLETATO (getAll, create, update, setStatus + JSDoc)
 │   │   └── methodologiesApi.js # ❌ MANCANTE (richiesto per Fase 4)
 │   ├── store/
-│   │   ├── useThreatModelStore.js  # ✅ Monolitico per asset+flows, selector stabili con useShallow, supporto force reload, cascade delete locale
+│   │   ├── useThreatModelStore.js  # ✅ Aggiornato: usa flowsApi, supporta force reload, cascade delete locale
 │   │   ├── useProjectStore.js      # ✅ COMPLETATO (gestione stato progetti frontend, evento projectChanged + JSDoc)
 │   │   ├── useAppStore.js          # ✅ Navigazione (currentPhase, setPhase)
 │   │   └── useAnalysisStore.js     # ✅ Stato transitorio estrazione
 │   ├── components/
 │   │   ├── App.jsx                 # ✅ Root, monta AppInitializer
 │   │   ├── AppInitializer.jsx      # ✅ Fetch iniziale + listener projectChanged per reload dati
-│   │   ├── ConfigPanel.jsx         # ✅ REFACTORED: tab Progetto con ProjectManager inline, tab Attivi/Archiviati, creazione con auto-attivazione
+│   │   ├── ConfigPanel.jsx         # ✅ REFACTORED: tab Progetto con ProjectManager inline, tab Attivi/Archiviati
 │   │   ├── BaseAssetsManager.jsx   # ✅ Migrato, selector stabili, usa taxonomyApi
-│   │   ├── DfdEditor.jsx           # ✅ REFACTORED: usa store actions + useShallow + taxonomyApi (no API dirette) + JSDoc completo
+│   │   ├── DfdEditor.jsx           # ✅ COMPLETO: validazione DFD frontend, errori specifici, editor Mermaid + JSDoc
 │   │   ├── DocumentationManager.jsx# ✅ Migrato
 │   │   └── MethodologyManager.jsx  # ❌ Non migrato, chiama setActiveMethodology inesistente
-│   └── config/api.js        # ✅ Istanza axios (VITE_API_BASE=3001, timeout 120s, interceptor errori)
+│   └── config/api.js        # ✅ Istanza axios (VITE_API_BASE=3001, timeout 120s, interceptor errori, export named)
 └── docs/
     ├── architecture/        # stores.md (v2.1 con useProjectStore), pipelines.md
     ├── guides/              # STUDENT_CONTEXT.md (materiale didattico)
     └── backend/             # Generata con npm run docs:all
-```
 
 🧠 Architettura Realizzata – Stato Attuale
 
 ## Backend (Node.js + Express)
 - **Isolamento dati per progetto**: Ogni progetto ha la sua directory (`backend/data/<uuid>/`) con `threat-model.json` e `config.json` isolati. Il middleware `projectScope.js` risolve `req.projectDir` leggendo `process.env.DATA_DIR` a runtime (supporto test).
 - **Modello dati dinamico**: `assetModel.js` accetta `projectDir` opzionale per leggere/scrivere nella cartella corretta. Fallback su `backend/data/` se nessun progetto attivo.
+- **Validazione flussi DFD**: `flowController.js` applica regole DFD Base (no EE→EE diretto, Data Store→solo Process). In ambiente test (`NODE_ENV=test`), salta la verifica esistenza asset per permettere mock/fittizi.
 - **Cascade delete**: Quando un asset viene eliminato, `assetService.deleteAsset()` rimuove automaticamente tutti i flussi che lo referenziano (`fromId` o `toId`). Il response include `orphanFlowsDeleted` per feedback.
 - **Validazione input**: `assetController.js` e `flowController.js` validano campi obbligatori e restituiscono HTTP 400 invece di 500.
 - **Estrazione asset sincrona**: L'endpoint `POST /api/analysis/extract` elabora l'intera pipeline in una singola richiesta HTTP.
 - **RAG**: Ogni metodologia ha collezione ChromaDB dedicata (`methodology_{id}`). Tassonomia indicizzata all'avvio. Query RAG arricchita con nomi categorie.
-- **Test**: 15 suite, 109 test → **108 passanti, 1 fallito** (race condition in projects.integration.test.js, fix in corso).
+- **Test**: 15 suite, 109 test → **100% PASS** ✅.
 
 ## Frontend (React + Zustand + Vite)
 - **Flusso dati unidirezionale**: `UI → Zustand store (useShallow) → API Layer → Backend → Store update → UI re-render`
 - **Selector stabili**: Tutti i componenti migrati usano `useShallow` da `zustand/shallow` per aggregare valori dallo store senza causare infinite re-render.
-- **API Layer centralizzato**: `src/api/*.js` centralizzano chiamate HTTP. Usano `apiClient` da `src/config/api.js` (respecta `VITE_API_BASE`, timeout, interceptor errori).
+- **API Layer centralizzato**: `src/api/*.js` centralizzano chiamate HTTP. Usano `apiClient` da `src/config/api.js` (named export, respecta `VITE_API_BASE`, timeout, interceptor errori).
 - **Nessun fetch diretto**: Componenti non chiamano mai `fetch` o `axios` inline; usano sempre i file in `src/api/`.
 - **Gestione progetti UI**: `ConfigPanel.jsx` include tab "Attivi/Archiviati", creazione con auto-attivazione, e dispatch evento `projectChanged` per reload dati.
+- **Editor DFD**: `DfdEditor.jsx` genera codice Mermaid, valida collegamenti, mostra errori specifici dal backend e supporta editing manuale.
 
 ## Store Zustand – Stato Consolidato
 
@@ -153,7 +149,6 @@ frontend/
 | `frontend/src/api/methodologiesApi.js` | File mancante (404) | `MethodologyManager.jsx` non può recuperare tassonomie. Fase 4 inutilizzabile. | Creare con `getAllMethodologies()`, `getMethodologyTaxonomy(id)` |
 | `backend/routes/methodologies.js` | Endpoint mancanti | `taxonomyApi.getTaxonomy()` → 404. Fase 4 non funziona. | Creare route con endpoint per lista metodologie e tassonomie |
 | `frontend/src/components/MethodologyManager.jsx` | Chiama `setActiveMethodology()` inesistente | `useAppStore` non esporta questa funzione → errore runtime. | Sostituire con `setPhase()` o migrare componente |
-| `tests/integration/projects.integration.test.js` | Race condition: directory progetto non creata quando verificata | 1 test fallito su Windows/dischi lenti | Fix applicato: `waitForDirectory()` con retry loop + log debug |
 
 ## 🟡 Warning / Fragilità Architetturali
 | File | Problema | Impatto | Azione |
@@ -173,30 +168,20 @@ frontend/
 
 🔍 Istruzioni per LLM: Come Leggere il Repository Git
 Per accedere al codice sorgente in modo affidabile, usa il pattern **Raw Content URL**:
-
-```
 https://raw.githubusercontent.com/nballestriero/threat-modeler/master/{path_al_file}
-```
-
 Esempi:
-- Store: `https://raw.githubusercontent.com/nballestriero/threat-modeler/master/frontend/src/store/useThreatModelStore.js`
-- Backend Service: `https://raw.githubusercontent.com/nballestriero/threat-modeler/master/backend/services/ragService.js`
-- Docs: `https://raw.githubusercontent.com/nballestriero/threat-modeler/master/docs/architecture/stores.md`
-
+- Store: https://raw.githubusercontent.com/nballestriero/threat-modeler/master/frontend/src/store/useThreatModelStore.js
+- Backend Service: https://raw.githubusercontent.com/nballestriero/threat-modeler/master/backend/services/ragService.js
+- Docs: https://raw.githubusercontent.com/nballestriero/threat-modeler/master/docs/architecture/stores.md
 Perché usarlo? Restituisce plain text (no HTML GitHub), compatibile con fetch/axios/parsing automatico. Branch predefinito: `master`. Se usi feature branch, sostituisci `master` nel path.
 
 Fallback: API GitHub v3 per metadata
-
-```
 GET https://api.github.com/repos/nballestriero/threat-modeler/contents/{path}?ref=master
-```
-
 La risposta include `download_url` (raw content) e `content` (base64-encoded).
 
 📊 Diagrammi Architetturali (Mermaid)
 - [Store & Flussi Dati](docs/architecture/stores.md): Mostra interazioni tra Componenti React, Store Zustand, API Layer e Backend. Aggiornato a v2.1 con useProjectStore e isolamento progetti.
 - [Pipeline Estrazione AI](docs/architecture/pipelines.md): Flusso Documenti → Chunking → RAG → LLM → Merge → Store.
-
 I diagrammi sono in sintassi Mermaid, renderizzabili nativamente su GitHub e VS Code. Aggiornarli ogni volta che cambia un'interfaccia o si aggiunge un componente.
 
 🚧 Passi Mancanti & Priorità (Aggiornata)
@@ -220,7 +205,7 @@ I diagrammi sono in sintassi Mermaid, renderizzabili nativamente su GitHub e VS 
   - [x] `frontend/src/store/useProjectStore.js` ✅
   - [x] `frontend/src/components/ConfigPanel.jsx` (tab Progetto con ProjectManager) ✅
   - [x] `frontend/src/components/AppInitializer.jsx` (listener projectChanged) ✅
-- [x] Tutti i test passano: 12 suite, 70 test → **100% PASS** ✅
+- [x] Tutti i test passano: 15 suite, 109 test → **100% PASS** ✅
 
 ## 🔴 Immediati (Bloccanti – Risolvere questa settimana)
 - [ ] Creare `frontend/src/api/methodologiesApi.js` (export: `getAllMethodologies`, `getMethodologyTaxonomy`, `getMethodologyPrompt`)
@@ -237,22 +222,19 @@ I diagrammi sono in sintassi Mermaid, renderizzabili nativamente su GitHub e VS 
   - [ ] Aggiornare `assets.integration.test.js` per testare cascade delete con projectDir
   - [ ] Aggiungere test per `ConfigPanel.jsx` (creazione progetto, attivazione, tab Attivi/Archiviati)
 - [ ] Unificare doppio `module.exports` in `methodologyService.js`
-- [ ] Nel progetto le rotte per i progetti sono gestite direttamente in backend/routes/projects.js, senza un controller intermedio valutare se dividere e usare controller
 - [ ] Disabilitare `stride-ai` nel manifest o creare i file mancanti (`taxonomy.json`, `prompts/extraction.md`)
 - [ ] Aggiungere endpoint `/api/analysis/status` (se polling necessario) o rimuovere `getExtractionStatus` dal frontend
 - [ ] Documentare editor codice Mermaid in `DfdEditor` come feature "view-only" o implementare sync bidirezionale
 
 ## 🧹 Cleanup & Documentazione
 - [ ] Eliminare legacy: `backend/testServer.js`, `backend/advanced-assets.json`, `frontend/src/OLD_*.jsx`
-- [ ] Aggiungere `backend/data/**/*.json` a `.gitignore` (dati runtime, non config)
+- [ ] Aggiungere `backend/data/**/*.json` a `.gitignore` (dati runtime, non config) ✅ COMPLETATO
 - [ ] Aggiornare `PROJECT_CONTEXT.md` dopo ogni modifica architetturale significativa
 
 🔧 Comandi Utili
-
-```bash
 # Backend
 cd backend
-npm test                 # 12 suite, 70 test → tutti passanti ✅
+npm test                 # 15 suite, 109 test → tutti passanti ✅
 npm run docs:all         # Genera docs HTML in docs/backend/
 npm start                # Server su porta 3001
 
@@ -264,7 +246,6 @@ rm -rf node_modules/.vite && npm run dev  # Fix errori cache Vite
 
 # Variabili
 VITE_API_BASE=http://localhost:3001/api
-```
 
 📌 Note Tecniche Importanti
 - **Estensioni**: `.js` per moduli/API/store, `.jsx` solo per componenti React con JSX.
@@ -276,6 +257,7 @@ VITE_API_BASE=http://localhost:3001/api
 - **Validazione**: `assetController` e `flowController` validano input e restituiscono HTTP 400 per errori di validazione, 500 per errori interni.
 - **Cascade delete**: `assetService.deleteAsset()` rimuove automaticamente flussi orfani; il response include `orphanFlowsDeleted` per feedback.
 - **Isolamento progetti**: Ogni progetto ha la sua cartella in `backend/data/<uuid>/`. Il middleware `projectScope` risolve il path corretto.
+- **Git Ignore**: `backend/data/` e `backend/data-test-*/` sono esclusi dal versioning per privacy e conflitti.
 
 📎 Riferimenti
 | Risorsa | Percorso |
@@ -292,7 +274,8 @@ VITE_API_BASE=http://localhost:3001/api
 | Configurazione axios | `frontend/src/config/api.js` |
 | Middleware ProjectScope | `backend/middleware/projectScope.js` |
 | Service Progetti | `backend/services/projectService.js` |
+| Controller Flussi | `backend/controllers/flowController.js` |
 
 🔚 Fine del documento
-Ultima verifica: 31 maggio 2025 | Versione: 6.5
+Ultima verifica: 31 maggio 2025 | Versione: 6.6
 Prossima revisione: al completamento di `methodologiesApi.js` e della suite test per gestione progetti

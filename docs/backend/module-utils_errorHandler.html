@@ -3,7 +3,7 @@
 <head>
     
     <meta charset="utf-8">
-    <title>services/textExtractorService - Documentation</title>
+    <title>utils/errorHandler - Documentation</title>
     
     
     <script src="scripts/prettify/prettify.js"></script>
@@ -35,7 +35,7 @@
 
 <div id="main">
     
-    <h1 class="page-title">services/textExtractorService</h1>
+    <h1 class="page-title">utils/errorHandler</h1>
     
 
     
@@ -58,7 +58,7 @@
         <div class="container-overview">
         
             
-                <div class="description usertext"><p>Servizio per l'estrazione di testo da formati documentali</p></div>
+                <div class="description usertext"><p>Middleware centralizzato per la gestione degli errori</p></div>
             
 
             
@@ -70,13 +70,13 @@
 <dl class="details">
     
     <dt class="tag-description">Description:</dt>
-    <dd class="tag-description"><ul class="dummy"><li><p>Servizio per l'estrazione di testo da formati documentali</p></li></ul></dd>
+    <dd class="tag-description"><ul class="dummy"><li><p>Middleware centralizzato per la gestione degli errori</p></li></ul></dd>
     
 
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="services_textExtractorService.js.html">services/textExtractorService.js</a>, <a href="services_textExtractorService.js.html#line2">line 2</a>
+        <a href="utils_errorHandler.js.html">utils/errorHandler.js</a>, <a href="utils_errorHandler.js.html#line1">line 1</a>
     </li></ul></dd>
     
 
@@ -167,7 +167,7 @@
 
     
 
-    <h4 class="name" id="~extractFromHTML"><span class="type-signature type-signature-async, inner">(async, inner) </span>extractFromHTML<span class="signature">(buffer)</span><span class="type-signature"> &rarr; {Promise.&lt;string>}</span></h4>
+    <h4 class="name" id="~asyncHandler"><span class="type-signature type-signature-inner">(inner) </span>asyncHandler<span class="signature">(fn)</span><span class="type-signature"> &rarr; {function}</span></h4>
 
     
 
@@ -177,13 +177,13 @@
 <dl class="details">
     
     <dt class="tag-description">Description:</dt>
-    <dd class="tag-description"><ul class="dummy"><li><p>Estrae testo da HTML</p></li></ul></dd>
+    <dd class="tag-description"><ul class="dummy"><li><p>Wrapper per gestire le eccezioni nelle route asincrone</p></li></ul></dd>
     
 
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="services_textExtractorService.js.html">services/textExtractorService.js</a>, <a href="services_textExtractorService.js.html#line69">line 69</a>
+        <a href="utils_errorHandler.js.html">utils/errorHandler.js</a>, <a href="utils_errorHandler.js.html#line11">line 11</a>
     </li></ul></dd>
     
 
@@ -255,13 +255,13 @@
 
         <tr>
             
-                <td class="name"><code>buffer</code></td>
+                <td class="name"><code>fn</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">Buffer</span>
+<span class="param-type">function</span>
 
 
 
@@ -272,7 +272,7 @@
 
             
 
-            <td class="description last"></td>
+            <td class="description last"><p>Funzione asincrona da eseguire</p></td>
         </tr>
 
     
@@ -292,505 +292,13 @@
 
 
 
-
-
-<h5 class="h5-returns">Returns:</h5>
-
-        
-
-
-<dl class="param-type">
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">Promise.&lt;string></span>
-
-
-
-    </dd>
-</dl>
-
-    
-
-
-
-        
-            
-
-    
-
-    <h4 class="name" id="~extractFromMarkdown"><span class="type-signature type-signature-async, inner">(async, inner) </span>extractFromMarkdown<span class="signature">(buffer)</span><span class="type-signature"> &rarr; {Promise.&lt;string>}</span></h4>
-
-    
-
-
-
-
-<dl class="details">
-    
-    <dt class="tag-description">Description:</dt>
-    <dd class="tag-description"><ul class="dummy"><li><p>Estrae testo da Markdown (converte in HTML e poi estrae il testo)</p></li></ul></dd>
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="services_textExtractorService.js.html">services/textExtractorService.js</a>, <a href="services_textExtractorService.js.html#line56">line 56</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-    <h5 class="h5-parameters">Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>buffer</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Buffer</span>
-
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<h5 class="h5-returns">Returns:</h5>
-
-        
-
-
-<dl class="param-type">
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">Promise.&lt;string></span>
-
-
-
-    </dd>
-</dl>
-
-    
-
-
-
-        
-            
-
-    
-
-    <h4 class="name" id="~extractFromPDF"><span class="type-signature type-signature-async, inner">(async, inner) </span>extractFromPDF<span class="signature">(buffer)</span><span class="type-signature"> &rarr; {Promise.&lt;string>}</span></h4>
-
-    
-
-
-
-
-<dl class="details">
-    
-    <dt class="tag-description">Description:</dt>
-    <dd class="tag-description"><ul class="dummy"><li><p>Estrae testo da un PDF</p></li></ul></dd>
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="services_textExtractorService.js.html">services/textExtractorService.js</a>, <a href="services_textExtractorService.js.html#line45">line 45</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-    <h5 class="h5-parameters">Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>buffer</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Buffer</span>
-
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<h5 class="h5-returns">Returns:</h5>
-
-        
-
-
-<dl class="param-type">
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">Promise.&lt;string></span>
-
-
-
-    </dd>
-</dl>
-
-    
-
-
-
-        
-            
-
-    
-
-    <h4 class="name" id="~extractTextFromFile"><span class="type-signature type-signature-async, inner">(async, inner) </span>extractTextFromFile<span class="signature">(filePath)</span><span class="type-signature"> &rarr; {Promise.&lt;string>}</span></h4>
-
-    
-
-
-
-
-<dl class="details">
-    
-    <dt class="tag-description">Description:</dt>
-    <dd class="tag-description"><ul class="dummy"><li><p>Estrae testo da un file in base all'estensione</p></li></ul></dd>
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="services_textExtractorService.js.html">services/textExtractorService.js</a>, <a href="services_textExtractorService.js.html#line20">line 20</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-    <h5 class="h5-parameters">Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>filePath</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>Percorso assoluto del file</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<h5 class="h5-throws">Throws:</h5>
-
-        
-
-<dl>
-    <dt>
-        <div class="param-desc usertext">
-        <p>Se il formato non è supportato o la lettura fallisce</p>
-        </div>
-    </dt>
-    <dd></dd>
-    <dt>
-        <dl class="param-type">
-            <dt>
-                Type
-            </dt>
-            <dd>
-                
-<span class="param-type">Error</span>
-
-
-
-            </dd>
-        </dl>
-    </dt>
-    <dd></dd>
-</dl>
-
-
-    
 
 
 <h5 class="h5-returns">Returns:</h5>
 
         
 <div class="param-desc">
-    <p>Testo estratto</p>
+    <p>Middleware che cattura errori e li passa a next()</p>
 </div>
 
 
@@ -801,7 +309,7 @@
     </dt>
     <dd>
         
-<span class="param-type">Promise.&lt;string></span>
+<span class="param-type">function</span>
 
 
 
@@ -817,7 +325,7 @@
 
     
 
-    <h4 class="name" id="~stripHtml"><span class="type-signature type-signature-inner">(inner) </span>stripHtml<span class="signature">(html)</span><span class="type-signature"> &rarr; {string}</span></h4>
+    <h4 class="name" id="~errorMiddleware"><span class="type-signature type-signature-inner">(inner) </span>errorMiddleware<span class="signature">(err, req, res, next)</span><span class="type-signature"></span></h4>
 
     
 
@@ -827,13 +335,13 @@
 <dl class="details">
     
     <dt class="tag-description">Description:</dt>
-    <dd class="tag-description"><ul class="dummy"><li><p>Rimuove i tag HTML e normalizza spazi</p></li></ul></dd>
+    <dd class="tag-description"><ul class="dummy"><li><p>Middleware globale per la gestione degli errori</p></li></ul></dd>
     
 
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="services_textExtractorService.js.html">services/textExtractorService.js</a>, <a href="services_textExtractorService.js.html#line79">line 79</a>
+        <a href="utils_errorHandler.js.html">utils/errorHandler.js</a>, <a href="utils_errorHandler.js.html#line22">line 22</a>
     </li></ul></dd>
     
 
@@ -905,13 +413,13 @@
 
         <tr>
             
-                <td class="name"><code>html</code></td>
+                <td class="name"><code>err</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">string</span>
+<span class="param-type">Error</span>
 
 
 
@@ -922,7 +430,79 @@
 
             
 
-            <td class="description last"></td>
+            <td class="description last"><p>Oggetto errore</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>req</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Request Express</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>res</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Response Express</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>next</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">function</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Next middleware</p></td>
         </tr>
 
     
@@ -944,25 +524,6 @@
 
 
 
-<h5 class="h5-returns">Returns:</h5>
-
-        
-
-
-<dl class="param-type">
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">string</span>
-
-
-
-    </dd>
-</dl>
-
-    
 
 
 

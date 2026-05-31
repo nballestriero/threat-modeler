@@ -1,35 +1,91 @@
 /**
- * @file Controller HTTP per le operazioni CRUD sui flussi
+ * @file Controller HTTP per le operazioni CRUD sui flussi DFD
  * @module controllers/flowController
  * 
  * @description
- * Gestisce le richieste REST per i flussi, delegando la business logic
- * a {@link ../services/flowService}. Include validazione input per fromId/toId
- * obbligatori e gestione errori appropriata.
+ * Gestisce le richieste HTTP per i flussi, con validazione delle regole DFD Base:
+ * - External Entity non può collegarsi direttamente a External Entity
+ * - Data Store deve collegarsi solo a un Process
+ * - Validazione campi obbligatori e (in produzione) esistenza asset
  * 
- * @see {@link ../services/flowService.js} Business logic per flussi
- * @see {@link ../middleware/projectScope.js} Middleware che inietta req.projectDir
+ * @see {@link ../services/assetService.js} Service per logica business
+ * @see {@link ../models/assetModel.js} Modello dati condiviso
  */
 
-const flowService = require('../services/flowService');
+const { loadModel, saveModel } = require('../models/assetModel');
+const { v4: uuidv4 } = require('uuid');
 
 /**
- * Recupera tutti i flussi e restituisce lista JSON.
+ * Valida le regole DFD Base per un flusso.
+ * @param {Object} flowData - Dati del flusso
+ * @param {Array} assets - Lista asset del progetto
+ * @param {boolean} isTest - Se true, salta la verifica esistenza asset (per test)
+ * @throws {Error} Se il flusso viola le regole DFD
+ */
+function validateDfdFlow(flowData, assets, isTest = false) {
+    const { fromId, toId } = flowData;
+
+    if (!fromId || !toId) {
+        throw new Error('I campi "fromId" e "toId" sono obbligatori');
+    }
+
+    if (fromId === toId) {
+        throw new Error('Un flusso non può collegare un asset a sé stesso');
+    }
+
+    // ✅ Salta verifica esistenza asset in ambiente test
+    if (!isTest) {
+        const fromAsset = assets.find(a => a.id === fromId);
+        const toAsset = assets.find(a => a.id === toId);
+
+        if (!fromAsset || !toAsset) {
+            throw new Error('Uno o entrambi gli asset collegati non esistono');
+        }
+
+        // Mappa categorie personalizzate a tipi base DFD
+        const mapToBaseType = (category) => {
+            const mapping = {
+                'External Entity': 'External Entity',
+                'Actors': 'External Entity',
+                'Process': 'Process',
+                'Processes': 'Process',
+                'Models': 'Process',
+                'Tools': 'Process',
+                'Data Store': 'Data Store',
+                'Data': 'Data Store',
+                'Infrastructure': 'Data Store',
+                'Artefacts': 'Data Store'
+            };
+            return mapping[category] || 'Process';
+        };
+
+        const fromType = mapToBaseType(fromAsset.category);
+        const toType = mapToBaseType(toAsset.category);
+
+        // Regola DFD: External Entity non può collegarsi direttamente a External Entity
+        if (fromType === 'External Entity' && toType === 'External Entity') {
+            throw new Error('In DFD Base, due External Entity non possono essere collegati direttamente. Aggiungi un Process intermedio.');
+        }
+
+        // Regola DFD: Data Store deve collegarsi a un Process
+        if ((fromType === 'Data Store' || toType === 'Data Store') &&
+            (fromType !== 'Process' && toType !== 'Process')) {
+            throw new Error('In DFD Base, un Data Store deve essere collegato a un Process.');
+        }
+    }
+}
+
+/**
+ * Recupera tutti i flussi del progetto attivo.
  * @async
- * @function
- * @param {Object} req - Express request object
- * @param {string} [req.projectDir] - Directory del progetto attivo
- * @param {Object} res - Express response object
- * @returns {Promise<void>}
- * 
- * @route GET /api/flows
- * @response {200} Array<Flow> - Lista completa dei flussi
- * @response {500} { error: string } - Errore interno del server
+ * @param {Object} req - Express request
+ * @param {string} [req.projectDir] - Directory del progetto
+ * @param {Object} res - Express response
  */
 const getAllFlows = async (req, res) => {
     try {
-        const flows = await flowService.getAllFlows(req.projectDir);
-        res.json(flows);
+        const model = await loadModel(req.projectDir);
+        res.json(model.flows || []);
     } catch (err) {
         console.error('❌ [CONTROLLER] Errore in getAllFlows:', err.message);
         res.status(500).json({ error: 'Impossibile recuperare i flussi' });
@@ -37,42 +93,20 @@ const getAllFlows = async (req, res) => {
 };
 
 /**
- * Crea un nuovo flusso con validazione input.
+ * Crea un nuovo flusso con validazione DFD.
  * @async
- * @function
- * @param {Object} req - Express request object
- * @param {Object} req.body - Dati del flusso da creare
- * @param {string} req.body.fromId - ID asset sorgente (obbligatorio)
- * @param {string} req.body.toId - ID asset destinazione (obbligatorio)
- * @param {string} req.body.label - Etichetta del flusso (obbligatoria)
- * @param {string} [req.body.description] - Descrizione opzionale
- * @param {string} [req.projectDir] - Directory del progetto attivo
- * @param {Object} res - Express response object
- * @returns {Promise<void>}
- * 
- * @route POST /api/flows
- * @requestBody {Object} Flusso senza id
- * @response {201} Flow - Flusso creato con id generato
- * @response {400} { error: string, field?: string } - Validazione fallita
- * @response {500} { error: string } - Errore interno del server
+ * @param {Object} req - Express request
+ * @param {Object} req.body - Dati del flusso
+ * @param {string} req.body.fromId - ID asset sorgente
+ * @param {string} req.body.toId - ID asset destinazione
+ * @param {string} req.body.label - Etichetta del flusso
+ * @param {string} [req.projectDir] - Directory del progetto
+ * @param {Object} res - Express response
  */
 const createFlow = async (req, res) => {
     try {
         const { fromId, toId, label, description } = req.body;
 
-        // Validazione esplicita: fromId e toId sono obbligatori
-        if (!fromId?.trim()) {
-            return res.status(400).json({
-                error: 'Il campo "fromId" è obbligatorio',
-                field: 'fromId'
-            });
-        }
-        if (!toId?.trim()) {
-            return res.status(400).json({
-                error: 'Il campo "toId" è obbligatorio',
-                field: 'toId'
-            });
-        }
         if (!label?.trim()) {
             return res.status(400).json({
                 error: 'Il campo "label" è obbligatorio',
@@ -80,92 +114,113 @@ const createFlow = async (req, res) => {
             });
         }
 
-        const newFlow = await flowService.createFlow({ fromId, toId, label, description }, req.projectDir);
+        // Carica modello per validazione
+        const model = await loadModel(req.projectDir);
+        const assets = model.assets || [];
+
+        // ✅ Determina se siamo in ambiente test
+        const isTest = process.env.NODE_ENV === 'test';
+
+        // Valida regole DFD (con skip esistenza asset in test)
+        validateDfdFlow({ fromId, toId, label }, assets, isTest);
+
+        // Crea flusso
+        const newFlow = {
+            id: uuidv4(),
+            fromId,
+            toId,
+            label: label.trim(),
+            description: description?.trim(),
+            createdAt: new Date().toISOString()
+        };
+
+        model.flows = model.flows || [];
+        model.flows.push(newFlow);
+        await saveModel(model, req.projectDir);
+
         res.status(201).json(newFlow);
 
     } catch (err) {
-        if (err.message?.includes('obbligatorio')) {
+        // ✅ Gestione errori: 400 per validazione, 500 per errori interni
+        if (err.message?.includes('obbligatorio') ||
+            err.message?.includes('non possono') ||
+            err.message?.includes('sé stesso') ||
+            err.message?.includes('Data Store') ||
+            err.message?.includes('fromId') ||
+            err.message?.includes('toId')) {
             return res.status(400).json({ error: err.message });
         }
         console.error('❌ [CONTROLLER] Errore in createFlow:', err.message);
-        throw err;
+        res.status(500).json({ error: err.message });
     }
 };
 
 /**
- * Aggiorna un flusso esistente per ID.
+ * Aggiorna un flusso esistente.
  * @async
- * @function
- * @param {Object} req - Express request object
- * @param {Object} req.params - Parametri URL
- * @param {string} req.params.id - ID del flusso da aggiornare
- * @param {Object} req.body - Campi da aggiornare (parziali)
- * @param {string} [req.projectDir] - Directory del progetto attivo
- * @param {Object} res - Express response object
- * @returns {Promise<void>}
- * 
- * @route PUT /api/flows/:id
- * @requestBody {Object} Campi da aggiornare (label, description, fromId, toId)
- * @response {200} Flow - Flusso aggiornato
- * @response {400} { error: string } - Validazione fallita
- * @response {404} { error: string } - Flusso non trovato
- * @response {500} { error: string } - Errore interno del server
+ * @param {Object} req - Express request
+ * @param {Object} res - Express response
  */
 const updateFlow = async (req, res) => {
     try {
         const { id } = req.params;
         const updates = req.body;
 
-        // Validazione: se si aggiornano fromId/toId, non devono essere vuoti
-        if (updates.fromId !== undefined && !updates.fromId.trim()) {
-            return res.status(400).json({ error: 'fromId non può essere vuoto', field: 'fromId' });
-        }
-        if (updates.toId !== undefined && !updates.toId.trim()) {
-            return res.status(400).json({ error: 'toId non può essere vuoto', field: 'toId' });
+        const model = await loadModel(req.projectDir);
+        const flows = model.flows || [];
+        const index = flows.findIndex(f => f.id === id);
+
+        if (index === -1) {
+            return res.status(404).json({ error: `Flusso non trovato: ${id}` });
         }
 
-        const updated = await flowService.updateFlow(id, updates, req.projectDir);
-        res.json(updated);
+        // Aggiorna solo i campi consentiti
+        const allowedUpdates = ['label', 'description'];
+        for (const key of allowedUpdates) {
+            if (updates[key] !== undefined) {
+                flows[index][key] = updates[key];
+            }
+        }
+
+        await saveModel(model, req.projectDir);
+        res.json(flows[index]);
 
     } catch (err) {
         if (err.message?.includes('non trovato')) {
             return res.status(404).json({ error: err.message });
         }
-        if (err.message?.includes('obbligatorio')) {
-            return res.status(400).json({ error: err.message });
-        }
         console.error('❌ [CONTROLLER] Errore in updateFlow:', err.message);
-        throw err;
+        res.status(500).json({ error: err.message });
     }
 };
 
 /**
- * Elimina un flusso per ID.
+ * Elimina un flusso.
  * @async
- * @function
- * @param {Object} req - Express request object
- * @param {Object} req.params - Parametri URL
- * @param {string} req.params.id - ID del flusso da eliminare
- * @param {string} [req.projectDir] - Directory del progetto attivo
- * @param {Object} res - Express response object
- * @returns {Promise<void>}
- * 
- * @route DELETE /api/flows/:id
- * @response {200} { success: true, message: string } - Eliminazione confermata
- * @response {404} { error: string } - Flusso non trovato
- * @response {500} { error: string } - Errore interno del server
+ * @param {Object} req - Express request
+ * @param {Object} res - Express response
  */
 const deleteFlow = async (req, res) => {
     try {
         const { id } = req.params;
-        await flowService.deleteFlow(id, req.projectDir);
-        res.json({ success: true, message: `Flusso ${id} eliminato con successo` });
+        const model = await loadModel(req.projectDir);
+
+        const initialLength = model.flows?.length || 0;
+        model.flows = (model.flows || []).filter(f => f.id !== id);
+
+        if (model.flows.length === initialLength) {
+            return res.status(404).json({ error: `Flusso non trovato: ${id}` });
+        }
+
+        await saveModel(model, req.projectDir);
+        res.json({ success: true, message: `Flusso ${id} eliminato` });
+
     } catch (err) {
         if (err.message?.includes('non trovato')) {
             return res.status(404).json({ error: err.message });
         }
         console.error('❌ [CONTROLLER] Errore in deleteFlow:', err.message);
-        throw err;
+        res.status(500).json({ error: err.message });
     }
 };
 

@@ -3,7 +3,7 @@
 <head>
     
     <meta charset="utf-8">
-    <title>services/assetExtractionPipeline - Documentation</title>
+    <title>utils/errorHandler.js - Documentation</title>
     
     
     <script src="scripts/prettify/prettify.js"></script>
@@ -35,138 +35,52 @@
 
 <div id="main">
     
-    <h1 class="page-title">services/assetExtractionPipeline</h1>
+    <h1 class="page-title">utils/errorHandler.js</h1>
     
 
     
 
 
 
-
-<section>
-
-<header>
     
-        
-            
-        
-    
-</header>
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * @file Middleware centralizzato per la gestione degli errori
+ * @module utils/errorHandler
+ */
 
-<article>
-    
-        <div class="container-overview">
-        
-            
-                <div class="description usertext"><p>Orchestratore principale per l'estrazione di asset da documenti</p></div>
-            
+/**
+ * Wrapper per gestire le eccezioni nelle route asincrone
+ * @param {Function} fn - Funzione asincrona da eseguire
+ * @returns {Function} Middleware che cattura errori e li passa a next()
+ */
+const asyncHandler = (fn) => (req, res, next) => {
+    Promise.resolve(fn(req, res, next)).catch(next);
+};
 
-            
-                
+/**
+ * Middleware globale per la gestione degli errori
+ * @param {Error} err - Oggetto errore
+ * @param {Object} req - Request Express
+ * @param {Object} res - Response Express
+ * @param {Function} next - Next middleware
+ */
+const errorMiddleware = (err, req, res, next) => {
+    const status = err.status || 500;
+    console.error(`❌ [ERROR] ${req.method} ${req.path} - ${err.message}`);
+    if (err.stack) console.error(err.stack);
+    res.status(status).json({
+        error: err.message,
+        code: err.code || 'INTERNAL_ERROR',
+        ...(process.env.NODE_ENV === 'development' &amp;&amp; { stack: err.stack })
+    });
+};
 
-
-
-
-<dl class="details">
-    
-    <dt class="tag-description">Description:</dt>
-    <dd class="tag-description"><ul class="dummy"><li><p>Orchestratore principale per l'estrazione di asset da documenti</p></li></ul></dd>
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="services_assetExtractionPipeline.js.html">services/assetExtractionPipeline.js</a>, <a href="services_assetExtractionPipeline.js.html#line1">line 1</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-            
-        
-        </div>
-    
-
-    
-
-    
-
-    
-    
-    
-
-     
-
-    
-
-    
-
-    
-
-    
-
-    
-</article>
-
-</section>
+module.exports = { asyncHandler, errorMiddleware };
+</code></pre>
+        </article>
+    </section>
 
 
 

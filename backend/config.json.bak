@@ -27,6 +27,6 @@
       "pythonCmd": "python3",
       "timeout": 30000
     },
-    "persistDirectory": "./venv"
+    "persistDirectory": "./.venv"
   }
 }
