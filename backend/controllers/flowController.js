@@ -3,17 +3,19 @@
  * @module controllers/flowController
  * 
  * @description
- * Gestisce le richieste HTTP per i flussi, con validazione delle regole DFD Base:
+ * Gestisce le richieste HTTP per i flussi, delegando la logica business a flowService.
+ * Applica validazione delle regole DFD Base:
  * - External Entity non può collegarsi direttamente a External Entity
  * - Data Store deve collegarsi solo a un Process
  * - Validazione campi obbligatori e (in produzione) esistenza asset
  * 
- * @see {@link ../services/assetService.js} Service per logica business
+ * @see {@link ../services/flowService.js} Service per logica business flussi
  * @see {@link ../models/assetModel.js} Modello dati condiviso
  */
 
 const { loadModel, saveModel } = require('../models/assetModel');
 const { v4: uuidv4 } = require('uuid');
+const flowService = require('../services/flowService');
 
 /**
  * Valida le regole DFD Base per un flusso.
@@ -33,7 +35,6 @@ function validateDfdFlow(flowData, assets, isTest = false) {
         throw new Error('Un flusso non può collegare un asset a sé stesso');
     }
 
-    // ✅ Salta verifica esistenza asset in ambiente test
     if (!isTest) {
         const fromAsset = assets.find(a => a.id === fromId);
         const toAsset = assets.find(a => a.id === toId);
@@ -42,7 +43,6 @@ function validateDfdFlow(flowData, assets, isTest = false) {
             throw new Error('Uno o entrambi gli asset collegati non esistono');
         }
 
-        // Mappa categorie personalizzate a tipi base DFD
         const mapToBaseType = (category) => {
             const mapping = {
                 'External Entity': 'External Entity',
@@ -62,12 +62,10 @@ function validateDfdFlow(flowData, assets, isTest = false) {
         const fromType = mapToBaseType(fromAsset.category);
         const toType = mapToBaseType(toAsset.category);
 
-        // Regola DFD: External Entity non può collegarsi direttamente a External Entity
         if (fromType === 'External Entity' && toType === 'External Entity') {
             throw new Error('In DFD Base, due External Entity non possono essere collegati direttamente. Aggiungi un Process intermedio.');
         }
 
-        // Regola DFD: Data Store deve collegarsi a un Process
         if ((fromType === 'Data Store' || toType === 'Data Store') &&
             (fromType !== 'Process' && toType !== 'Process')) {
             throw new Error('In DFD Base, un Data Store deve essere collegato a un Process.');
@@ -84,8 +82,8 @@ function validateDfdFlow(flowData, assets, isTest = false) {
  */
 const getAllFlows = async (req, res) => {
     try {
-        const model = await loadModel(req.projectDir);
-        res.json(model.flows || []);
+        const flows = await flowService.getAllFlows(req.projectDir);
+        res.json(flows);
     } catch (err) {
         console.error('❌ [CONTROLLER] Errore in getAllFlows:', err.message);
         res.status(500).json({ error: 'Impossibile recuperare i flussi' });
@@ -107,6 +105,14 @@ const createFlow = async (req, res) => {
     try {
         const { fromId, toId, label, description } = req.body;
 
+        // ✅ Validazione esplicita PRIMA di validateDfdFlow
+        if (!fromId || !toId) {
+            return res.status(400).json({
+                error: 'I campi "fromId" e "toId" sono obbligatori',
+                field: !fromId ? 'fromId' : 'toId'
+            });
+        }
+
         if (!label?.trim()) {
             return res.status(400).json({
                 error: 'Il campo "label" è obbligatorio',
@@ -114,17 +120,12 @@ const createFlow = async (req, res) => {
             });
         }
 
-        // Carica modello per validazione
         const model = await loadModel(req.projectDir);
         const assets = model.assets || [];
-
-        // ✅ Determina se siamo in ambiente test
         const isTest = process.env.NODE_ENV === 'test';
 
-        // Valida regole DFD (con skip esistenza asset in test)
         validateDfdFlow({ fromId, toId, label }, assets, isTest);
 
-        // Crea flusso
         const newFlow = {
             id: uuidv4(),
             fromId,
@@ -141,7 +142,6 @@ const createFlow = async (req, res) => {
         res.status(201).json(newFlow);
 
     } catch (err) {
-        // ✅ Gestione errori: 400 per validazione, 500 per errori interni
         if (err.message?.includes('obbligatorio') ||
             err.message?.includes('non possono') ||
             err.message?.includes('sé stesso') ||
@@ -166,24 +166,8 @@ const updateFlow = async (req, res) => {
         const { id } = req.params;
         const updates = req.body;
 
-        const model = await loadModel(req.projectDir);
-        const flows = model.flows || [];
-        const index = flows.findIndex(f => f.id === id);
-
-        if (index === -1) {
-            return res.status(404).json({ error: `Flusso non trovato: ${id}` });
-        }
-
-        // Aggiorna solo i campi consentiti
-        const allowedUpdates = ['label', 'description'];
-        for (const key of allowedUpdates) {
-            if (updates[key] !== undefined) {
-                flows[index][key] = updates[key];
-            }
-        }
-
-        await saveModel(model, req.projectDir);
-        res.json(flows[index]);
+        const updatedFlow = await flowService.updateFlow(id, updates, req.projectDir);
+        res.json(updatedFlow);
 
     } catch (err) {
         if (err.message?.includes('non trovato')) {
@@ -203,16 +187,7 @@ const updateFlow = async (req, res) => {
 const deleteFlow = async (req, res) => {
     try {
         const { id } = req.params;
-        const model = await loadModel(req.projectDir);
-
-        const initialLength = model.flows?.length || 0;
-        model.flows = (model.flows || []).filter(f => f.id !== id);
-
-        if (model.flows.length === initialLength) {
-            return res.status(404).json({ error: `Flusso non trovato: ${id}` });
-        }
-
-        await saveModel(model, req.projectDir);
+        await flowService.deleteFlow(id, req.projectDir);
         res.json({ success: true, message: `Flusso ${id} eliminato` });
 
     } catch (err) {

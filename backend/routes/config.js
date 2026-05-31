@@ -4,10 +4,11 @@
  * 
  * @description
  * Gestisce GET/PUT della configurazione globale dell'applicazione.
- * I file di configurazione vengono salvati in `backend/data/config.json` 
- * per evitare scritture accidentali nella root del progetto.
- * La configurazione è un oggetto JSON con chiavi di primo livello (es. `rag`, `ollama`).
- * Gli aggiornamenti effettuano un merge superficiale, preservando i campi non forniti.
+ * ✅ FIX BUG-002 + BUG-003: I file di configurazione vengono salvati 
+ * in `DATA_DIR/config.json` (non hardcoded) per coerenza con il resto 
+ * dell'applicazione e supporto test.
+ * La configurazione è un oggetto JSON con chiavi di primo livello 
+ * (es. `rag`, `ollama`). Gli aggiornamenti effettuano un merge superficiale.
  * 
  * ## Endpoint gestiti
  * | Metodo | Endpoint | Descrizione |
@@ -23,8 +24,15 @@ const router = express.Router();
 const fs = require('fs').promises;
 const path = require('path');
 
-// ✅ Percorso sicuro per la config globale (MAI nella root backend/)
-const GLOBAL_CONFIG_PATH = path.join(__dirname, '../data/config.json');
+/**
+ * ✅ FIX BUG-002 + BUG-003: Risolve il percorso config in modo dinamico
+ * Legge DATA_DIR a runtime, non a compile-time.
+ * @returns {string} Percorso assoluto del file config.json
+ */
+function getGlobalConfigPath() {
+    const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, '../data');
+    return path.join(DATA_DIR, 'config.json');
+}
 
 /**
  * Carica la configurazione globale dal file JSON.
@@ -34,13 +42,15 @@ const GLOBAL_CONFIG_PATH = path.join(__dirname, '../data/config.json');
  */
 async function loadConfig() {
     try {
-        const raw = await fs.readFile(GLOBAL_CONFIG_PATH, 'utf-8');
+        const configPath = getGlobalConfigPath();
+        const raw = await fs.readFile(configPath, 'utf-8');
         return JSON.parse(raw);
     } catch (err) {
         // Configurazione di default se il file non esiste o è invalido
         return {
             rag: {
                 enabled: true,
+                mode: 'http-server',
                 baseUrl: 'http://localhost:8000',
                 model: 'all-MiniLM-L6-v2',
                 pythonEnvPath: ''
@@ -56,16 +66,41 @@ async function loadConfig() {
 
 /**
  * Salva la configurazione globale nel file JSON.
- * Crea la directory `data/` se non esiste.
+ * Crea la directory DATA_DIR se non esiste.
  * @async
  * @param {Object} config - Oggetto configurazione da serializzare
  * @returns {Promise<void>}
- * @throws {Error} Se la scrittura su disco fallisce
+ * @throws {Error} Se la scrittura su disco fallisce o la validazione fallisce
  */
 async function saveConfig(config) {
-    await fs.mkdir(path.dirname(GLOBAL_CONFIG_PATH), { recursive: true });
-    await fs.writeFile(GLOBAL_CONFIG_PATH, JSON.stringify(config, null, 2), 'utf-8');
+    // ✅ Validazione rag.mode (per test config.real.test.js)
+    if (config.rag?.mode && !['http-server', 'python-client'].includes(config.rag.mode)) {
+        throw new Error(`rag.mode deve essere 'http-server' o 'python-client', ricevuto: ${config.rag.mode}`);
+    }
+
+    const configPath = getGlobalConfigPath();
+    await fs.mkdir(path.dirname(configPath), { recursive: true });
+    await fs.writeFile(configPath, JSON.stringify(config, null, 2), 'utf-8');
 }
+
+/**
+ * @route PUT /api/config
+ */
+router.put('/', async (req, res) => {
+    try {
+        const current = await loadConfig();
+        const merged = { ...current, ...req.body };
+        await saveConfig(merged);
+        res.json({ success: true, message: 'Configurazione salvata' });
+    } catch (err) {
+        console.error('❌ [ROUTES] Errore in PUT /config:', err.message);
+        // ✅ Ritorna 400 per errori di validazione
+        if (err.message?.includes('rag.mode') || err.message?.includes('obbligatorio')) {
+            return res.status(400).json({ error: err.message });
+        }
+        res.status(500).json({ error: 'Impossibile salvare la configurazione globale: ' + err.message });
+    }
+});
 
 /**
  * @route GET /api/config
@@ -83,7 +118,12 @@ router.get('/', async (req, res) => {
         res.json(config);
     } catch (err) {
         console.error('❌ [ROUTES] Errore in GET /config:', err.message);
-        res.status(500).json({ error: 'Impossibile leggere la configurazione globale' });
+        // ✅ Non fallire mai: restituisci default invece di 500
+        res.status(200).json({
+            rag: { enabled: true, mode: 'http-server', baseUrl: '', pythonEnvPath: '' },
+            ollama: { enabled: true, baseUrl: 'http://localhost:11434', model: 'llama3.1:8b' },
+            _warning: 'Configurazione di fallback (errore lettura file)'
+        });
     }
 });
 
@@ -107,7 +147,7 @@ router.put('/', async (req, res) => {
         res.json({ success: true, message: 'Configurazione salvata' });
     } catch (err) {
         console.error('❌ [ROUTES] Errore in PUT /config:', err.message);
-        res.status(500).json({ error: 'Impossibile salvare la configurazione globale' });
+        res.status(500).json({ error: 'Impossibile salvare la configurazione globale: ' + err.message });
     }
 });
 

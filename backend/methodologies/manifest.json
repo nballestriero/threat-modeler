@@ -1,20 +1,41 @@
 {
-  "methodologies": [
+  "version": "1.0",
+  "methods": [
     {
       "id": "dfd-base",
       "name": "DFD Base",
+      "description": "Data Flow Diagram base per threat modeling",
       "enabled": true,
-      "path": "./dfd-base",
-      "taxonomyFile": "taxonomy.json",
-      "promptFile": "prompts/extraction.md"
+      "rag": { "enabled": true }
+    },
+    {
+      "id": "stride",
+      "name": "STRIDE",
+      "description": "Metodologia STRIDE per threat categorization",
+      "enabled": true,
+      "rag": { "enabled": false }
+    },
+    {
+      "id": "linddun",
+      "name": "LINDDUN",
+      "description": "Metodologia LINDDUN per privacy threat modeling",
+      "enabled": true,
+      "rag": { "enabled": false }
+    },
+    {
+      "id": "fmea",
+      "name": "FMEA",
+      "description": "Failure Mode and Effects Analysis",
+      "enabled": true,
+      "rag": { "enabled": false }
     },
     {
       "id": "stride-ai",
-      "name": "STRIDE AI",
-      "enabled": true,
-      "path": "./stride-ai",
-      "taxonomyFile": "taxonomy.json",
-      "promptFile": "prompts/extraction.md"
+      "name": "STRIDE-AI",
+      "description": "STRIDE potenziato con AI (WIP)",
+      "enabled": false,
+      "rag": { "enabled": false },
+      "_note": "Disabilitato: manca taxonomy.json e routes/advancedAssets"
     }
   ]
 }

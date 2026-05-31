@@ -46,6 +46,8 @@ app.get('/api/methodologies', (req, res) => {
 });
 
 // Rotte API
+app.use(require('./middleware/projectScope'));
+app.use('/api/config', require('./routes/config'));
 app.use('/api/projects', projectsRoutes); // ✅ NUOVO
 app.use('/api', assetsRoutes);
 app.use('/api', configRoutes);
