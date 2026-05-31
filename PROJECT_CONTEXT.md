@@ -1,6 +1,6 @@
 PROJECT_CONTEXT.md – threat-modeler
 Ultimo aggiornamento: 31 maggio 2025
-Versione contesto: 6.3
+Versione contesto: 6.5
 Manutenuto da: (da compilare)
 
 🤖 Istruzione per LLM: Se stai leggendo questo file, assumi che rappresenti fedelmente lo stato attuale del progetto. Usalo per contestualizzare le tue risposte. Tutte le convenzioni descritte qui devono essere rispettate nel codice che suggerisci. Non fare assunzioni su file non elencati. Se devi leggere codice dal repository, usa gli URL raw indicati nella sezione dedicata.
@@ -26,10 +26,12 @@ L'applicazione si integra con Ollama (LLM locale) e ChromaDB (RAG) per arricchir
 🗂️ Mappa della Struttura File – Stato Reale (31/05/2025)
 
 ## Backend (Node.js + Express)
+
 ```
 backend/
 ├── routes/              # Endpoint HTTP
-│   ├── assets.js        # CRUD asset & flussi (gestiti insieme nel modello JSON)
+│   ├── assets.js        # ✅ CRUD asset & flussi con supporto projectDir + JSDoc completo
+│   ├── projects.js      # ✅ CRUD progetti con verifica esistenza per 404 + JSDoc completo
 │   ├── config.js        # GET/PUT configurazione globale (logica inline)
 │   ├── ollama.js        # GET /api/ollama/models, POST /api/ollama/test
 │   ├── rag.js           # POST /api/rag/test-connection
@@ -37,31 +39,40 @@ backend/
 │   ├── taxonomy.js      # GET /api/dfd-taxonomy (legge da backend/context/)
 │   └── methodologies.js # ❌ MANCANTE (richiesto per Fase 4)
 ├── controllers/
-│   ├── assetController.js      # ✅ CRUD asset con validazione input (name, category) + cascade delete
-│   ├── flowController.js       # ✅ CRUD flussi con validazione (fromId, toId, label)
+│   ├── assetController.js      # ✅ CRUD asset con validazione + projectDir + JSDoc completo
+│   ├── flowController.js       # ✅ CRUD flussi con validazione + projectDir + JSDoc completo
+│   ├── assetSuggestionController.js # Suggerimenti AI per asset
 │   └── assetExtractionController.js  # Estrazione asset (sincrona)
 ├── services/
-│   ├── assetService.js      # ✅ CRUD su JSON con cascade delete per flussi orfani + gestione errori robusta
-│   ├── flowService.js       # CRUD flussi su JSON
+│   ├── assetService.js      # ✅ CRUD asset con projectDir, cascade delete, importAssets, trim input + JSDoc
+│   ├── flowService.js       # ✅ CRUD flussi con projectDir + JSDoc completo
+│   ├── projectService.js    # ✅ CRUD progetti, auto-attivazione, isolamento cartelle, DATA_DIR dinamico + JSDoc
 │   ├── TextExtractorService.js, ChunkService.js, RagService.js, OllamaService.js
 │   ├── MethodologyService.js, AssetMergeService.js
 │   └── assetExtractionPipeline.js  # Orchestratore estrazione
+├── middleware/
+│   └── projectScope.js      # ✅ Risolve req.projectDir con DATA_DIR dinamico + JSDoc
 ├── methodologies/       # Definizione metodologie
 │   ├── manifest.json
 │   └── dfd-base/, stride/, linddun/, fmea/ (taxonomy.json + prompt.md)
 │       └── stride-ai/   # ⚠️ INCOMPLETA (manca taxonomy.json)
 ├── context/             # Tassonomie legacy per endpoint taxonomy.js
 ├── models/
-│   └── assetModel.js    # Unico file per asset+flows (threat-model.json)
+│   └── assetModel.js    # ✅ Unico file per asset+flows con supporto projectDir + JSDoc
 ├── utils/
-│   ├── configUtils.js, errorHandler.js (definisce asyncHandler ma non usato), fileUtils.js
-├── data/                # JSON persistenti
-├── server.js            # Entry point Express
+│   ├── configUtils.js, errorHandler.js, fileUtils.js
+├── data/                # JSON persistenti (struttura isolata per progetto)
+│   ├── projects.json    # Metadata lista progetti
+│   └── <project-uuid>/  # Directory isolata per progetto
+│       ├── threat-model.json  # Asset e flussi del progetto
+│       └── config.json        # Configurazione specifica del progetto
+├── server.js            # Entry point Express con middleware projectScope
 ├── testServer.js        # ⚠️ LEGACY: da eliminare
 └── advanced-assets.json # ⚠️ LEGACY: file vuoto, da eliminare
 ```
 
 ## Frontend (React + Zustand + Vite)
+
 ```
 frontend/
 ├── src/
@@ -70,23 +81,25 @@ frontend/
 │   │   ├── flowsApi.js      # ✅ Completo (getFlows, createFlow, updateFlow, deleteFlow)
 │   │   ├── configApi.js     # ✅ Completo (getConfig, updateConfig, test* functions)
 │   │   ├── analysisApi.js   # ✅ Presente (startExtraction, getExtractionStatus ⚠️ endpoint backend mancante)
-│   │   ├── taxonomyApi.js   # ✅ COMPLETATO (getDfdTaxonomy, getTaxonomy con validazione)
+│   │   ├── taxonomyApi.js   # ✅ COMPLETATO (getDfdTaxonomy, getTaxonomy con validazione + JSDoc)
+│   │   ├── projectsApi.js   # ✅ COMPLETATO (getAll, create, update, setStatus + JSDoc)
 │   │   └── methodologiesApi.js # ❌ MANCANTE (richiesto per Fase 4)
 │   ├── store/
-│   │   ├── useThreatModelStore.js  # ✅ Monolitico per asset+flows, selector stabili, azioni CRUD complete per flussi
+│   │   ├── useThreatModelStore.js  # ✅ Monolitico per asset+flows, selector stabili con useShallow, supporto force reload, cascade delete locale
+│   │   ├── useProjectStore.js      # ✅ COMPLETATO (gestione stato progetti frontend, evento projectChanged + JSDoc)
 │   │   ├── useAppStore.js          # ✅ Navigazione (currentPhase, setPhase)
 │   │   └── useAnalysisStore.js     # ✅ Stato transitorio estrazione
 │   ├── components/
 │   │   ├── App.jsx                 # ✅ Root, monta AppInitializer
-│   │   ├── AppInitializer.jsx      # ✅ Fetch iniziale centralizzato
-│   │   ├── ConfigPanel.jsx         # ✅ Migrato, UI a tab, usa configApi + apiClient per test
+│   │   ├── AppInitializer.jsx      # ✅ Fetch iniziale + listener projectChanged per reload dati
+│   │   ├── ConfigPanel.jsx         # ✅ REFACTORED: tab Progetto con ProjectManager inline, tab Attivi/Archiviati, creazione con auto-attivazione
 │   │   ├── BaseAssetsManager.jsx   # ✅ Migrato, selector stabili, usa taxonomyApi
-│   │   ├── DfdEditor.jsx           # ✅ REFACTORED: usa store actions + useShallow + taxonomyApi (no API dirette)
+│   │   ├── DfdEditor.jsx           # ✅ REFACTORED: usa store actions + useShallow + taxonomyApi (no API dirette) + JSDoc completo
 │   │   ├── DocumentationManager.jsx# ✅ Migrato
 │   │   └── MethodologyManager.jsx  # ❌ Non migrato, chiama setActiveMethodology inesistente
 │   └── config/api.js        # ✅ Istanza axios (VITE_API_BASE=3001, timeout 120s, interceptor errori)
 └── docs/
-    ├── architecture/        # stores.md, pipelines.md (Mermaid)
+    ├── architecture/        # stores.md (v2.1 con useProjectStore), pipelines.md
     ├── guides/              # STUDENT_CONTEXT.md (materiale didattico)
     └── backend/             # Generata con npm run docs:all
 ```
@@ -94,35 +107,43 @@ frontend/
 🧠 Architettura Realizzata – Stato Attuale
 
 ## Backend (Node.js + Express)
-- **Modello dati unico**: Asset e flussi sono gestiti nello stesso file JSON (`threat-model.json`) tramite `assetModel.js`.
-- **Validazione input**: `assetController.js` e `flowController.js` validano campi obbligatori (`name`, `category`, `fromId`, `toId`, `label`) e restituiscono HTTP 400 invece di 500.
-- **Cascade delete**: Quando un asset viene eliminato, `assetService.deleteAsset()` rimuove automaticamente tutti i flussi che lo referenziano (`fromId` o `toId`). Il response include `orphanFlowsDeleted` per feedback all'utente.
+- **Isolamento dati per progetto**: Ogni progetto ha la sua directory (`backend/data/<uuid>/`) con `threat-model.json` e `config.json` isolati. Il middleware `projectScope.js` risolve `req.projectDir` leggendo `process.env.DATA_DIR` a runtime (supporto test).
+- **Modello dati dinamico**: `assetModel.js` accetta `projectDir` opzionale per leggere/scrivere nella cartella corretta. Fallback su `backend/data/` se nessun progetto attivo.
+- **Cascade delete**: Quando un asset viene eliminato, `assetService.deleteAsset()` rimuove automaticamente tutti i flussi che lo referenziano (`fromId` o `toId`). Il response include `orphanFlowsDeleted` per feedback.
+- **Validazione input**: `assetController.js` e `flowController.js` validano campi obbligatori e restituiscono HTTP 400 invece di 500.
 - **Estrazione asset sincrona**: L'endpoint `POST /api/analysis/extract` elabora l'intera pipeline in una singola richiesta HTTP.
 - **RAG**: Ogni metodologia ha collezione ChromaDB dedicata (`methodology_{id}`). Tassonomia indicizzata all'avvio. Query RAG arricchita con nomi categorie.
-- **Test**: 12 suite, 70 test → **tutti passanti** ✅.
+- **Test**: 15 suite, 109 test → **108 passanti, 1 fallito** (race condition in projects.integration.test.js, fix in corso).
 
 ## Frontend (React + Zustand + Vite)
 - **Flusso dati unidirezionale**: `UI → Zustand store (useShallow) → API Layer → Backend → Store update → UI re-render`
 - **Selector stabili**: Tutti i componenti migrati usano `useShallow` da `zustand/shallow` per aggregare valori dallo store senza causare infinite re-render.
 - **API Layer centralizzato**: `src/api/*.js` centralizzano chiamate HTTP. Usano `apiClient` da `src/config/api.js` (respecta `VITE_API_BASE`, timeout, interceptor errori).
 - **Nessun fetch diretto**: Componenti non chiamano mai `fetch` o `axios` inline; usano sempre i file in `src/api/`.
+- **Gestione progetti UI**: `ConfigPanel.jsx` include tab "Attivi/Archiviati", creazione con auto-attivazione, e dispatch evento `projectChanged` per reload dati.
 
 ## Store Zustand – Stato Consolidato
 
-### Cosa funziona ✅
-- `useThreatModelStore` è l'unica fonte di verità per asset e flussi.
-- Azioni CRUD complete per asset: `fetchAssets`, `addAsset`, `updateAsset`, `deleteAsset`.
-- Azioni CRUD complete per flussi: `fetchFlows`, `addFlow`, `updateFlow`, `deleteFlow`.
+### useThreatModelStore ✅
+- Unica fonte di verità per asset e flussi.
+- Azioni CRUD complete per asset e flussi con supporto `force` parameter per reload forzato (usato al cambio progetto).
 - Cascade delete locale: `deleteAsset` filtra anche i flussi orfani dallo stato.
 - Flag `assetsLoaded`/`flowsLoaded` prevengono fetch duplicati.
 - Selector stabili con `useShallow` usati in tutti i componenti migrati.
 - Gestione errori robusta: `getAllAssets` restituisce array vuoto invece di crashare se il file JSON è corrotto.
 
+### useProjectStore ✅ (NUOVO)
+- Gestisce lista progetti, progetto attivo, loading ed errori.
+- Azioni: `fetchProjects`, `setActiveProject`, `addProject`, `updateProject`, `reset`.
+- Dispatcha evento custom `projectChanged` quando il progetto attivo cambia, ascoltato da `AppInitializer` per reload dati.
+- Isolamento: tutti i metodi API usano implicitamente il contesto del progetto attivo.
+
 ### Principi architetturali da rispettare
 1. **Store monolitico**: Asset e flussi vivono insieme. Aggiornamenti atomici.
 2. **Selector stabili**: Usare `useShallow` per aggregare più valori: `useThreatModelStore(useShallow(state => ({ a: state.a, b: state.b })))`.
-3. **Layer API dedicato**: Store e componenti chiamano `assetsApi.*`, `flowsApi.*`, non `axios` diretto.
+3. **Layer API dedicato**: Store e componenti chiamano `assetsApi.*`, `flowsApi.*`, `projectsApi.*`, non `axios` diretto.
 4. **Inizializzazione centralizzata**: `<AppInitializer />` monta una volta in `App.jsx`.
+5. **Isolamento progetti**: Se un nuovo store gestisce dati per-progetto, deve supportare `projectDir` come parametro opzionale.
 
 ⚠️ Known Issues & Bug Report (Aggiornato 31/05/2025)
 
@@ -132,6 +153,7 @@ frontend/
 | `frontend/src/api/methodologiesApi.js` | File mancante (404) | `MethodologyManager.jsx` non può recuperare tassonomie. Fase 4 inutilizzabile. | Creare con `getAllMethodologies()`, `getMethodologyTaxonomy(id)` |
 | `backend/routes/methodologies.js` | Endpoint mancanti | `taxonomyApi.getTaxonomy()` → 404. Fase 4 non funziona. | Creare route con endpoint per lista metodologie e tassonomie |
 | `frontend/src/components/MethodologyManager.jsx` | Chiama `setActiveMethodology()` inesistente | `useAppStore` non esporta questa funzione → errore runtime. | Sostituire con `setPhase()` o migrare componente |
+| `tests/integration/projects.integration.test.js` | Race condition: directory progetto non creata quando verificata | 1 test fallito su Windows/dischi lenti | Fix applicato: `waitForDirectory()` con retry loop + log debug |
 
 ## 🟡 Warning / Fragilità Architetturali
 | File | Problema | Impatto | Azione |
@@ -151,9 +173,11 @@ frontend/
 
 🔍 Istruzioni per LLM: Come Leggere il Repository Git
 Per accedere al codice sorgente in modo affidabile, usa il pattern **Raw Content URL**:
+
 ```
 https://raw.githubusercontent.com/nballestriero/threat-modeler/master/{path_al_file}
 ```
+
 Esempi:
 - Store: `https://raw.githubusercontent.com/nballestriero/threat-modeler/master/frontend/src/store/useThreatModelStore.js`
 - Backend Service: `https://raw.githubusercontent.com/nballestriero/threat-modeler/master/backend/services/ragService.js`
@@ -162,14 +186,17 @@ Esempi:
 Perché usarlo? Restituisce plain text (no HTML GitHub), compatibile con fetch/axios/parsing automatico. Branch predefinito: `master`. Se usi feature branch, sostituisci `master` nel path.
 
 Fallback: API GitHub v3 per metadata
+
 ```
 GET https://api.github.com/repos/nballestriero/threat-modeler/contents/{path}?ref=master
 ```
+
 La risposta include `download_url` (raw content) e `content` (base64-encoded).
 
 📊 Diagrammi Architetturali (Mermaid)
-- [Store & Flussi Dati](docs/architecture/stores.md): Mostra interazioni tra Componenti React, Store Zustand, API Layer e Backend.
+- [Store & Flussi Dati](docs/architecture/stores.md): Mostra interazioni tra Componenti React, Store Zustand, API Layer e Backend. Aggiornato a v2.1 con useProjectStore e isolamento progetti.
 - [Pipeline Estrazione AI](docs/architecture/pipelines.md): Flusso Documenti → Chunking → RAG → LLM → Merge → Store.
+
 I diagrammi sono in sintassi Mermaid, renderizzabili nativamente su GitHub e VS Code. Aggiornarli ogni volta che cambia un'interfaccia o si aggiunge un componente.
 
 🚧 Passi Mancanti & Priorità (Aggiornata)
@@ -182,6 +209,17 @@ I diagrammi sono in sintassi Mermaid, renderizzabili nativamente su GitHub e VS 
 - [x] Aggiornare `assets.integration.test.js` con isolamento dati completo (`beforeEach` + `jest.resetModules()`) ✅ COMPLETATO
 - [x] Implementare cascade delete backend: quando si cancella un asset, eliminare anche flussi con `fromId`/`toId` corrispondenti ✅ COMPLETATO
 - [x] Refactor `DfdEditor.jsx` → usare store actions + `useShallow` + `taxonomyApi` (no API dirette) ✅ COMPLETATO
+- [x] Implementare sistema di gestione progetti con isolamento dati per progetto:
+  - [x] `backend/middleware/projectScope.js` ✅
+  - [x] `backend/services/projectService.js` ✅
+  - [x] `backend/models/assetModel.js` (supporto projectDir) ✅
+  - [x] `backend/services/assetService.js` e `flowService.js` (passaggio projectDir) ✅
+  - [x] `backend/controllers/assetController.js` e `flowController.js` (passaggio projectDir) ✅
+  - [x] `backend/routes/assets.js` (route complete con JSDoc) ✅
+  - [x] `frontend/src/api/projectsApi.js` ✅
+  - [x] `frontend/src/store/useProjectStore.js` ✅
+  - [x] `frontend/src/components/ConfigPanel.jsx` (tab Progetto con ProjectManager) ✅
+  - [x] `frontend/src/components/AppInitializer.jsx` (listener projectChanged) ✅
 - [x] Tutti i test passano: 12 suite, 70 test → **100% PASS** ✅
 
 ## 🔴 Immediati (Bloccanti – Risolvere questa settimana)
@@ -190,17 +228,27 @@ I diagrammi sono in sintassi Mermaid, renderizzabili nativamente su GitHub e VS 
 - [ ] Fix `MethodologyManager.jsx` → migrare a `methodologiesApi` + store actions
 
 ## 🟡 Miglioramenti & Refactoring (Prossima settimana)
+- [ ] **Aggiornare e creare tutti i nuovi test automatici** per il sistema di gestione progetti:
+  - [ ] Test di integrazione per `projectService.js` (CRUD progetti, auto-attivazione, isolamento cartelle)
+  - [ ] Test di integrazione per `assetService.js` e `flowService.js` con `projectDir` (isolamento dati)
+  - [ ] Test di integrazione per `projectScope.js` middleware (risoluzione directory, fallback)
+  - [ ] Test frontend per `useProjectStore.js` (azioni, evento projectChanged)
+  - [ ] Test E2E per flusso completo: crea progetto → aggiungi asset → switch progetto → verifica isolamento
+  - [ ] Aggiornare `assets.integration.test.js` per testare cascade delete con projectDir
+  - [ ] Aggiungere test per `ConfigPanel.jsx` (creazione progetto, attivazione, tab Attivi/Archiviati)
 - [ ] Unificare doppio `module.exports` in `methodologyService.js`
+- [ ] Nel progetto le rotte per i progetti sono gestite direttamente in backend/routes/projects.js, senza un controller intermedio valutare se dividere e usare controller
 - [ ] Disabilitare `stride-ai` nel manifest o creare i file mancanti (`taxonomy.json`, `prompts/extraction.md`)
 - [ ] Aggiungere endpoint `/api/analysis/status` (se polling necessario) o rimuovere `getExtractionStatus` dal frontend
 - [ ] Documentare editor codice Mermaid in `DfdEditor` come feature "view-only" o implementare sync bidirezionale
 
 ## 🧹 Cleanup & Documentazione
 - [ ] Eliminare legacy: `backend/testServer.js`, `backend/advanced-assets.json`, `frontend/src/OLD_*.jsx`
-- [ ] Aggiungere `backend/threat-model.json` a `.gitignore` (è dato runtime, non config)
+- [ ] Aggiungere `backend/data/**/*.json` a `.gitignore` (dati runtime, non config)
 - [ ] Aggiornare `PROJECT_CONTEXT.md` dopo ogni modifica architetturale significativa
 
 🔧 Comandi Utili
+
 ```bash
 # Backend
 cd backend
@@ -224,9 +272,10 @@ VITE_API_BASE=http://localhost:3001/api
 - **Store**: Non frammentare `useThreatModelStore`. Usare selector stabili con `useShallow`.
 - **AppInitializer**: Montare una volta in `App.jsx`. Non renderizza UI, solo `useEffect` di inizializzazione.
 - **API Layer**: Tutti i componenti devono usare i file in `src/api/`. Mai `fetch` o `axios` inline.
-- **Backend JSON**: Asset e flussi condividono `threat-model.json`. Non esistono model separati.
+- **Backend JSON**: Asset e flussi condividono `threat-model.json` **per progetto**. La directory è risolta da `req.projectDir`.
 - **Validazione**: `assetController` e `flowController` validano input e restituiscono HTTP 400 per errori di validazione, 500 per errori interni.
 - **Cascade delete**: `assetService.deleteAsset()` rimuove automaticamente flussi orfani; il response include `orphanFlowsDeleted` per feedback.
+- **Isolamento progetti**: Ogni progetto ha la sua cartella in `backend/data/<uuid>/`. Il middleware `projectScope` risolve il path corretto.
 
 📎 Riferimenti
 | Risorsa | Percorso |
@@ -235,12 +284,15 @@ VITE_API_BASE=http://localhost:3001/api
 | Contesto LLM | Questo file (`PROJECT_CONTEXT.md`) |
 | Contesto Studenti | `docs/guides/STUDENT_CONTEXT.md` |
 | Store Principale | `frontend/src/store/useThreatModelStore.js` |
+| Store Progetti | `frontend/src/store/useProjectStore.js` |
 | Inizializzatore | `frontend/src/components/AppInitializer.jsx` |
 | Diagrammi Arch. | `docs/architecture/stores.md`, `docs/architecture/pipelines.md` |
 | Manifesto Metodologie | `backend/methodologies/manifest.json` |
-| API Layer Frontend | `frontend/src/api/` (assetsApi, flowsApi, configApi, taxonomyApi ✅) |
+| API Layer Frontend | `frontend/src/api/` (assetsApi, flowsApi, configApi, taxonomyApi, projectsApi ✅) |
 | Configurazione axios | `frontend/src/config/api.js` |
+| Middleware ProjectScope | `backend/middleware/projectScope.js` |
+| Service Progetti | `backend/services/projectService.js` |
 
 🔚 Fine del documento
-Ultima verifica: 31 maggio 2025 | Versione: 6.3
-Prossima revisione: al completamento di `methodologiesApi.js` e migrazione di `MethodologyManager`
+Ultima verifica: 31 maggio 2025 | Versione: 6.5
+Prossima revisione: al completamento di `methodologiesApi.js` e della suite test per gestione progetti

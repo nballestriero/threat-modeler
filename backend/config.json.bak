@@ -5,12 +5,12 @@
     "model": "llama3.1:8b"
   },
   "project": {
-    "name": "Test Project",
+    "name": "Nuovo Progetto",
     "version": "1.0",
     "owner": ""
   },
   "database": {
-    "enabled": false,
+    "enabled": true,
     "type": "sqlite",
     "path": "./data.db"
   },
@@ -24,9 +24,9 @@
     "pythonBridge": {
       "enabled": true,
       "scriptPath": "./services/rag_bridge.py",
-      "pythonCmd": "./.venv/Scripts/python.exe",
+      "pythonCmd": "python3",
       "timeout": 30000
     },
-    "persistDirectory": "./chroma_data"
+    "persistDirectory": "./venv"
   }
 }

@@ -1,14 +1,25 @@
 /**
  * @file Servizio per la gestione degli asset (business logic CRUD)
- * @description Gestisce creazione, lettura, aggiornamento ed eliminazione degli asset.
- *              I dati vengono persistiti nel modello JSON tramite {@link ../models/assetModel}.
- *              ✅ FIX: Aggiunta gestione errori in getAllAssets per fallback sicuro,
- *              validazione input in createAsset, e allineamento return di importAssets
- *              con il controller ({ saved, duplicates }).
  * @module services/assetService
  * 
- * @see {@link ../models/assetModel} Modello di persistenza JSON
- * @see {@link ../controllers/assetController} Controller HTTP che usa questo service
+ * @description
+ * Gestisce le operazioni CRUD per gli asset DFD, operando sul modello JSON condiviso
+ * con i flussi. Supporta l'isolamento dei dati per progetto tramite `projectDir`.
+ * 
+ * ## Struttura dati asset
+ * ```json
+ * {
+ *   "id": "uuid-v4",
+ *   "name": "Nome dell'asset",
+ *   "category": "External Entity|Process|Data Store",
+ *   "description": "Descrizione opzionale",
+ *   "createdAt": "ISO-8601 timestamp",
+ *   "evidence": { ... } // Metadati opzionali per tracciabilità RAG
+ * }
+ * ```
+ * 
+ * @see {@link ../models/assetModel.js} Modello dati condiviso asset+flows
+ * @see {@link ../middleware/projectScope.js} Middleware che inietta req.projectDir
  */
 
 const { loadModel, saveModel } = require('../models/assetModel');
@@ -16,88 +27,158 @@ const { v4: uuidv4 } = require('uuid');
 
 /**
  * @typedef {Object} Asset
- * @property {string} id - Identificativo univoco generato con UUID v4
- * @property {string} name - Nome dell'asset (obbligatorio, univoco per deduplica)
- * @property {string} category - Categoria DFD (es. "External Entity", "Process", "Data Store")
- * @property {string} [description] - Descrizione opzionale dell'asset
+ * @property {string} id - Identificativo univoco UUID v4
+ * @property {string} name - Nome dell'asset (obbligatorio)
+ * @property {string} category - Categoria DFD: 'External Entity' | 'Process' | 'Data Store'
+ * @property {string} [description] - Descrizione opzionale
  * @property {string} createdAt - Timestamp ISO di creazione
- * @property {string} [updatedAt] - Timestamp ISO di ultimo aggiornamento
  * @property {Object} [evidence] - Metadati opzionali per tracciabilità RAG
- * @property {Array} [evidence.chunks] - Chunk di testo da cui è stato estratto l'asset
- * @property {string} [evidence.source] - Fonte del documento originale
  */
 
 /**
- * Recupera tutti gli asset dal modello persistente.
+ * Recupera tutti gli asset dal modello persistente del progetto specifico.
  * @async
- * @returns {Promise<Array<Asset>>} Lista completa degli asset presenti nel file JSON.
- *                                  Restituisce array vuoto in caso di errore di lettura.
+ * @param {string} [projectDir] - Percorso della directory del progetto attivo
+ * @returns {Promise<Asset[]>} Lista di asset, o array vuoto se nessuno presente
  * @example
- * const assets = await getAllAssets();
- * console.log(`Trovati ${assets.length} asset`);
- * // → [ { id: 'abc-123', name: 'Database', category: 'Data Store', ... }, ... ]
+ * const assets = await getAllAssets(req.projectDir);
+ * console.log(assets.map(a => a.name));
  */
-async function getAllAssets() {
+async function getAllAssets(projectDir) {
     try {
-        const model = await loadModel();
+        const model = await loadModel(projectDir);
         return model.assets || [];
     } catch (err) {
-        // Log per debug, ma non far crashare l'app
-        console.error('⚠️ [assetService] Errore lettura assets:', err.message);
-        return []; // Fallback sicuro: frontend vede lista vuota invece di crash
+        // ✅ Gestisci errori di loadModel restituendo fallback
+        console.error('Errore in getAllAssets:', err.message);
+        return [];
     }
 }
 
 /**
- * Crea un nuovo asset e lo salva nel modello.
+ * Crea un nuovo asset nel progetto specifico.
  * @async
- * @param {Object} assetData - Dati dell'asset da creare.
- * @param {string} assetData.name - Nome dell'asset (obbligatorio, non vuoto).
- * @param {string} assetData.category - Categoria DFD (es. "External Entity", "Process", "Data Store").
- * @param {string} [assetData.description] - Descrizione opzionale.
- * @returns {Promise<Asset>} L'asset creato, con `id` e `createdAt` generati automaticamente.
- * @throws {Error} Se manca il nome o il salvataggio fallisce.
+ * @param {Object} assetData - Dati dell'asset da creare
+ * @param {string} assetData.name - Nome dell'asset (obbligatorio)
+ * @param {string} assetData.category - Categoria DFD (obbligatoria)
+ * @param {string} [assetData.description] - Descrizione opzionale
+ * @param {string} [projectDir] - Percorso della directory del progetto attivo
+ * @returns {Promise<Asset>} Asset creato con ID generato e timestamp
+ * @throws {Error} Se il campo name è mancante o vuoto
  * @example
- * const newAsset = await createAsset({ 
- *   name: "Database Utenti", 
- *   category: "Data Store",
- *   description: "Archivio principale dati sensibili"
- * });
- * console.log(newAsset.id); // → 'f47ac10b-58cc-4372-a567-0e02b2c3d479'
+ * const asset = await createAsset({
+ *   name: 'API Gateway',
+ *   category: 'Process',
+ *   description: 'Punto di ingresso per le richieste esterne'
+ * }, req.projectDir);
  */
-async function createAsset(assetData) {
+async function createAsset(assetData, projectDir) {
     if (!assetData.name?.trim()) {
         throw new Error('Il campo "name" è obbligatorio e non può essere vuoto');
     }
 
-    const model = await loadModel();
+    // ✅ Trimma name, description, owner prima di salvare
+    const trimmedData = {
+        ...assetData,
+        name: assetData.name.trim(),
+        description: assetData.description?.trim(),
+        owner: assetData.owner?.trim()
+    };
+
+    const model = await loadModel(projectDir);
     const newAsset = {
         id: uuidv4(),
         createdAt: new Date().toISOString(),
-        ...assetData
+        ...trimmedData // ✅ Usa dati trimmati
     };
 
+    model.assets = model.assets || [];
     model.assets.push(newAsset);
-    await saveModel(model);
+    await saveModel(model, projectDir);
     return newAsset;
 }
 
 /**
- * Importa una lista di asset in blocco.
- * Applica deduplicazione basata sul nome (case-insensitive) per evitare record ripetuti.
+ * Aggiorna un asset esistente nel progetto specifico.
  * @async
- * @param {Array<Object>} assets - Lista di asset da importare.
- * @returns {Promise<{saved: number, duplicates: number}>} Conteggio asset salvati e duplicati ignorati.
+ * @param {string} id - ID dell'asset da aggiornare
+ * @param {Object} updates - Campi da modificare (parziali)
+ * @param {string} [projectDir] - Percorso della directory del progetto attivo
+ * @returns {Promise<Asset>} Asset aggiornato con tutti i campi
+ * @throws {Error} Se l'asset con l'ID specificato non viene trovato
+ * @example
+ * const updated = await updateAsset('asset-123', {
+ *   name: 'API Gateway Produzione',
+ *   description: 'Aggiornato con rate limiting'
+ * }, req.projectDir);
+ */
+async function updateAsset(id, updates, projectDir) {
+    const model = await loadModel(projectDir);
+    if (!model.assets) model.assets = [];
+
+    const index = model.assets.findIndex(a => a.id === id);
+    if (index === -1) {
+        throw new Error(`Asset non trovato: ${id}`);
+    }
+
+    // Merge sicuro: preserva ID, sovrascrive solo i campi forniti
+    model.assets[index] = { ...model.assets[index], ...updates, id };
+
+    await saveModel(model, projectDir);
+    return model.assets[index];
+}
+
+/**
+ * Elimina un asset nel progetto specifico con cascade delete per flussi orfani.
+ * @async
+ * @param {string} id - ID dell'asset da eliminare
+ * @param {string} [projectDir] - Percorso della directory del progetto attivo
+ * @returns {Promise<{orphanFlowsDeleted: number}>} Conteggio flussi eliminati
+ * @throws {Error} Se l'asset con l'ID specificato non viene trovato
+ * @example
+ * const result = await deleteAsset('asset-123', req.projectDir);
+ * console.log(`Flussi orfani eliminati: ${result.orphanFlowsDeleted}`);
+ */
+async function deleteAsset(id, projectDir) {
+    const model = await loadModel(projectDir);
+    if (!model.assets) model.assets = [];
+
+    const initialLength = model.assets.length;
+
+    // ✅ Conta flussi orfani prima di eliminarli (cascade delete)
+    const initialFlowsLength = model.flows?.length || 0;
+    model.flows = (model.flows || []).filter(f => f.fromId !== id && f.toId !== id);
+    const orphanFlowsDeleted = initialFlowsLength - (model.flows?.length || 0);
+
+    model.assets = model.assets.filter(a => a.id !== id);
+
+    if (model.assets.length === initialLength) {
+        throw new Error(`Asset non trovato: ${id}`);
+    }
+
+    await saveModel(model, projectDir);
+
+    // ✅ Restituisci conteggio flussi eliminati
+    return { orphanFlowsDeleted };
+}
+
+/**
+ * Importa asset in blocco nel progetto specifico con deduplica per nome.
+ * @async
+ * @param {Array<Object>} assets - Lista di asset da importare
+ * @param {string} [projectDir] - Percorso della directory del progetto attivo
+ * @returns {Promise<{saved: number, duplicates: number}>} Conteggio asset salvati e duplicati ignorati
  * @example
  * const result = await importAssets([
- *   { name: "API Gateway", category: "Process" },
- *   { name: "Database", category: "Data Store" }
- * ]);
+ *   { name: 'API Gateway', category: 'Process' },
+ *   { name: 'Database', category: 'Data Store' }
+ * ], req.projectDir);
  * console.log(`Salvati: ${result.saved}, Duplicati: ${result.duplicates}`);
- * // → "Salvati: 2, Duplicati: 0"
  */
-async function importAssets(assets) {
-    const model = await loadModel();
+async function importAssets(assets, projectDir) {
+    const model = await loadModel(projectDir);
+    if (!model.assets) model.assets = [];
+
     let saved = 0;
     let duplicates = 0;
 
@@ -106,6 +187,7 @@ async function importAssets(assets) {
 
     for (const a of assets) {
         if (!a.name?.trim()) continue;
+
         const normalizedName = a.name.trim().toLowerCase();
 
         if (existingNames.has(normalizedName)) {
@@ -121,82 +203,14 @@ async function importAssets(assets) {
         }
     }
 
-    await saveModel(model);
+    await saveModel(model, projectDir);
     return { saved, duplicates };
-}
-
-/**
- * Aggiorna un asset esistente.
- * @async
- * @param {string} id - ID univoco dell'asset da aggiornare.
- * @param {Object} updates - Campi da aggiornare (es. `{ name: "Nuovo Nome" }`).
- * @returns {Promise<Asset>} L'asset aggiornato con tutti i campi (originali + modifiche).
- * @throws {Error} Se l'asset con l'ID specificato non viene trovato.
- * @example
- * const updated = await updateAsset("abc-123", { 
- *   name: "Database Produzione",
- *   description: "Archivio aggiornato con nuovi campi"
- * });
- * console.log(updated.updatedAt); // → '2025-05-31T10:30:00.000Z' (se aggiunto)
- */
-async function updateAsset(id, updates) {
-    const model = await loadModel();
-    const index = model.assets.findIndex(a => a.id === id);
-
-    if (index === -1) throw new Error(`Asset non trovato: ${id}`);
-
-    // Merge sicuro: preserva ID e createdAt, sovrascrive solo i campi forniti
-    model.assets[index] = { ...model.assets[index], ...updates, id };
-    await saveModel(model);
-    return model.assets[index];
-}
-
-/**
- * Elimina un asset per ID e tutti i flussi correlati (cascade delete).
- * @async
- * @param {string} id - ID univoco dell'asset da eliminare.
- * @returns {Promise<{success: boolean, message: string, orphanFlowsDeleted: number}>} 
- *          Conferma dell'eliminazione con conteggio flussi orfani rimossi.
- * @throws {Error} Se l'asset non esiste nel modello.
- * @example
- * const result = await deleteAsset("abc-123");
- * console.log(result.orphanFlowsDeleted); // → 2 (flussi orfani eliminati)
- */
-async function deleteAsset(id) {
-    const model = await loadModel();
-    const initialLength = model.assets.length;
-
-    // Filtra gli asset: rimuovi quello con l'ID specificato
-    const filteredAssets = model.assets.filter(a => a.id !== id);
-
-    if (filteredAssets.length === initialLength) {
-        throw new Error(`Asset non trovato: ${id}`);
-    }
-
-    // Cascade delete: rimuovi tutti i flussi che referenziano l'asset eliminato
-    const initialFlowsLength = model.flows?.length || 0;
-    const filteredFlows = (model.flows || []).filter(
-        f => f.fromId !== id && f.toId !== id
-    );
-    const orphanFlowsDeleted = initialFlowsLength - filteredFlows.length;
-
-    // Salva il modello aggiornato con asset e flussi filtrati
-    await saveModel({
-        assets: filteredAssets,
-        flows: filteredFlows
-    });
-
-    return {
-        success: true,
-        message: `Asset ${id} eliminato con successo`,
-        orphanFlowsDeleted
-    };
 }
 
 module.exports = {
     getAllAssets,
     createAsset,
-    importAssets,
     updateAsset,
-    deleteAsset
+    deleteAsset,
+    importAssets
 };

@@ -1,34 +1,33 @@
 /**
- * @file Componente per inizializzare i dati all'avvio dell'applicazione
- * @description Carica asset e flussi dal backend una sola volta, prima che i componenti figli vengano renderizzati.
- * @module AppInitializer
+ * AppInitializer - Componente di inizializzazione globale
+ * @module components/AppInitializer
  */
 
-import { useEffect } from 'react';
-import useThreatModelStore from '../store/useThreatModelStore';
+import React, { useEffect } from 'react';
+import { useThreatModelStore } from '../store/useThreatModelStore';
 
-/**
- * Componente che inizializza i dati globali (asset, flussi) all'avvio.
- * Non renderizza nulla, ma esegue le chiamate API necessarie.
- * @param {Object} props - Proprietà del componente
- * @param {React.ReactNode} props.children - I componenti figli da renderizzare dopo l'inizializzazione
- * @returns {React.ReactNode} I children senza modifiche
- */
-const AppInitializer = ({ children }) => {
-    const { fetchAssets, fetchFlows, assetsLoaded, flowsLoaded } = useThreatModelStore();
+export default function AppInitializer({ children }) {
+    const { fetchAssets, fetchFlows, assetsLoaded, flowsLoaded, resetLoadedFlags } = useThreatModelStore();
 
+    // Caricamento iniziale
     useEffect(() => {
-        // Carica asset solo se non sono già stati caricati
-        if (!assetsLoaded) {
-            fetchAssets();
-        }
-        // Carica flussi solo se non sono già stati caricati
-        if (!flowsLoaded) {
-            fetchFlows();
-        }
+        if (!assetsLoaded) fetchAssets();
+        if (!flowsLoaded) fetchFlows();
     }, [fetchAssets, fetchFlows, assetsLoaded, flowsLoaded]);
 
-    return <>{children}</>;
-};
+    // Ascolta cambio progetto e ricarica FORZATAMENTE i dati
+    useEffect(() => {
+        const handleProjectChange = () => {
+            // 1. Resetta i flag
+            resetLoadedFlags();
+            // 2. Forza il fetch ignorando i vecchi stati
+            fetchAssets(true);
+            fetchFlows(true);
+        };
 
-export default AppInitializer;
+        window.addEventListener('projectChanged', handleProjectChange);
+        return () => window.removeEventListener('projectChanged', handleProjectChange);
+    }, [resetLoadedFlags, fetchAssets, fetchFlows]);
+
+    return <>{children}</>;
+}

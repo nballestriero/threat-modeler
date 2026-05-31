@@ -189,6 +189,61 @@ describe('Assets API - Integrazione HTTP', () => {
     });
 });
 
+/**
+ * Verifica cascade delete con isolamento progetti: eliminando asset in un progetto,
+ * i flussi orfani vengono rimossi solo in quel progetto.
+ */
+test('DELETE /api/assets/:id con cascade delete rispetta isolamento projectDir', async () => {
+    // Crea due progetti
+    const projectA = await request(app).post('/api/projects').send({ name: 'Cascade A' }).expect(201);
+    const projectB = await request(app).post('/api/projects').send({ name: 'Cascade B' }).expect(201);
+
+    // Configura Progetto A: crea asset e flusso correlato
+    await request(app).post(`/api/projects/${projectA.body.id}/status`).send({ status: 'active' }).expect(200);
+
+    const assetA = await request(app)
+        .post('/api/assets')
+        .send({ name: 'Asset Cascade A', category: 'Process' })
+        .expect(201);
+
+    await request(app)
+        .post('/api/flows')
+        .send({ fromId: assetA.body.id, toId: 'other', label: 'Flusso Cascade A' })
+        .expect(201);
+
+    // Configura Progetto B: crea asset e flusso con label simile (ma isolato)
+    await request(app).post(`/api/projects/${projectB.body.id}/status`).send({ status: 'active' }).expect(200);
+
+    const assetB = await request(app)
+        .post('/api/assets')
+        .send({ name: 'Asset Cascade B', category: 'Process' })
+        .expect(201);
+
+    await request(app)
+        .post('/api/flows')
+        .send({ fromId: assetB.body.id, toId: 'other', label: 'Flusso Cascade B' })
+        .expect(201);
+
+    // Elimina asset in Progetto A
+    await request(app).post(`/api/projects/${projectA.body.id}/status`).send({ status: 'active' }).expect(200);
+    const deleteRes = await request(app)
+        .delete(`/api/assets/${assetA.body.id}`)
+        .expect('Content-Type', /json/)
+        .expect(200);
+
+    // Verifica response cascade delete
+    expect(deleteRes.body.orphanFlowsDeleted).toBe(1);
+
+    // Verifica in Progetto A: flusso eliminato
+    const flowsA = await request(app).get('/api/flows').expect(200);
+    expect(flowsA.body.find(f => f.label === 'Flusso Cascade A')).toBeUndefined();
+
+    // Verifica in Progetto B: flusso ancora presente (isolamento)
+    await request(app).post(`/api/projects/${projectB.body.id}/status`).send({ status: 'active' }).expect(200);
+    const flowsB = await request(app).get('/api/flows').expect(200);
+    expect(flowsB.body.find(f => f.label === 'Flusso Cascade B')).toBeDefined();
+});
+
 // ============================================================================
 // TEST SU FLOWS API (CRUD completo)
 // ============================================================================

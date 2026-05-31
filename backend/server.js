@@ -10,14 +10,14 @@ const fsSync = require('fs');
 const { ensureUploadDirs } = require('./utils/fileUtils');
 const { loadConfig } = require('./utils/configUtils');
 const { errorMiddleware } = require('./utils/errorHandler');
+const projectScope = require('./middleware/projectScope'); // ✅ NUOVO: Risolve req.projectDir
 
 const app = express();
 
+// Middleware core
 app.use(cors());
 app.use(express.json());
-
-const JSON_FILE = path.join(__dirname, 'threat-model.json');
-const ADVANCED_FILE = path.join(__dirname, 'advanced-assets.json');
+app.use(projectScope); // ✅ Inietta req.projectDir prima di ogni route
 
 // Route modules
 const assetsRoutes = require('./routes/assets');
@@ -28,6 +28,7 @@ const analysisRoutes = require('./routes/analysis');
 const dfdRoutes = require('./routes/dfd');
 const ragRoutes = require('./routes/rag');
 const ollamaRoutes = require('./routes/ollama');
+const projectsRoutes = require('./routes/projects'); // ✅ NUOVO
 
 const methodologies = require('./methodologies');
 
@@ -39,30 +40,13 @@ for (const [name, module] of Object.entries(methodologies)) {
     }
 }
 
-// Sincronizzazione advanced-assets (legacy)
-if (fsSync.existsSync(JSON_FILE)) {
-    try {
-        const threatModel = JSON.parse(fsSync.readFileSync(JSON_FILE, 'utf-8'));
-        if (threatModel.assets.length === 0 && fsSync.existsSync(ADVANCED_FILE)) {
-            fsSync.writeFileSync(ADVANCED_FILE, JSON.stringify([], null, 2));
-            console.log('🧹 Advanced assets resettati perché threat-model è vuoto.');
-        }
-    } catch (err) {
-        console.warn('⚠️ Errore lettura threat-model.json');
-    }
-} else {
-    if (fsSync.existsSync(ADVANCED_FILE)) {
-        fsSync.writeFileSync(ADVANCED_FILE, JSON.stringify([], null, 2));
-        console.log('🧹 Advanced assets resettati (threat-model.json mancante).');
-    }
-}
-
 // Endpoint metodologie
 app.get('/api/methodologies', (req, res) => {
     res.json(Object.keys(methodologies));
 });
 
-// Rotte
+// Rotte API
+app.use('/api/projects', projectsRoutes); // ✅ NUOVO
 app.use('/api', assetsRoutes);
 app.use('/api', configRoutes);
 app.use('/api', filesRoutes);

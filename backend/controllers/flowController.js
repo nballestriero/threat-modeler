@@ -1,12 +1,14 @@
 /**
- * @file Controller HTTP per le operazioni CRUD sui flussi DFD
- * @description Gestisce le richieste REST per flussi: GET/POST/PUT/DELETE.
- *              Delega la business logic a {@link ../services/flowService}.
- *              Include validazione input per fromId/toId obbligatori.
+ * @file Controller HTTP per le operazioni CRUD sui flussi
  * @module controllers/flowController
  * 
- * @see {@link ../services/flowService} Business logic per flussi
- * @see {@link ../routes/assets.js} Route definitions (flussi gestiti insieme ad asset)
+ * @description
+ * Gestisce le richieste REST per i flussi, delegando la business logic
+ * a {@link ../services/flowService}. Include validazione input per fromId/toId
+ * obbligatori e gestione errori appropriata.
+ * 
+ * @see {@link ../services/flowService.js} Business logic per flussi
+ * @see {@link ../middleware/projectScope.js} Middleware che inietta req.projectDir
  */
 
 const flowService = require('../services/flowService');
@@ -14,24 +16,19 @@ const flowService = require('../services/flowService');
 /**
  * Recupera tutti i flussi e restituisce lista JSON.
  * @async
- * @param {Object} req - Request object di Express
- * @param {Object} res - Response object di Express
+ * @function
+ * @param {Object} req - Express request object
+ * @param {string} [req.projectDir] - Directory del progetto attivo
+ * @param {Object} res - Express response object
  * @returns {Promise<void>}
  * 
  * @route GET /api/flows
  * @response {200} Array<Flow> - Lista completa dei flussi
  * @response {500} { error: string } - Errore interno del server
- * 
- * @example
- * // Request: GET /api/flows
- * // Response: 200 OK
- * [
- *   { "id": "flow-1", "fromId": "asset-a", "toId": "asset-b", "label": "HTTPS", ... }
- * ]
  */
 const getAllFlows = async (req, res) => {
     try {
-        const flows = await flowService.getAllFlows();
+        const flows = await flowService.getAllFlows(req.projectDir);
         res.json(flows);
     } catch (err) {
         console.error('❌ [CONTROLLER] Errore in getAllFlows:', err.message);
@@ -42,13 +39,15 @@ const getAllFlows = async (req, res) => {
 /**
  * Crea un nuovo flusso con validazione input.
  * @async
- * @param {Object} req - Request object di Express
+ * @function
+ * @param {Object} req - Express request object
  * @param {Object} req.body - Dati del flusso da creare
  * @param {string} req.body.fromId - ID asset sorgente (obbligatorio)
  * @param {string} req.body.toId - ID asset destinazione (obbligatorio)
  * @param {string} req.body.label - Etichetta del flusso (obbligatoria)
  * @param {string} [req.body.description] - Descrizione opzionale
- * @param {Object} res - Response object di Express
+ * @param {string} [req.projectDir] - Directory del progetto attivo
+ * @param {Object} res - Express response object
  * @returns {Promise<void>}
  * 
  * @route POST /api/flows
@@ -56,18 +55,6 @@ const getAllFlows = async (req, res) => {
  * @response {201} Flow - Flusso creato con id generato
  * @response {400} { error: string, field?: string } - Validazione fallita
  * @response {500} { error: string } - Errore interno del server
- * 
- * @example
- * // Request: POST /api/flows
- * // Body: { "fromId": "asset-a", "toId": "asset-b", "label": "API Call" }
- * // Response: 201 Created
- * {
- *   "id": "flow-abc-123",
- *   "fromId": "asset-a",
- *   "toId": "asset-b",
- *   "label": "API Call",
- *   "createdAt": "2025-05-31T10:30:00.000Z"
- * }
  */
 const createFlow = async (req, res) => {
     try {
@@ -93,7 +80,7 @@ const createFlow = async (req, res) => {
             });
         }
 
-        const newFlow = await flowService.createFlow({ fromId, toId, label, description });
+        const newFlow = await flowService.createFlow({ fromId, toId, label, description }, req.projectDir);
         res.status(201).json(newFlow);
 
     } catch (err) {
@@ -108,11 +95,13 @@ const createFlow = async (req, res) => {
 /**
  * Aggiorna un flusso esistente per ID.
  * @async
- * @param {Object} req - Request object di Express
+ * @function
+ * @param {Object} req - Express request object
  * @param {Object} req.params - Parametri URL
  * @param {string} req.params.id - ID del flusso da aggiornare
  * @param {Object} req.body - Campi da aggiornare (parziali)
- * @param {Object} res - Response object di Express
+ * @param {string} [req.projectDir] - Directory del progetto attivo
+ * @param {Object} res - Express response object
  * @returns {Promise<void>}
  * 
  * @route PUT /api/flows/:id
@@ -121,18 +110,6 @@ const createFlow = async (req, res) => {
  * @response {400} { error: string } - Validazione fallita
  * @response {404} { error: string } - Flusso non trovato
  * @response {500} { error: string } - Errore interno del server
- * 
- * @example
- * // Request: PUT /api/flows/flow-123
- * // Body: { "label": "HTTPS Encrypted", "description": "Aggiornato" }
- * // Response: 200 OK
- * {
- *   "id": "flow-123",
- *   "fromId": "asset-a",
- *   "toId": "asset-b",
- *   "label": "HTTPS Encrypted",
- *   "description": "Aggiornato"
- * }
  */
 const updateFlow = async (req, res) => {
     try {
@@ -147,7 +124,7 @@ const updateFlow = async (req, res) => {
             return res.status(400).json({ error: 'toId non può essere vuoto', field: 'toId' });
         }
 
-        const updated = await flowService.updateFlow(id, updates);
+        const updated = await flowService.updateFlow(id, updates, req.projectDir);
         res.json(updated);
 
     } catch (err) {
@@ -165,27 +142,24 @@ const updateFlow = async (req, res) => {
 /**
  * Elimina un flusso per ID.
  * @async
- * @param {Object} req - Request object di Express
+ * @function
+ * @param {Object} req - Express request object
  * @param {Object} req.params - Parametri URL
  * @param {string} req.params.id - ID del flusso da eliminare
- * @param {Object} res - Response object di Express
+ * @param {string} [req.projectDir] - Directory del progetto attivo
+ * @param {Object} res - Express response object
  * @returns {Promise<void>}
  * 
  * @route DELETE /api/flows/:id
  * @response {200} { success: true, message: string } - Eliminazione confermata
  * @response {404} { error: string } - Flusso non trovato
  * @response {500} { error: string } - Errore interno del server
- * 
- * @example
- * // Request: DELETE /api/flows/flow-123
- * // Response: 200 OK
- * { "success": true, "message": "Flusso flow-123 eliminato con successo" }
  */
 const deleteFlow = async (req, res) => {
     try {
         const { id } = req.params;
-        const result = await flowService.deleteFlow(id);
-        res.json(result);
+        await flowService.deleteFlow(id, req.projectDir);
+        res.json({ success: true, message: `Flusso ${id} eliminato con successo` });
     } catch (err) {
         if (err.message?.includes('non trovato')) {
             return res.status(404).json({ error: err.message });
