@@ -1,0 +1,109 @@
+{
+  "assets": [
+    {
+      "id": "b0ebc385-d9f1-48ab-91ad-6c1cc55bfce0",
+      "createdAt": "2026-05-31T16:35:32.651Z",
+      "name": "Asset Cascade B",
+      "category": "Process"
+    },
+    {
+      "id": "f5b03522-49b8-46ed-b30d-de36646b7d1f",
+      "createdAt": "2026-05-31T16:35:32.774Z",
+      "name": "Source Asset",
+      "category": "External Entity"
+    },
+    {
+      "id": "3fbd4c04-ee0a-45b2-8706-2dbd09856eb2",
+      "createdAt": "2026-05-31T16:35:32.786Z",
+      "name": "Target Asset",
+      "category": "Data Store"
+    },
+    {
+      "id": "d215724a-7db6-491e-9ace-0abccce8da1c",
+      "createdAt": "2026-05-31T16:35:32.827Z",
+      "name": "Source Asset",
+      "category": "External Entity"
+    },
+    {
+      "id": "06cf2323-c8c2-4538-be40-7fa7067f2093",
+      "createdAt": "2026-05-31T16:35:32.840Z",
+      "name": "Target Asset",
+      "category": "Data Store"
+    },
+    {
+      "id": "50ac91ea-c830-4768-8026-2c85321bf479",
+      "createdAt": "2026-05-31T16:35:32.882Z",
+      "name": "Source Asset",
+      "category": "External Entity"
+    },
+    {
+      "id": "76e14394-0ddd-49aa-ab4e-a61534314d2c",
+      "createdAt": "2026-05-31T16:35:32.895Z",
+      "name": "Target Asset",
+      "category": "Data Store"
+    },
+    {
+      "id": "9adc8f5d-f97e-49c6-84e2-e13de27d54cc",
+      "createdAt": "2026-05-31T16:35:32.939Z",
+      "name": "Source Asset",
+      "category": "External Entity"
+    },
+    {
+      "id": "125eba43-da91-48f5-97a7-9b8df9c8e1e5",
+      "createdAt": "2026-05-31T16:35:32.952Z",
+      "name": "Target Asset",
+      "category": "Data Store"
+    },
+    {
+      "id": "1dfbe14b-c8a9-416d-b761-e42d80c3ef4e",
+      "createdAt": "2026-05-31T16:35:32.997Z",
+      "name": "Source Asset",
+      "category": "External Entity"
+    },
+    {
+      "id": "750ebdce-06ed-4400-a6e7-4bcd9a987f69",
+      "createdAt": "2026-05-31T16:35:33.010Z",
+      "name": "Target Asset",
+      "category": "Data Store"
+    },
+    {
+      "id": "269a5bab-2850-46bd-9ed6-f045aec421de",
+      "createdAt": "2026-05-31T16:35:33.166Z",
+      "name": "Target Asset Cascade",
+      "category": "Data Store"
+    }
+  ],
+  "flows": [
+    {
+      "id": "a09fff67-60bd-43c6-94ce-80bf670efb07",
+      "fromId": "b0ebc385-d9f1-48ab-91ad-6c1cc55bfce0",
+      "toId": "other",
+      "label": "Flusso Cascade B",
+      "createdAt": "2026-05-31T16:35:32.665Z"
+    },
+    {
+      "id": "32d440cf-3a23-4912-bf8c-65f3adde5fa8",
+      "fromId": "f5b03522-49b8-46ed-b30d-de36646b7d1f",
+      "toId": "3fbd4c04-ee0a-45b2-8706-2dbd09856eb2",
+      "label": "HTTPS Request",
+      "description": "Flusso di test",
+      "createdAt": "2026-05-31T16:35:32.800Z"
+    },
+    {
+      "id": "3382b647-dd02-4efe-9d96-3b94ff71a020",
+      "fromId": "50ac91ea-c830-4768-8026-2c85321bf479",
+      "toId": "76e14394-0ddd-49aa-ab4e-a61534314d2c",
+      "label": "HTTPS Request",
+      "description": "Flusso di test",
+      "createdAt": "2026-05-31T16:35:32.909Z"
+    },
+    {
+      "id": "c33be690-f90b-4342-ac17-cba9c20e98b7",
+      "fromId": "9adc8f5d-f97e-49c6-84e2-e13de27d54cc",
+      "toId": "125eba43-da91-48f5-97a7-9b8df9c8e1e5",
+      "label": "Flusso Aggiornato",
+      "description": "Nuova descrizione",
+      "createdAt": "2026-05-31T16:35:32.967Z"
+    }
+  ]
+}

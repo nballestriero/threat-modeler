@@ -1,0 +1,26 @@
+{
+  "assets": [
+    {
+      "id": "69489e74-1b1d-4c10-826f-462fcdac8f0b",
+      "createdAt": "2026-05-31T16:35:32.313Z",
+      "name": "Integration Test Asset",
+      "category": "External Entity",
+      "description": "Creato automaticamente dal test di integrazione"
+    },
+    {
+      "id": "482578fa-6abc-407f-b63a-7cc689b3ef50",
+      "createdAt": "2026-05-31T16:35:32.359Z",
+      "name": "Integration Test Asset",
+      "category": "External Entity",
+      "description": "Creato automaticamente dal test di integrazione"
+    },
+    {
+      "id": "50e4b38d-dbb8-46e4-ae56-fc5970b7136c",
+      "createdAt": "2026-05-31T16:35:32.391Z",
+      "name": "Asset Aggiornato via Test",
+      "category": "External Entity",
+      "description": "Nuova descrizione di test"
+    }
+  ],
+  "flows": []
+}

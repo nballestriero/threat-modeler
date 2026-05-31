@@ -5,19 +5,17 @@
     "model": "llama3.1:8b"
   },
   "project": {
-    "name": "Nuovo Progetto",
-    "version": "1.0",
-    "owner": ""
+    "name": "Nuovo Progetto"
   },
   "database": {
-    "enabled": true,
+    "enabled": false,
     "type": "sqlite",
     "path": "./data.db"
   },
   "jsonStoragePath": "./threat-models/",
   "rag": {
-    "enabled": true,
-    "mode": "python-client",
+    "enabled": false,
+    "mode": "http-server",
     "baseUrl": "http://localhost:8000",
     "embeddingModel": "nomic-embed-text",
     "collectionPrefix": "threatmodel_",
@@ -27,6 +25,6 @@
       "pythonCmd": "python3",
       "timeout": 30000
     },
-    "persistDirectory": "./.venv"
+    "persistDirectory": "./chroma_data"
   }
 }

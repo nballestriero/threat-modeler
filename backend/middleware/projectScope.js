@@ -1,75 +1,70 @@
 /**
- * @file Middleware per la risoluzione della directory del progetto attivo
+ * @file Middleware Express per la risoluzione della directory del progetto attivo
  * @module middleware/projectScope
  * 
  * @description
- * Risolve la directory dati del progetto attivo e la inietta in `req.projectDir`.
- * Se nessun progetto è attivo, utilizza una directory di fallback sicura per evitare errori null.
- * Supporta `process.env.DATA_DIR` per isolamento nei test.
+ * Intercetta ogni richiesta HTTP, determina la directory di lavoro corretta 
+ * in base al progetto attivo e la inietta in `req.projectDir`.
+ * Garantisce isolamento dei dati: ogni progetto scrive/legge solo nella propria cartella.
+ * Supporta override via `process.env.DATA_DIR` per ambienti di test.
+ * Previene la creazione accidentale di cartelle nidificate o percorsi non validi.
  * 
  * ## Flusso di risoluzione
- * 1. Cerca un progetto con `status: 'active'` in `projects.json`
- * 2. Se trovato, imposta `req.projectDir = backend/data/<project-uuid>/`
- * 3. Se non trovato, fallback su `process.env.DATA_DIR` o `backend/data/`
- * 4. Assicura che la directory esista fisicamente (crea se manca)
+ * 1. Legge il progetto attivo tramite `projectService.getActiveProjectDir()`
+ * 2. Se esiste e ha formato UUID valido → garantisce esistenza cartella → inietta path
+ * 3. Se non esiste → usa fallback `DATA_DIR` senza creare nuove directory
+ * 4. In caso di errore critico → logga errore, usa fallback, prosegue richiesta
  * 
- * @see {@link ../services/projectService.js} Service per gestione progetti
- * @see {@link ../models/assetModel.js} Modello dati che usa req.projectDir
+ * @see {@link ../services/projectService.js} Service gestione progetti
+ * @see {@link ../routes/config.js} Configurazione globale
  */
 
 const path = require('path');
 const fs = require('fs').promises;
+const projectService = require('../services/projectService');
 
-// ✅ Usa path assoluto per evitare problemi di risoluzione modulo
-const projectService = require(path.join(__dirname, '../services/projectService'));
-
-// ✅ Rispetta DATA_DIR da env var (per test), altrimenti fallback su path relativo a questo file
+// ✅ Usa DATA_DIR da env var se impostata (per test), altrimenti fallback sicuro
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, '../data');
 
+// Regex per validare formato UUID v4
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 /**
- * Middleware Express per risolvere la directory del progetto attivo.
+ * Middleware Express per risolvere e iniettare `req.projectDir`.
  * @async
  * @function
- * @param {Object} req - Request object di Express
- * @param {string} [req.projectDir] - (Iniettato) Percorso della directory del progetto attivo, o fallback
- * @param {Object} res - Response object di Express
- * @param {Function} next - Callback per passare al middleware successivo
+ * @param {import('express').Request} req - Request object di Express
+ * @param {string} [req.projectDir] - (Iniettato) Percorso directory progetto attivo o fallback
+ * @param {import('express').Response} res - Response object di Express
+ * @param {import('express').NextFunction} next - Callback per middleware successivo
  * @returns {Promise<void>}
- * 
- * @example
- * // In server.js
- * const projectScope = require('./middleware/projectScope');
- * app.use(express.json());
- * app.use(projectScope); // ← Eseguito prima di ogni route
- * 
- * // In un controller
- * const assets = await assetService.getAllAssets(req.projectDir);
  */
 module.exports = async (req, res, next) => {
     try {
-        // 1. Cerca il progetto attivo tramite service
         let projectDir = await projectService.getActiveProjectDir();
 
-        // 2. Fallback sicuro: se non c'è progetto attivo, usa DATA_DIR
+        // ✅ Fallback sicuro: NON crea cartelle a cascata se nessun progetto è attivo
         if (!projectDir) {
-            console.warn('⚠️ Nessun progetto attivo. Utilizzo directory fallback:', DATA_DIR);
+            req.projectDir = DATA_DIR;
+            return next();
+        }
+
+        // ✅ Verifica che il nome della directory sia un UUID valido
+        const dirName = path.basename(projectDir);
+        if (UUID_REGEX.test(dirName)) {
+            // Crea la directory SOLO se è una cartella di progetto legittima
+            await fs.mkdir(projectDir, { recursive: true });
+        } else {
+            // Se il path non è un UUID, usa il fallback sicuro
+            console.warn(`⚠️ [projectScope] Percorso non valido rilevato: ${projectDir}. Fallback su DATA_DIR.`);
             projectDir = DATA_DIR;
         }
 
-        // 3. Assicura che la directory esista fisicamente (crea se manca)
-        await fs.mkdir(projectDir, { recursive: true });
-
-        // 4. Inietta il path risolto nella request per l'uso nei service
         req.projectDir = projectDir;
-
-        // 5. Prosegui con la catena di middleware
         next();
-
     } catch (err) {
-        // Log dell'errore per debugging, ma non bloccare la richiesta
-        console.error('❌ Errore critico nel middleware projectScope:', err.message);
-
-        // Fallback estremo: usa DATA_DIR per non bloccare l'app
+        // ✅ Gestione errore resiliente: non blocca la richiesta
+        console.error('❌ [projectScope] Errore critico nella risoluzione directory:', err.message);
         req.projectDir = DATA_DIR;
         next();
     }
